@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { api } from "../api/client";
 import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -25,6 +25,7 @@ import { formatWatchTime } from "../utils/time";
 export function GroupPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { isOnline } = usePresence();
   const isAdmin = user?.role === "admin";
@@ -36,10 +37,8 @@ export function GroupPage() {
   const [showAddMedia, setShowAddMedia] = useState(false);
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showDeleteGroup, setShowDeleteGroup] = useState(false);
-  const [deletingGroup, setDeletingGroup] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
-  const [importing, setImporting] = useState(false);
   const [rankingMemberId, setRankingMemberId] = useState<number | string | "average">("average");
   const [votingFilter, setVotingFilter] = useState<"all" | "open" | "closed">("all");
   const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
@@ -97,6 +96,17 @@ export function GroupPage() {
 
   useEffect(() => {
     api.get<UserDirectoryItem[]>("/api/users/directory").then(setAllUsers).catch(() => {});
+  }, []);
+
+  // Pick up a toast handed to us via navigation state (e.g. re-navigated here after a
+  // background group-deletion failed), then clear it so it doesn't reappear on refresh/back.
+  useEffect(() => {
+    const toast = (location.state as { toast?: { variant: "success" | "error"; title: string } } | null)?.toast;
+    if (!toast) return;
+    if (toast.variant === "error") setError(toast.title);
+    else setSuccessToast(toast.title);
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -504,19 +514,21 @@ export function GroupPage() {
     }
   };
 
-  const deleteGroup = async () => {
-    setDeletingGroup(true);
-    try {
-      await api.delete(`/api/groups/${groupId}`);
-      navigate("/");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to delete group");
-      setDeletingGroup(false);
-    }
+  const deleteGroup = () => {
+    const name = group?.name;
+    // Optimistic: leave the page right away; if the delete turns out to have failed,
+    // navigate back here with an error toast instead of leaving the user stranded.
+    setShowDeleteGroup(false);
+    navigate("/", { state: { toast: { variant: "success", title: name ? `"${name}" deleted` : "Group deleted" } } });
+    api.delete(`/api/groups/${groupId}`).catch((e) => {
+      navigate(`/groups/${groupId}`, {
+        replace: true,
+        state: { toast: { variant: "error", title: e instanceof Error ? e.message : "Failed to delete group" } },
+      });
+    });
   };
 
   const importExcel = async (file: File) => {
-    setImporting(true);
     const form = new FormData();
     form.append("file", file);
     try {
@@ -525,16 +537,18 @@ export function GroupPage() {
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Import failed");
-    } finally {
-      setImporting(false);
     }
   };
 
-  const confirmImport = async () => {
+  const confirmImport = () => {
     if (!pendingImportFile) return;
-    await importExcel(pendingImportFile);
+    const file = pendingImportFile;
+    // Non-blocking: close the confirmation modal right away and let the import run in the
+    // background - the exact counts/unmatched-ids can only be known once the server replies,
+    // so we surface those via the existing importToast once it resolves.
     setPendingImportFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    importExcel(file);
   };
 
   const cancelImport = () => {
@@ -599,7 +613,14 @@ export function GroupPage() {
                 </button>
                 <GroupEditForm
                   group={group}
-                  onSaved={() => { setShowEditGroup(false); load(); }}
+                  onSaved={(patch) => {
+                    setGroup((g) => (g ? { ...g, ...patch } : g));
+                    setShowEditGroup(false);
+                  }}
+                  onError={(message) => {
+                    setError(message);
+                    load();
+                  }}
                   onCancel={requestClose}
                   onDeleteRequested={() => { setShowEditGroup(false); setShowDeleteGroup(true); }}
                 />
@@ -613,11 +634,10 @@ export function GroupPage() {
             overlayClassName="comment-modal-overlay"
             modalClassName="comment-modal confirm-modal"
             onClose={() => setShowDeleteGroup(false)}
-            disableBackdropClose={deletingGroup}
           >
             {(requestClose) => (
               <>
-                <button className="media-modal-close" onClick={requestClose} title="Close" type="button" disabled={deletingGroup}>
+                <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   ×
                 </button>
                 <p>
@@ -625,10 +645,10 @@ export function GroupPage() {
                   watch history. This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">
-                  <button className="danger" onClick={deleteGroup} disabled={deletingGroup}>
-                    {deletingGroup ? "Deleting…" : "Yes, delete"}
+                  <button className="danger" onClick={deleteGroup}>
+                    Yes, delete
                   </button>
-                  <button className="secondary" onClick={requestClose} disabled={deletingGroup}>
+                  <button className="secondary" onClick={requestClose}>
                     Cancel
                   </button>
                 </div>
@@ -1042,7 +1062,7 @@ export function GroupPage() {
       )}
 
       {pendingImportFile && (
-        <Modal modalClassName="media-modal confirm-modal" onClose={cancelImport} disableBackdropClose={importing}>
+        <Modal modalClassName="media-modal confirm-modal" onClose={cancelImport}>
           {(requestClose) => (
             <>
               <h2>Import "{pendingImportFile.name}"?</h2>
@@ -1052,10 +1072,8 @@ export function GroupPage() {
                 undone. Continue?
               </p>
               <div className="row confirm-modal-actions">
-                <button onClick={confirmImport} disabled={importing}>
-                  {importing ? "Importing…" : "Yes, import & overwrite"}
-                </button>
-                <button className="secondary" onClick={requestClose} disabled={importing}>
+                <button onClick={confirmImport}>Yes, import & overwrite</button>
+                <button className="secondary" onClick={requestClose}>
                   Cancel
                 </button>
               </div>

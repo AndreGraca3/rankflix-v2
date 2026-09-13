@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Group } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -15,17 +15,18 @@ import { useInfiniteList } from "../hooks/useInfiniteList";
 
 export function DashboardPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupImageUrl, setNewGroupImageUrl] = useState("");
   const [newGroupImportFile, setNewGroupImportFile] = useState<File | null>(null);
-  const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [viewFilter, setViewFilter] = useState<"all" | "owner" | "system">("all");
 
   const load = (filter: "all" | "owner" | "system") => {
@@ -45,31 +46,59 @@ export function DashboardPage() {
   useServerEvent("groups-changed", () => load(viewFilter));
   useServerEvent("group-updated", () => load(viewFilter));
 
-  const createGroup = async (e: React.FormEvent) => {
+  // Pick up a toast handed to us from another page (e.g. GroupPage navigating here after an
+  // optimistic group deletion), then clear it from history state so it doesn't reappear on
+  // back/forward navigation or a refresh.
+  useEffect(() => {
+    const toast = (location.state as { toast?: { variant: "success" | "error"; title: string } } | null)?.toast;
+    if (!toast) return;
+    if (toast.variant === "error") setError(toast.title);
+    else setSuccessToast(toast.title);
+    navigate(location.pathname, { replace: true, state: {} });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const createGroup = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGroupName.trim()) return;
-    setCreating(true);
+    if (!newGroupName.trim() || !user) return;
     setError(null);
-    try {
-      const created = await api.post<Group>("/api/groups", {
-        name: newGroupName.trim(),
-        imageUrl: newGroupImageUrl.trim() || null,
-      });
-      if (newGroupImportFile) {
-        const form = new FormData();
-        form.append("file", newGroupImportFile);
-        await api.postForm(`/api/groups/${created.id}/excel/import`, form);
+
+    const trimmedName = newGroupName.trim();
+    const trimmedImageUrl = newGroupImageUrl.trim() || null;
+    const importFile = newGroupImportFile;
+    const tempId = -Date.now();
+    const optimisticGroup: Group = {
+      id: tempId,
+      name: trimmedName,
+      ownerId: user.id,
+      imageUrl: trimmedImageUrl,
+      members: [{ userId: user.id, username: user.username, avatarUrl: user.avatarUrl, discordId: user.discordId, isOwner: true }],
+      pendingMembers: [],
+    };
+
+    // Optimistic: show the new group card right away instead of waiting for the round-trip
+    // (plus, when importing, the follow-up import call too).
+    setGroups((cur) => [optimisticGroup, ...cur]);
+    setNewGroupName("");
+    setNewGroupImageUrl("");
+    setNewGroupImportFile(null);
+    setShowCreateForm(false);
+
+    (async () => {
+      try {
+        const created = await api.post<Group>("/api/groups", { name: trimmedName, imageUrl: trimmedImageUrl });
+        if (importFile) {
+          const form = new FormData();
+          form.append("file", importFile);
+          await api.postForm(`/api/groups/${created.id}/excel/import`, form);
+        }
+        setGroups((cur) => cur.map((g) => (g.id === tempId ? created : g)));
+        if (importFile) load(viewFilter); // pick up members/pending members the import added
+      } catch (err) {
+        setGroups((cur) => cur.filter((g) => g.id !== tempId));
+        setError(err instanceof Error ? err.message : "Failed to create group");
       }
-      setNewGroupName("");
-      setNewGroupImageUrl("");
-      setNewGroupImportFile(null);
-      setShowCreateForm(false);
-      load(viewFilter);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create group");
-    } finally {
-      setCreating(false);
-    }
+    })();
   };
 
   const isAdmin = user?.role === "admin";
@@ -78,19 +107,24 @@ export function DashboardPage() {
   const editingGroup = editingId != null ? groups.find((g) => g.id === editingId) ?? null : null;
   const deletingGroup = deletingId != null ? groups.find((g) => g.id === deletingId) ?? null : null;
 
-  const deleteGroup = async () => {
+  const deleteGroup = () => {
     if (deletingId == null) return;
-    setDeleting(true);
-    setError(null);
-    try {
-      await api.delete(`/api/groups/${deletingId}`);
-      setDeletingId(null);
-      load(viewFilter);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete group");
-    } finally {
-      setDeleting(false);
-    }
+    const prevGroups = groups;
+    const id = deletingId;
+    const name = deletingGroup?.name;
+
+    // Optimistic: remove the card immediately; restore it (and show an error) if the delete
+    // turns out to have failed.
+    setGroups((cur) => cur.filter((g) => g.id !== id));
+    setDeletingId(null);
+
+    api
+      .delete(`/api/groups/${id}`)
+      .then(() => setSuccessToast(name ? `"${name}" deleted` : "Group deleted"))
+      .catch((err) => {
+        setGroups(prevGroups);
+        setError(err instanceof Error ? err.message : "Failed to delete group");
+      });
   };
 
   const {
@@ -151,9 +185,7 @@ export function DashboardPage() {
                       onChange={(e) => setNewGroupName(e.target.value)}
                       autoFocus
                     />
-                    <button type="submit" disabled={creating}>
-                      {creating ? "Creating..." : "Create group"}
-                    </button>
+                    <button type="submit">Create group</button>
                   </div>
                   <label className="file-input-label excel-btn new-group-import-label">
                     {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
@@ -233,7 +265,14 @@ export function DashboardPage() {
                 </button>
                 <GroupEditForm
                   group={editingGroup}
-                  onSaved={() => { setEditingId(null); load(viewFilter); }}
+                  onSaved={(patch) => {
+                    setGroups((cur) => cur.map((g) => (g.id === editingGroup.id ? { ...g, ...patch } : g)));
+                    setEditingId(null);
+                  }}
+                  onError={(message) => {
+                    setError(message);
+                    load(viewFilter);
+                  }}
                   onCancel={requestClose}
                   onDeleteRequested={() => { setEditingId(null); setDeletingId(editingGroup.id); }}
                 />
@@ -246,11 +285,10 @@ export function DashboardPage() {
             overlayClassName="comment-modal-overlay"
             modalClassName="comment-modal confirm-modal"
             onClose={() => setDeletingId(null)}
-            disableBackdropClose={deleting}
           >
             {(requestClose) => (
               <>
-                <button className="media-modal-close" onClick={requestClose} title="Close" type="button" disabled={deleting}>
+                <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   ×
                 </button>
                 <p>
@@ -258,10 +296,10 @@ export function DashboardPage() {
                   reviews, and watch history. This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">
-                  <button className="danger" onClick={deleteGroup} disabled={deleting}>
-                    {deleting ? "Deleting…" : "Yes, delete"}
+                  <button className="danger" onClick={deleteGroup}>
+                    Yes, delete
                   </button>
-                  <button className="secondary" onClick={requestClose} disabled={deleting}>
+                  <button className="secondary" onClick={requestClose}>
                     Cancel
                   </button>
                 </div>
@@ -271,6 +309,9 @@ export function DashboardPage() {
         )}
       </main>
       {error && <Toast variant="error" title={error} duration={7000} onClose={() => setError(null)} />}
+      {successToast && (
+        <Toast variant="success" title={successToast} duration={4000} onClose={() => setSuccessToast(null)} style={{ top: 24 + (error ? 86 : 0) }} />
+      )}
     </div>
   );
 }

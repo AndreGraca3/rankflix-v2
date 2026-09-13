@@ -16,7 +16,6 @@ export function UsersPage() {
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   const [editDiscordId, setEditDiscordId] = useState("");
   const [editRole, setEditRole] = useState("member");
-  const [saving, setSaving] = useState(false);
   const [newPassword, setNewPassword] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
@@ -45,29 +44,33 @@ export function UsersPage() {
   };
 
   const closeEdit = () => {
-    if (saving) return;
     setEditingUser(null);
   };
 
-  const saveEdit = async () => {
+  const saveEdit = () => {
     if (!editingUser) return;
-    setSaving(true);
-    try {
-      const patch: Record<string, string> = {};
-      if (editDiscordId !== (editingUser.discordId ?? "")) patch.discordId = editDiscordId;
-      if (editRole !== editingUser.role) patch.role = editRole;
+    const patch: Record<string, string> = {};
+    if (editDiscordId !== (editingUser.discordId ?? "")) patch.discordId = editDiscordId;
+    if (editRole !== editingUser.role) patch.role = editRole;
 
-      if (Object.keys(patch).length > 0) {
-        await api.patch(`/api/users/${editingUser.id}`, patch);
-      }
-      setToast({ variant: "success", title: "User updated" });
+    if (Object.keys(patch).length === 0) {
       setEditingUser(null);
-      loadUsers();
-    } catch (e) {
-      setToast({ variant: "error", title: e instanceof Error ? e.message : "Update failed" });
-    } finally {
-      setSaving(false);
+      return;
     }
+
+    const prevUsers = users;
+    const userId = editingUser.id;
+    // Optimistic: apply the patch and close the modal right away; revert + toast on failure.
+    setUsers((cur) => cur.map((u) => (u.id === userId ? { ...u, ...patch, role: (patch.role ?? u.role) as UserListItem["role"] } : u)));
+    setEditingUser(null);
+
+    api
+      .patch(`/api/users/${userId}`, patch)
+      .then(() => setToast({ variant: "success", title: "User updated" }))
+      .catch((e) => {
+        setUsers(prevUsers);
+        setToast({ variant: "error", title: e instanceof Error ? e.message : "Update failed" });
+      });
   };
 
   const resetPassword = async () => {
@@ -132,10 +135,10 @@ export function UsersPage() {
       </main>
 
       {editingUser && (
-        <Modal modalClassName="media-modal user-edit-modal" onClose={closeEdit} disableBackdropClose={saving}>
+        <Modal modalClassName="media-modal user-edit-modal" onClose={closeEdit}>
           {(requestClose) => (
             <>
-              <button className="media-modal-close" onClick={requestClose} title="Close" type="button" disabled={saving}>
+              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 ×
               </button>
               <div className="user-edit-modal-header">
@@ -149,7 +152,6 @@ export function UsersPage() {
                   value={editDiscordId}
                   onChange={(e) => setEditDiscordId(e.target.value)}
                   placeholder="Discord ID"
-                  disabled={saving}
                 />
                 <span className="user-edit-hint muted">
                   Reassigning this attaches any pending imported ratings/watch history for that Discord ID to this account.
@@ -158,7 +160,7 @@ export function UsersPage() {
 
               <label className="user-edit-field">
                 <span className="muted">Role</span>
-                <select value={editRole} onChange={(e) => setEditRole(e.target.value)} disabled={saving}>
+                <select value={editRole} onChange={(e) => setEditRole(e.target.value)}>
                   <option value="member">member</option>
                   <option value="admin">admin</option>
                 </select>
@@ -175,17 +177,17 @@ export function UsersPage() {
                     </button>
                   </div>
                 ) : (
-                  <button type="button" className="btn-secondary" onClick={resetPassword} disabled={saving}>
+                  <button type="button" className="btn-secondary" onClick={resetPassword}>
                     Reset password
                   </button>
                 )}
               </div>
 
               <div className="row rating-modal-actions user-edit-actions-row">
-                <button type="button" onClick={saveEdit} disabled={saving}>
-                  {saving ? "Saving…" : "Save changes"}
+                <button type="button" onClick={saveEdit}>
+                  Save changes
                 </button>
-                <button type="button" className="btn-secondary" onClick={requestClose} disabled={saving}>
+                <button type="button" className="btn-secondary" onClick={requestClose}>
                   Cancel
                 </button>
                 <div className="user-edit-danger-zone">

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { api } from "../api/client";
 import type { Group } from "../api/types";
 import { ImageUploadButton } from "./ImageUploadButton";
-import { Toast } from "./Toast";
 
 export function GroupPoster({ imageUrl, name }: { imageUrl: string | null; name: string }) {
   if (imageUrl) {
@@ -57,32 +56,36 @@ export function GroupPosterEditor({
 export function GroupEditForm({
   group,
   onSaved,
+  onError,
   onCancel,
   onDeleteRequested,
 }: {
   group: Group;
-  onSaved: () => void;
+  // Called immediately (optimistically), before the server confirms the save, with the
+  // new name/imageUrl so the caller can update its own view right away.
+  onSaved: (patch: { name: string; imageUrl: string | null }) => void;
+  // Called if the save turns out to have failed after onSaved already ran - the caller
+  // should revert its optimistic update (e.g. by refetching) and surface the error.
+  onError?: (message: string) => void;
   onCancel: () => void;
   onDeleteRequested?: () => void;
 }) {
   const [name, setName] = useState(group.name);
   const [imageUrl, setImageUrl] = useState(group.imageUrl ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const save = async (e: React.FormEvent) => {
+  const save = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setSaving(true);
-    setError(null);
-    try {
-      await api.patch(`/api/groups/${group.id}`, { name: name.trim(), imageUrl: imageUrl.trim() || null });
-      onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update group");
-    } finally {
-      setSaving(false);
-    }
+    const trimmedName = name.trim();
+    const trimmedImageUrl = imageUrl.trim() || null;
+
+    // Optimistic: hand the new values to the caller right away (it typically closes this
+    // form/modal immediately) instead of waiting on the network round-trip.
+    onSaved({ name: trimmedName, imageUrl: trimmedImageUrl });
+
+    api.patch(`/api/groups/${group.id}`, { name: trimmedName, imageUrl: trimmedImageUrl }).catch((err) => {
+      onError?.(err instanceof Error ? err.message : "Failed to update group");
+    });
   };
 
   return (
@@ -93,9 +96,7 @@ export function GroupEditForm({
       </div>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Group name" />
       <div className="row group-edit-actions">
-        <button type="submit" disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </button>
+        <button type="submit">Save</button>
         <button type="button" className="btn-secondary" onClick={onCancel}>
           Cancel
         </button>
@@ -105,7 +106,6 @@ export function GroupEditForm({
           Delete group
         </button>
       )}
-      {error && <Toast variant="error" title={error} duration={7000} onClose={() => setError(null)} />}
     </form>
   );
 }
