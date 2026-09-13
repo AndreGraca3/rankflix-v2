@@ -77,16 +77,19 @@ public class AuthController(IAuthService authService, IWebHostEnvironment env) :
 
     private void SetRefreshTokenCookie(Guid refreshToken, DateTime expiresAt)
     {
-        // In dev the site runs over plain HTTP, and browsers refuse to persist
-        // Secure cookies over HTTP, so the refresh cookie would silently never
-        // be stored (breaking "stay logged in"). Only require Secure/SameSite=Strict
-        // in production where everything runs over HTTPS.
+        // The frontend (static site) and this API run on different Render domains, which
+        // browsers treat as cross-site. Cross-site fetch/XHR requests only ever include
+        // SameSite=None cookies (Strict/Lax are silently dropped on cross-site requests,
+        // even though they still get stored after login) - so refresh-on-page-load would
+        // always fail in production without this. SameSite=None requires Secure=true,
+        // which browsers refuse to persist over plain HTTP, so dev (plain HTTP) still
+        // needs Lax/non-secure instead.
         var isProd = env.IsProduction();
         Response.Cookies.Append(RefreshTokenCookieName, refreshToken.ToString(), new CookieOptions
         {
             HttpOnly = true,
             Secure = isProd,
-            SameSite = isProd ? SameSiteMode.Strict : SameSiteMode.Lax,
+            SameSite = isProd ? SameSiteMode.None : SameSiteMode.Lax,
             Expires = expiresAt
         });
     }
