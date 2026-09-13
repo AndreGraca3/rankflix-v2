@@ -110,7 +110,14 @@ app.UseCors(corsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+// Also touches the database (not just returns 200) so the cron ping that keeps Render's
+// free-tier instance awake also counts as activity for Supabase, which auto-pauses free
+// Postgres projects after 7 days of no database activity.
+app.MapGet("/health", async (RankflixDbContext db) =>
+{
+    await db.Database.ExecuteSqlRawAsync("SELECT 1");
+    return Results.Ok(new { status = "ok" });
+});
 
 app.MapControllers();
 
