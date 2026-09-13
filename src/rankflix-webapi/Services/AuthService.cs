@@ -10,7 +10,7 @@ public record LoginResult(string AccessToken, int ExpireMinutes, Guid RefreshTok
 
 public interface IAuthService
 {
-    Task<LoginResult> RegisterAsync(string username, string password, string? inviteCode);
+    Task<LoginResult> RegisterAsync(string username, string password);
     Task<LoginResult> LoginAsync(string username, string password);
     Task<LoginResult> RefreshTokensAsync(Guid refreshToken);
     Task RevokeRefreshTokenAsync(int userId);
@@ -20,13 +20,11 @@ public class AuthService(
     IUserRepository userRepository,
     ITokenRepository tokenRepository,
     IJwtProvider jwtProvider,
-    IOptions<RefreshTokenOptions> refreshTokenOptions,
-    IOptions<RegistrationOptions> registrationOptions) : IAuthService
+    IOptions<RefreshTokenOptions> refreshTokenOptions) : IAuthService
 {
     private readonly RefreshTokenOptions _refreshTokenOptions = refreshTokenOptions.Value;
-    private readonly RegistrationOptions _registrationOptions = registrationOptions.Value;
 
-    public async Task<LoginResult> RegisterAsync(string username, string password, string? inviteCode)
+    public async Task<LoginResult> RegisterAsync(string username, string password)
     {
         username = UsernameValidator.ValidateAndTrim(username);
 
@@ -36,14 +34,6 @@ public class AuthService(
         // The very first account ever created becomes admin automatically, so there is
         // no manual DB step needed to bootstrap the first admin on a fresh deployment.
         var isFirstUser = !await userRepository.AnyAsync();
-
-        // Once an invite code is configured, gate every sign-up after the bootstrap admin behind
-        // it - otherwise anyone who finds the deployed URL could create an account.
-        if (!isFirstUser && !string.IsNullOrEmpty(_registrationOptions.InviteCode) &&
-            inviteCode != _registrationOptions.InviteCode)
-        {
-            throw new AppException("Invalid or missing invite code", StatusCodes.Status403Forbidden);
-        }
 
         var user = await userRepository.AddAsync(new UserEntity
         {

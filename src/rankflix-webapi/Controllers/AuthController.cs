@@ -17,7 +17,7 @@ public class AuthController(IAuthService authService, IWebHostEnvironment env) :
     {
         try
         {
-            var result = await authService.RegisterAsync(request.Username, request.Password, request.InviteCode);
+            var result = await authService.RegisterAsync(request.Username, request.Password);
             SetRefreshTokenCookie(result.RefreshToken, result.RefreshTokenExpiresAt);
             return new LoginResponse { AccessToken = result.AccessToken, ExpireMinutes = result.ExpireMinutes };
         }

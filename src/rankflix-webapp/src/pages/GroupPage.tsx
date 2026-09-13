@@ -14,6 +14,7 @@ import { Spinner } from "../components/Spinner";
 import { Toast } from "../components/Toast";
 import { GroupEditForm } from "../components/GroupEditor";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../auth/AuthContext";
 import { usePresence } from "../presence/PresenceContext";
 import { useServerEvent } from "../hooks/useServerEvent";
@@ -744,8 +745,15 @@ export function GroupPage() {
               )}
             </div>
 
+            {media.length === 0 && (
+              <EmptyState
+                icon="🍿"
+                title="No media in this group"
+                subtitle="Add a movie or show above to start ranking and voting."
+              />
+            )}
             <ol className="media-ranking-list">
-                {rankedMedia.length === 0 && mediaSearch && (
+                {media.length > 0 && rankedMedia.length === 0 && mediaSearch && (
                   <p className="muted">No media matches "{mediaSearchInput}".</p>
                 )}
                 {visibleRankedMedia.map((m, i) => {

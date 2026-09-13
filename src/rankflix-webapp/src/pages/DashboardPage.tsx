@@ -7,6 +7,7 @@ import { Spinner } from "../components/Spinner";
 import { Toast } from "../components/Toast";
 import { GroupPoster, GroupPosterEditor, GroupEditForm } from "../components/GroupEditor";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
+import { EmptyState } from "../components/EmptyState";
 import { useAuth } from "../auth/AuthContext";
 import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
@@ -143,11 +144,15 @@ export function DashboardPage() {
         )}
         {loading && <Spinner />}
         {!loading && displayedGroups.length === 0 && (
-          <p>
-            {viewFilter === "owner"
-              ? "You don't own any groups yet."
-              : "You're not part of any group yet. Create one, or ask a friend to add you."}
-          </p>
+          <EmptyState
+            icon="🎬"
+            title={viewFilter === "owner" ? "No groups owned" : "No groups yet"}
+            subtitle={
+              viewFilter === "owner"
+                ? "You don't own any groups yet."
+                : "You're not part of any group yet. Create one, or ask a friend to add you."
+            }
+          />
         )}
         <div className="group-grid">
           {visibleGroups.map((g) => (

@@ -7,7 +7,6 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -16,7 +15,7 @@ export function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(username, password, inviteCode || undefined);
+      await register(username, password);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -53,10 +52,6 @@ export function RegisterPage() {
               minLength={8}
               required
             />
-          </label>
-          <label>
-            Invite code <span className="muted">(if required by your group's admin)</span>
-            <input type="text" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
           </label>
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={submitting}>

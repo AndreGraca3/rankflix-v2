@@ -20,7 +20,6 @@ builder.Services.AddDbContext<RankflixDbContext>(options =>
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<RefreshTokenOptions>(builder.Configuration.GetSection("RefreshToken"));
-builder.Services.Configure<RegistrationOptions>(builder.Configuration.GetSection("Registration"));
 
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
