@@ -54,7 +54,17 @@ export function GroupPosterEditor({
 // The backend broadcasts a "group-updated" SSE event on save, so any other open tab/user
 // viewing this group (or the Dashboard) picks up the new name/poster live, without needing
 // a manual callback wired through here.
-export function GroupEditForm({ group, onSaved, onCancel }: { group: Group; onSaved: () => void; onCancel: () => void }) {
+export function GroupEditForm({
+  group,
+  onSaved,
+  onCancel,
+  onDeleteRequested,
+}: {
+  group: Group;
+  onSaved: () => void;
+  onCancel: () => void;
+  onDeleteRequested?: () => void;
+}) {
   const [name, setName] = useState(group.name);
   const [imageUrl, setImageUrl] = useState(group.imageUrl ?? "");
   const [saving, setSaving] = useState(false);
@@ -90,6 +100,11 @@ export function GroupEditForm({ group, onSaved, onCancel }: { group: Group; onSa
           Cancel
         </button>
       </div>
+      {onDeleteRequested && (
+        <button type="button" className="danger group-delete-btn" onClick={onDeleteRequested}>
+          Delete group
+        </button>
+      )}
       {error && <Toast variant="error" title={error} duration={7000} onClose={() => setError(null)} />}
     </form>
   );

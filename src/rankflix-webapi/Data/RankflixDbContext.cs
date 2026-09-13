@@ -73,7 +73,11 @@ public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : Db
         {
             e.HasKey(m => new { m.MediaId, m.GroupId });
             e.Property(m => m.AddedAt).HasDefaultValueSql("now()");
-            e.Property(m => m.VotingDurationHours).HasDefaultValue(24);
+            // ValueGeneratedNever prevents an EF Core pitfall: without it, explicitly setting
+            // this to 0 (e.g. Excel import closing voting immediately) is indistinguishable
+            // from "not set" (0 is also the CLR default for int), and EF silently substitutes
+            // the database default (24) instead of actually inserting 0.
+            e.Property(m => m.VotingDurationHours).HasDefaultValue(24).ValueGeneratedNever();
             e.HasOne<MediaEntity>().WithMany().HasForeignKey(m => m.MediaId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne<RankGroupEntity>().WithMany().HasForeignKey(m => m.GroupId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne<UserEntity>().WithMany().HasForeignKey(m => m.AddedBy).OnDelete(DeleteBehavior.Restrict);

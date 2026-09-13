@@ -24,6 +24,8 @@ export function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [viewFilter, setViewFilter] = useState<"all" | "owner" | "system">("all");
 
   const load = (filter: "all" | "owner" | "system") => {
@@ -74,6 +76,23 @@ export function DashboardPage() {
   const isGroupOwner = (g: Group) => isAdmin || g.members.some((m) => m.userId === user?.id && m.isOwner);
   const displayedGroups = viewFilter === "owner" ? groups.filter(isGroupOwner) : groups;
   const editingGroup = editingId != null ? groups.find((g) => g.id === editingId) ?? null : null;
+  const deletingGroup = deletingId != null ? groups.find((g) => g.id === deletingId) ?? null : null;
+
+  const deleteGroup = async () => {
+    if (deletingId == null) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await api.delete(`/api/groups/${deletingId}`);
+      setDeletingId(null);
+      load(viewFilter);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete group");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const {
     visibleItems: visibleGroups,
     sentinelRef: groupsSentinelRef,
@@ -202,7 +221,36 @@ export function DashboardPage() {
                   group={editingGroup}
                   onSaved={() => { setEditingId(null); load(viewFilter); }}
                   onCancel={requestClose}
+                  onDeleteRequested={() => { setEditingId(null); setDeletingId(editingGroup.id); }}
                 />
+              </>
+            )}
+          </Modal>
+        )}
+        {deletingGroup && (
+          <Modal
+            overlayClassName="comment-modal-overlay"
+            modalClassName="comment-modal confirm-modal"
+            onClose={() => setDeletingId(null)}
+            disableBackdropClose={deleting}
+          >
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" onClick={requestClose} title="Close" type="button" disabled={deleting}>
+                  ×
+                </button>
+                <p>
+                  Delete <strong>{deletingGroup.name}</strong>? This permanently removes the group, its media,
+                  reviews, and watch history. This can't be undone.
+                </p>
+                <div className="media-modal-confirm-delete confirm-modal-actions">
+                  <button className="danger" onClick={deleteGroup} disabled={deleting}>
+                    {deleting ? "Deleting…" : "Yes, delete"}
+                  </button>
+                  <button className="secondary" onClick={requestClose} disabled={deleting}>
+                    Cancel
+                  </button>
+                </div>
               </>
             )}
           </Modal>

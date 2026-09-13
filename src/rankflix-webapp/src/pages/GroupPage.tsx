@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -23,6 +23,7 @@ import { useInfiniteList } from "../hooks/useInfiniteList";
 
 export function GroupPage() {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isOnline } = usePresence();
   const isAdmin = user?.role === "admin";
@@ -33,6 +34,8 @@ export function GroupPage() {
   const [selectedTmdbId, setSelectedTmdbId] = useState<number | null>(null);
   const [showAddMedia, setShowAddMedia] = useState(false);
   const [showEditGroup, setShowEditGroup] = useState(false);
+  const [showDeleteGroup, setShowDeleteGroup] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -500,6 +503,17 @@ export function GroupPage() {
     }
   };
 
+  const deleteGroup = async () => {
+    setDeletingGroup(true);
+    try {
+      await api.delete(`/api/groups/${groupId}`);
+      navigate("/");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to delete group");
+      setDeletingGroup(false);
+    }
+  };
+
   const importExcel = async (file: File) => {
     setImporting(true);
     const form = new FormData();
@@ -580,7 +594,37 @@ export function GroupPage() {
                   group={group}
                   onSaved={() => { setShowEditGroup(false); load(); }}
                   onCancel={requestClose}
+                  onDeleteRequested={() => { setShowEditGroup(false); setShowDeleteGroup(true); }}
                 />
+              </>
+            )}
+          </Modal>
+        )}
+
+        {isGroupOwner && showDeleteGroup && (
+          <Modal
+            overlayClassName="comment-modal-overlay"
+            modalClassName="comment-modal confirm-modal"
+            onClose={() => setShowDeleteGroup(false)}
+            disableBackdropClose={deletingGroup}
+          >
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" onClick={requestClose} title="Close" type="button" disabled={deletingGroup}>
+                  ×
+                </button>
+                <p>
+                  Delete <strong>{group.name}</strong>? This permanently removes the group, its media, reviews, and
+                  watch history. This can't be undone.
+                </p>
+                <div className="media-modal-confirm-delete confirm-modal-actions">
+                  <button className="danger" onClick={deleteGroup} disabled={deletingGroup}>
+                    {deletingGroup ? "Deleting…" : "Yes, delete"}
+                  </button>
+                  <button className="secondary" onClick={requestClose} disabled={deletingGroup}>
+                    Cancel
+                  </button>
+                </div>
               </>
             )}
           </Modal>

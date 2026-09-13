@@ -61,6 +61,22 @@ public class GroupsController(IGroupService groupService) : ControllerBase
         }
     }
 
+    [HttpDelete("{groupId:int}")]
+    public async Task<IActionResult> DeleteGroup(int groupId)
+    {
+        var (userId, isAdmin) = GetCurrentUser();
+        try
+        {
+            await groupService.EnsureManagerAsync(groupId, userId, isAdmin);
+            await groupService.DeleteGroupAsync(groupId);
+            return NoContent();
+        }
+        catch (AppException ex)
+        {
+            return Problem(ex.Message, statusCode: ex.StatusCode);
+        }
+    }
+
     [HttpPost("{groupId:int}/members")]
     public async Task<ActionResult<GroupResponse>> AddMember(int groupId, [FromBody] AddMemberRequest request)
     {

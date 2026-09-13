@@ -13,6 +13,7 @@ public interface IGroupService
     Task<GroupResponse> GetGroupAsync(int groupId, int requestingUserId, bool isAdmin);
     Task<GroupResponse> CreateGroupAsync(string name, int ownerId, string? imageUrl);
     Task<GroupResponse> UpdateGroupAsync(int groupId, string? name, string? imageUrl);
+    Task DeleteGroupAsync(int groupId);
     Task<GroupResponse> AddMemberAsync(int groupId, int userId);
     Task RemoveMemberAsync(int groupId, int userId);
     Task RemovePendingMemberAsync(int groupId, string discordId);
@@ -72,6 +73,24 @@ public class GroupService(RankflixDbContext db, ISseService sse) : IGroupService
         await db.SaveChangesAsync();
         await PublishGroupUpdatedToMembersAsync(groupId);
         return await BuildGroupResponseAsync(groupId);
+    }
+
+    public async Task DeleteGroupAsync(int groupId)
+    {
+        var group = await db.RankGroups.FirstOrDefaultAsync(g => g.Id == groupId)
+                    ?? throw new AppException("Group not found", StatusCodes.Status404NotFound);
+
+        var memberIds = await db.RankGroupMembers
+            .Where(m => m.GroupId == groupId)
+            .Select(m => m.UserId)
+            .ToListAsync();
+
+        // All group-scoped data (members, media, reviews, watch statuses, pending members) cascades
+        // via ON DELETE CASCADE foreign keys, so removing the group row is enough.
+        db.RankGroups.Remove(group);
+        await db.SaveChangesAsync();
+
+        sse.PublishToUsers(memberIds, "groups-changed", new { groupId });
     }
 
     public async Task<GroupResponse> AddMemberAsync(int groupId, int userId)

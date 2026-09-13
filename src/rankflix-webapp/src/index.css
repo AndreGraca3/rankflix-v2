@@ -707,6 +707,12 @@ button.link:hover {
   justify-content: center;
 }
 
+.group-delete-btn {
+  margin-top: 6px;
+  width: 100%;
+  max-width: 280px;
+}
+
 .group-edit-modal {
   max-width: 360px;
 }
