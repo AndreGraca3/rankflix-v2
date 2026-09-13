@@ -80,7 +80,16 @@ export function MediaDetailModal({
     if (!addWatcherOpen || !addWatcherTriggerRef.current) return;
     const updatePos = () => {
       const rect = addWatcherTriggerRef.current!.getBoundingClientRect();
-      setAddWatcherPos({ top: rect.bottom + 6, left: rect.right });
+      // The dropdown is right-anchored (rendered with transform: translateX(-100%)), so its
+      // visible left edge sits at `left - width` - clamp so that edge never goes off-screen on
+      // narrow viewports, and keep the right edge inset from the screen edge too.
+      const dropdownWidth = 200;
+      const margin = 8;
+      const left = Math.min(
+        Math.max(rect.right, dropdownWidth + margin),
+        window.innerWidth - margin
+      );
+      setAddWatcherPos({ top: rect.bottom + 6, left });
     };
     updatePos();
     window.addEventListener("resize", updatePos);

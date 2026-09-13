@@ -3344,7 +3344,7 @@ button.secondary:hover {
   }
 
   .media-modal {
-    padding: 14px;
+    padding: 20px 18px 22px;
   }
 
   .media-modal-overlay {
@@ -3361,9 +3361,14 @@ button.secondary:hover {
     margin: 0 auto 4px;
   }
 
+  .media-modal-info {
+    width: 100%;
+  }
+
   .media-modal-info h2 {
     font-size: 17px;
     margin-bottom: 8px;
+    overflow-wrap: break-word;
   }
 
   .media-modal-meta {
@@ -3373,6 +3378,7 @@ button.secondary:hover {
   }
 
   .media-modal-avg-rating {
+    flex-wrap: wrap;
     margin: 10px 0;
   }
 
@@ -3380,10 +3386,25 @@ button.secondary:hover {
     font-size: 18px;
   }
 
+  .media-modal .star-rating {
+    --star-size: 16px !important;
+  }
+
   .media-modal-vote-cta {
+    flex-wrap: wrap;
     margin: 14px 0;
     padding: 8px 12px;
     font-size: 13px;
+  }
+
+  .media-modal-vote-cta-edit {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
+
+  .media-modal-section-header {
+    flex-wrap: wrap;
   }
 
   .media-modal-section {
@@ -3394,7 +3415,7 @@ button.secondary:hover {
   .watcher-chip {
     padding: 4px 10px 4px 4px;
     font-size: 13px;
-    max-width: 180px;
+    max-width: 100%;
   }
 
   .watcher-chip-avatar {
