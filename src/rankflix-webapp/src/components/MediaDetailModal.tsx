@@ -217,7 +217,10 @@ export function MediaDetailModal({
                     const isMe = w.userId === currentUserId;
                     const canRate = isMe && w.hasWatched && media.votingOpen;
                     const canRemove =
-                      canManage && w.hasWatched && (w.userId !== null || w.discordId) && (media.votingOpen || isSiteAdmin);
+                      (canManage || isSiteAdmin) &&
+                      w.hasWatched &&
+                      (w.userId !== null || w.discordId) &&
+                      (media.votingOpen || isSiteAdmin);
                     const removeWatcher = () => {
                       setPendingRemoveWatcher({ userId: w.userId, discordId: w.discordId ?? null, username: w.username });
                     };
@@ -355,7 +358,7 @@ export function MediaDetailModal({
                   <p className="comment-modal-rating-row">
                     <StarRating value={watcherModalFor.rating} readOnly size={20} />
                     <span className="comment-modal-rating">{watcherModalFor.rating}/10</span>
-                    {canManage && watcherModalFor.userId !== null && (media.votingOpen || isSiteAdmin) && (
+                    {(canManage || isSiteAdmin) && watcherModalFor.userId !== null && (media.votingOpen || isSiteAdmin) && (
                       <button
                         className="media-modal-remove-review"
                         title="Remove this rating"
@@ -389,7 +392,7 @@ export function MediaDetailModal({
 
               {watcherModalFor.comment && <p className="comment-modal-text">{watcherModalFor.comment}</p>}
 
-              {canManage &&
+              {(canManage || isSiteAdmin) &&
                 (watcherModalFor.userId !== null || watcherModalFor.discordId) &&
                 (media.votingOpen || (isSiteAdmin && watcherModalFor.hasWatched)) && (
                 <button
