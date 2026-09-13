@@ -39,6 +39,7 @@ export function GroupPage() {
   const [votingFilter, setVotingFilter] = useState<"all" | "open" | "closed">("all");
   const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
   const [memberSortMode, setMemberSortMode] = useState<"az" | "rating" | "watched">("az");
+  const [membersExpanded, setMembersExpanded] = useState(false);
   const [mediaSearchInput, setMediaSearchInput] = useState("");
   const [mediaSearch, setMediaSearch] = useState("");
   const [importToast, setImportToast] = useState<ExcelImportResult | null>(null);
@@ -799,42 +800,88 @@ export function GroupPage() {
           <aside className="member-sidebar">
             <div className="member-sidebar-header">
               <h2>Members — {group.members.length + group.pendingMembers.length}</h2>
-              <button
-                type="button"
-                className="member-sort-toggle"
-                onClick={() =>
-                  setMemberSortMode((v) => (v === "az" ? "rating" : v === "rating" ? "watched" : "az"))
-                }
-                title="Cycle member sort: A-Z, average rating given, most watched"
-              >
-                {memberSortMode === "rating" ? "★ By rating" : memberSortMode === "watched" ? "👁 Most watched" : "A-Z"}
-              </button>
+              <div className="member-sidebar-header-actions">
+                <button
+                  type="button"
+                  className="member-sort-toggle"
+                  onClick={() =>
+                    setMemberSortMode((v) => (v === "az" ? "rating" : v === "rating" ? "watched" : "az"))
+                  }
+                  title="Cycle member sort: A-Z, average rating given, most watched"
+                >
+                  {memberSortMode === "rating" ? "★ By rating" : memberSortMode === "watched" ? "👁 Most watched" : "A-Z"}
+                </button>
+                <button
+                  type="button"
+                  className="member-sidebar-mobile-toggle"
+                  onClick={() => setMembersExpanded((v) => !v)}
+                >
+                  {membersExpanded ? "Hide ▲" : "Show ▼"}
+                </button>
+              </div>
             </div>
 
-            {isGroupOwner && (
-              <div className="member-sidebar-add">
-                <AddMemberDropdown users={nonMemberUsers} onAdd={addMember} />
-              </div>
-            )}
+            <div className={`member-sidebar-body${membersExpanded ? " expanded" : ""}`}>
+              {isGroupOwner && (
+                <div className="member-sidebar-add">
+                  <AddMemberDropdown users={nonMemberUsers} onAdd={addMember} />
+                </div>
+              )}
 
-            <ul className="member-sidebar-list">
-              {visibleMembers.map((m) => {
-                if (m.kind === "pending") {
-                  const stats = pendingStatsByDiscordId.get(m.discordId);
-                  const label = m.displayName || m.discordId;
+              <ul className="member-sidebar-list">
+                {visibleMembers.map((m) => {
+                  if (m.kind === "pending") {
+                    const stats = pendingStatsByDiscordId.get(m.discordId);
+                    const label = m.displayName || m.discordId;
+                    return (
+                      <li
+                        key={m.key}
+                        className="member-sidebar-row member-sidebar-row-pending member-sidebar-row-clickable"
+                        onClick={() => setMemberModal(m)}
+                      >
+                        <div className="avatar avatar-pending" style={{ width: 40, height: 40 }} title={`Discord id: ${m.discordId}`}>
+                          {label.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="member-sidebar-info">
+                          <span className="member-sidebar-name">
+                            {label}
+                            <span className="member-pending-badge">Pending</span>
+                          </span>
+                          {stats && (
+                            <span className="member-sidebar-stats muted">
+                              {stats.moviesWatched + stats.tvWatched} watched
+                              {stats.averageRatingGiven !== null && ` · ★ ${stats.averageRatingGiven.toFixed(1)} avg`}
+                            </span>
+                          )}
+                        </div>
+                        {isGroupOwner && (
+                          <button
+                            className="member-remove"
+                            title="Remove pending member"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPendingRemove({ kind: "pending", discordId: m.discordId, label });
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </li>
+                    );
+                  }
+
+                  const stats = memberStatsByUserId.get(m.userId);
                   return (
                     <li
                       key={m.key}
-                      className="member-sidebar-row member-sidebar-row-pending member-sidebar-row-clickable"
+                      className="member-sidebar-row member-sidebar-row-clickable"
                       onClick={() => setMemberModal(m)}
                     >
-                      <div className="avatar avatar-pending" style={{ width: 40, height: 40 }} title={`Discord id: ${m.discordId}`}>
-                        {label.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar username={m.username} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />
                       <div className="member-sidebar-info">
                         <span className="member-sidebar-name">
-                          {label}
-                          <span className="member-pending-badge">Pending</span>
+                          {m.username}
+                          {m.isOwner && <span className="member-owner-badge" title="Owner">👑</span>}
                         </span>
                         {stats && (
                           <span className="member-sidebar-stats muted">
@@ -843,13 +890,13 @@ export function GroupPage() {
                           </span>
                         )}
                       </div>
-                      {isGroupOwner && (
+                      {isGroupOwner && !m.isOwner && (
                         <button
                           className="member-remove"
-                          title="Remove pending member"
+                          title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setPendingRemove({ kind: "pending", discordId: m.discordId, label });
+                            setPendingRemove({ kind: "member", userId: m.userId, label: m.username });
                           }}
                         >
                           ×
@@ -857,45 +904,10 @@ export function GroupPage() {
                       )}
                     </li>
                   );
-                }
-
-                const stats = memberStatsByUserId.get(m.userId);
-                return (
-                  <li
-                    key={m.key}
-                    className="member-sidebar-row member-sidebar-row-clickable"
-                    onClick={() => setMemberModal(m)}
-                  >
-                    <Avatar username={m.username} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />
-                    <div className="member-sidebar-info">
-                      <span className="member-sidebar-name">
-                        {m.username}
-                        {m.isOwner && <span className="member-owner-badge" title="Owner">👑</span>}
-                      </span>
-                      {stats && (
-                        <span className="member-sidebar-stats muted">
-                          {stats.moviesWatched + stats.tvWatched} watched
-                          {stats.averageRatingGiven !== null && ` · ★ ${stats.averageRatingGiven.toFixed(1)} avg`}
-                        </span>
-                      )}
-                    </div>
-                    {isGroupOwner && !m.isOwner && (
-                      <button
-                        className="member-remove"
-                        title="Remove member"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPendingRemove({ kind: "member", userId: m.userId, label: m.username });
-                        }}
-                      >
-                        ×
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            {hasMoreMembers && <InfiniteScrollLoader sentinelRef={membersSentinelRef} />}
+                })}
+              </ul>
+              {hasMoreMembers && <InfiniteScrollLoader sentinelRef={membersSentinelRef} />}
+            </div>
           </aside>
         </div>
       </main>

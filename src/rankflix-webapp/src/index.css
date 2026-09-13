@@ -2625,6 +2625,23 @@ button.secondary:hover {
   gap: 8px;
 }
 
+.member-sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-sidebar-mobile-toggle {
+  display: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
 .member-sidebar-header h2 {
   margin: 0;
 }
@@ -3075,6 +3092,20 @@ button.secondary:hover {
 
   .member-sidebar {
     position: static;
+    order: -1;
+  }
+
+  .member-sidebar-mobile-toggle {
+    display: inline-block;
+  }
+
+  .member-sidebar-body {
+    display: none;
+  }
+
+  .member-sidebar-body.expanded {
+    display: block;
+    margin-top: 12px;
   }
 }
 
@@ -3203,6 +3234,19 @@ button.secondary:hover {
   .group-header-poster {
     width: 56px;
     height: 56px;
+  }
+
+  .group-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+  }
+
+  .group-card-name {
+    font-size: 12px;
+  }
+
+  .group-card-info .muted {
+    font-size: 11px;
   }
 
   .profile-card {
