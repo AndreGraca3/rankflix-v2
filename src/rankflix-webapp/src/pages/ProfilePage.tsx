@@ -198,6 +198,8 @@ export function ProfilePage() {
               Current password
               <input
                 type="password"
+                name="current-password"
+                autoComplete="current-password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 required
@@ -207,6 +209,8 @@ export function ProfilePage() {
               New password
               <input
                 type="password"
+                name="new-password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 minLength={8}
@@ -217,6 +221,8 @@ export function ProfilePage() {
               Confirm new password
               <input
                 type="password"
+                name="confirm-new-password"
+                autoComplete="new-password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
                 minLength={8}

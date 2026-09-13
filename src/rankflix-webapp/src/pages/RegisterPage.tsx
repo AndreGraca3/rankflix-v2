@@ -36,6 +36,8 @@ export function RegisterPage() {
             Username
             <input
               type="text"
+              name="username"
+              autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -47,6 +49,8 @@ export function RegisterPage() {
             Password
             <input
               type="password"
+              name="new-password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               minLength={8}

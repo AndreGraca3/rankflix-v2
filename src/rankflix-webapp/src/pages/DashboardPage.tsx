@@ -105,23 +105,12 @@ export function DashboardPage() {
           )}
         </div>
         {showCreateForm && (
-          <form className="card new-group-card" onSubmit={createGroup}>
-            <div className="group-edit-poster-row">
-              <GroupPosterEditor imageUrl={newGroupImageUrl} name={newGroupName || "New group"} onChange={setNewGroupImageUrl} />
-            </div>
-            <div className="row">
-              <input
-                placeholder="New group name"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                autoFocus
-              />
-              <button type="submit" disabled={creating}>
-                {creating ? "Creating..." : "Create group"}
-              </button>
+          <div className="media-modal-overlay" onClick={() => setShowCreateForm(false)}>
+            <div className="media-modal group-edit-modal" onClick={(e) => e.stopPropagation()}>
               <button
+                className="media-modal-close"
+                title="Close"
                 type="button"
-                className="btn-secondary"
                 onClick={() => {
                   setShowCreateForm(false);
                   setNewGroupName("");
@@ -129,18 +118,35 @@ export function DashboardPage() {
                   setNewGroupImportFile(null);
                 }}
               >
-                Cancel
+                ×
               </button>
+              <form className="new-group-card" onSubmit={createGroup}>
+                <h2>New group</h2>
+                <div className="group-edit-poster-row">
+                  <GroupPosterEditor imageUrl={newGroupImageUrl} name={newGroupName || "New group"} onChange={setNewGroupImageUrl} />
+                </div>
+                <div className="row">
+                  <input
+                    placeholder="New group name"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    autoFocus
+                  />
+                  <button type="submit" disabled={creating}>
+                    {creating ? "Creating..." : "Create group"}
+                  </button>
+                </div>
+                <label className="file-input-label excel-btn new-group-import-label">
+                  {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
+                  <input
+                    type="file"
+                    accept=".xlsx"
+                    onChange={(e) => setNewGroupImportFile(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </form>
             </div>
-            <label className="file-input-label excel-btn new-group-import-label">
-              {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
-              <input
-                type="file"
-                accept=".xlsx"
-                onChange={(e) => setNewGroupImportFile(e.target.files?.[0] ?? null)}
-              />
-            </label>
-          </form>
+          </div>
         )}
         {loading && <Spinner />}
         {!loading && displayedGroups.length === 0 && (
