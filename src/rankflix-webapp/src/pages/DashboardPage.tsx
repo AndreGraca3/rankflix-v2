@@ -187,18 +187,32 @@ export function DashboardPage() {
                 <div className="group-poster-wrap">
                   <GroupPoster imageUrl={g.imageUrl} name={g.name} />
                   {isGroupOwner(g) && (
-                    <button
-                      type="button"
-                      className="group-edit-btn"
-                      title="Edit group"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setEditingId(g.id);
-                      }}
-                    >
-                      ✎
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="group-edit-btn"
+                        title="Edit group"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setEditingId(g.id);
+                        }}
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        className="group-delete-overlay-btn"
+                        title="Delete group"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeletingId(g.id);
+                        }}
+                      >
+                        🗑
+                      </button>
+                    </>
                   )}
                 </div>
                 <div className="group-card-info">

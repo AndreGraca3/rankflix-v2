@@ -673,6 +673,34 @@ button.link:hover {
   color: var(--accent-text);
 }
 
+.group-delete-overlay-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(11, 11, 13, 0.7);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.group-poster-wrap:hover .group-delete-overlay-btn {
+  opacity: 1;
+}
+
+.group-delete-overlay-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
 .group-card-info {
   display: flex;
   flex-direction: column;
