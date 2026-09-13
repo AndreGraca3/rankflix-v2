@@ -701,6 +701,20 @@ button.link:hover {
   color: #fff;
 }
 
+/* Touch devices have no real hover state, so opacity:0-until-hover would leave these
+   overlay/reveal-on-hover controls permanently invisible/untappable across the app.
+   Always show them (slightly dimmed) on coarse-pointer/no-hover devices instead. */
+@media (hover: none), (pointer: coarse) {
+  .group-edit-btn,
+  .group-delete-overlay-btn,
+  .group-poster-edit-overlay,
+  .group-poster-remove-overlay,
+  .avatar-edit-overlay,
+  .member-sidebar-row .member-remove {
+    opacity: 0.85;
+  }
+}
+
 .group-card-info {
   display: flex;
   flex-direction: column;
