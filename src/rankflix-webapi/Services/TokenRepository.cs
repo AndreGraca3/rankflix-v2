@@ -10,7 +10,6 @@ public interface ITokenRepository
 {
     Task<RefreshTokenEntity?> GetByValueAsync(Guid value);
     Task<RefreshTokenEntity> AddAsync(int userId);
-    Task MarkUsedAsync(RefreshTokenEntity token, Guid replacedByValue);
     Task RemoveByUserIdAsync(int userId);
     Task RemoveByValueAsync(Guid value);
     bool IsExpired(RefreshTokenEntity token);
@@ -36,13 +35,6 @@ public class TokenRepository(RankflixDbContext db, IOptions<RefreshTokenOptions>
         db.RefreshTokens.Add(token);
         await db.SaveChangesAsync();
         return token;
-    }
-
-    public async Task MarkUsedAsync(RefreshTokenEntity token, Guid replacedByValue)
-    {
-        token.UsedAt = DateTime.UtcNow;
-        token.ReplacedByValue = replacedByValue;
-        await db.SaveChangesAsync();
     }
 
     public async Task RemoveByUserIdAsync(int userId)

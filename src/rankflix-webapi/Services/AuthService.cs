@@ -58,41 +58,17 @@ public class AuthService(
 
     public async Task<LoginResult> RefreshTokensAsync(Guid refreshToken)
     {
-        var token = await ResolveActiveTokenAsync(refreshToken, depth: 0);
+        var token = await tokenRepository.GetByValueAsync(refreshToken);
+        if (token is null || tokenRepository.IsExpired(token))
+            throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
 
         var user = await userRepository.GetByIdAsync(token.UserId)
                    ?? throw new AppException("User not found", StatusCodes.Status401Unauthorized);
 
-        // Create the replacement first so the token being consumed can point at it - other
-        // devices/tabs are unaffected, they keep their own separate refresh tokens.
-        var result = await GenerateLoginResultAsync(user);
-        await tokenRepository.MarkUsedAsync(token, result.RefreshToken);
-        return result;
-    }
-
-    // Resolves a presented refresh token to the still-active token in its rotation chain.
-    // Refresh tokens are single-use, but a short grace window lets a near-simultaneous
-    // duplicate call (e.g. two browser tabs both refreshing right as the access token
-    // expires) follow the chain to its replacement instead of being wrongly logged out.
-    // Reuse of a token outside that window is treated as suspicious and revokes every
-    // refresh token for the user.
-    private async Task<RefreshTokenEntity> ResolveActiveTokenAsync(Guid value, int depth)
-    {
-        if (depth > 5) throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
-
-        var token = await tokenRepository.GetByValueAsync(value);
-        if (token is null || tokenRepository.IsExpired(token))
-            throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
-
-        if (token.UsedAt is null) return token;
-
-        const int gracePeriodSeconds = 15;
-        var withinGracePeriod = token.UsedAt.Value.AddSeconds(gracePeriodSeconds) >= DateTime.UtcNow;
-        if (withinGracePeriod && token.ReplacedByValue is not null)
-            return await ResolveActiveTokenAsync(token.ReplacedByValue.Value, depth + 1);
-
-        await tokenRepository.RemoveByUserIdAsync(token.UserId);
-        throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
+        // Rotate only the token being used (single-use, replay-proof) - other devices/tabs keep
+        // their own refresh tokens and stay logged in.
+        await tokenRepository.RemoveByValueAsync(refreshToken);
+        return await GenerateLoginResultAsync(user);
     }
 
     public async Task RevokeRefreshTokenAsync(int userId)
