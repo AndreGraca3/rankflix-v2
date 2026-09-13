@@ -143,7 +143,6 @@ export function MediaDetailModal({
               <div className="media-modal-avg-rating">
                 <StarRating value={media.averageRating} readOnly size={24} />
                 <span className="media-modal-avg-rating-value">{media.averageRating.toFixed(1)}/10</span>
-                <span className="muted">average rating</span>
               </div>
             )}
 
