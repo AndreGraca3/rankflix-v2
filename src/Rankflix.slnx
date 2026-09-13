@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/rankflix-webapi/">
+    <Project Path="rankflix-webapi/Rankflix.csproj" />
+  </Folder>
+</Solution>

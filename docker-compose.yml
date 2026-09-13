@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rankflix
+      POSTGRES_USER: rankflix
+      POSTGRES_PASSWORD: rankflix_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - rankflix_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  rankflix_postgres_data:
