@@ -89,6 +89,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Apply any pending EF Core migrations on startup so the schema is always up to date -
+// this lets a brand-new (e.g. Supabase) database provision itself on first deploy.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<RankflixDbContext>();
+    dbContext.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
