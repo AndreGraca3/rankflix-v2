@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Avatar } from "./Avatar";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface MemberModalStats {
   moviesWatched: number;
@@ -40,14 +41,7 @@ export function MemberDetailModal({
   const [closing, setClosing] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Lock background scroll while open - see Modal.tsx for why this matters on mobile.
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
+  useScrollLock();
 
   const requestClose = () => {
     if (closing) return;

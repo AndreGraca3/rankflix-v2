@@ -6,6 +6,7 @@ import { RatingModal } from "./RatingModal";
 import { StarRating } from "./StarRating";
 import { Avatar } from "./Avatar";
 import { Modal } from "./Modal";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface MediaDetailModalProps {
   media: GroupMedia;
@@ -52,15 +53,13 @@ export function MediaDetailModal({
   const addWatcherTriggerRef = useRef<HTMLButtonElement>(null);
   const [addWatcherPos, setAddWatcherPos] = useState({ top: 0, left: 0 });
   const notWatchedMembers = media.watchers.filter((w) => !w.hasWatched && (w.userId !== null || w.discordId));
+  const [votingHoursDraft, setVotingHoursDraft] = useState(media.votingDurationHours);
 
-  // Lock background scroll while open - see Modal.tsx for why this matters on mobile.
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
+    setVotingHoursDraft(media.votingDurationHours);
+  }, [media.votingDurationHours]);
+
+  useScrollLock();
 
   useEffect(() => {
     if (!addWatcherOpen) return;
@@ -261,17 +260,35 @@ export function MediaDetailModal({
             {canManage && (
               <div className="media-modal-admin-row">
                 {media.votingOpen && (
-                  <label className="muted media-modal-voting-hours">
-                    Voting hours{" "}
-                    <input
-                      type="number"
-                      defaultValue={media.votingDurationHours}
-                      onBlur={(e) => {
-                        const v = Number(e.target.value);
-                        if (v !== media.votingDurationHours) onUpdateVotingDuration(v);
-                      }}
-                    />
-                  </label>
+                  <div className="muted media-modal-voting-hours">
+                    <span>Voting hours</span>
+                    <div className="voting-hours-stepper">
+                      <button
+                        type="button"
+                        aria-label="Decrease voting hours"
+                        onClick={() => setVotingHoursDraft((h) => Math.max(1, h - 1))}
+                      >
+                        −
+                      </button>
+                      <span className="voting-hours-value">{votingHoursDraft}</span>
+                      <button
+                        type="button"
+                        aria-label="Increase voting hours"
+                        onClick={() => setVotingHoursDraft((h) => h + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {votingHoursDraft !== media.votingDurationHours && (
+                      <button
+                        type="button"
+                        className="voting-hours-save"
+                        onClick={() => onUpdateVotingDuration(votingHoursDraft)}
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
                 )}
                 {!confirmingDelete ? (
                   <button className="danger" onClick={() => setConfirmingDelete(true)}>
