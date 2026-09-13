@@ -62,8 +62,15 @@ public class AuthController(IAuthService authService, IWebHostEnvironment env) :
     }
 
     [HttpPost("sign-out")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        // Revoke only this device's refresh token - other devices/tabs stay signed in.
+        var refreshTokenCookie = Request.Cookies[RefreshTokenCookieName];
+        if (refreshTokenCookie is not null && Guid.TryParse(refreshTokenCookie, out var refreshTokenValue))
+        {
+            await authService.RevokeRefreshTokenByValueAsync(refreshTokenValue);
+        }
+
         Response.Cookies.Delete(RefreshTokenCookieName);
         return NoContent();
     }
