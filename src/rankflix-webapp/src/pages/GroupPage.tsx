@@ -20,6 +20,7 @@ import { useAuth } from "../auth/AuthContext";
 import { usePresence } from "../presence/PresenceContext";
 import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
+import { formatWatchTime } from "../utils/time";
 
 export function GroupPage() {
   const { groupId } = useParams();
@@ -582,6 +583,12 @@ export function GroupPage() {
             )}
           </div>
         </div>
+
+        {groupStats && groupStats.totalWatchTimeMinutes > 0 && (
+          <p className="group-watch-time-summary muted">
+            ⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)} watched together so far
+          </p>
+        )}
 
         {isGroupOwner && showEditGroup && (
           <Modal modalClassName="media-modal group-edit-modal" onClose={() => setShowEditGroup(false)}>

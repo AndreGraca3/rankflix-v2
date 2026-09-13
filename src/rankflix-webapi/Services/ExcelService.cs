@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Rankflix.Data;
 using Rankflix.Data.Entities;
-using TMDbLib.Client;
 
 namespace Rankflix.Services;
 
@@ -22,9 +21,8 @@ public interface IExcelService
 /// (col C = tmdb id, col D = title); one rating column per user ("rating - comment", or blank);
 /// red background = not watched, yellow background = watched but not yet rated; last column = average.
 /// </summary>
-public class ExcelService(RankflixDbContext db, TMDbClient tmdbClient) : IExcelService
+public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetadataService) : IExcelService
 {
-    private const string TmdbPosterBaseUrl = "https://image.tmdb.org/t/p/w185";
     private const int UserRowIdx = 3; // row 3 (1-based) = discord ids
     private const int UsernameRowIdx = 4; // row 4 = usernames
     private const int FirstMediaRowIdx = 5;
@@ -235,13 +233,14 @@ public class ExcelService(RankflixDbContext db, TMDbClient tmdbClient) : IExcelS
             .Where(m => mediaRows.Select(r => r.TmdbId).Contains(m.TmdbId))
             .ToDictionaryAsync(m => m.TmdbId);
 
-        var tmdbIdsNeedingPoster = mediaRows
+        var tmdbIdsNeedingMetadata = mediaRows
             .Select(r => (r.TmdbId, r.MediaType))
-            .Where(r => !existingMedia.TryGetValue(r.TmdbId, out var m) || string.IsNullOrWhiteSpace(m.PosterUrl))
+            .Where(r => !existingMedia.TryGetValue(r.TmdbId, out var m) ||
+                        string.IsNullOrWhiteSpace(m.PosterUrl) || m.RuntimeMinutes is null)
             .DistinctBy(r => r.TmdbId)
             .ToList();
 
-        var posterByTmdbId = await FetchPostersAsync(tmdbIdsNeedingPoster);
+        var metadataByTmdbId = await mediaMetadataService.FetchManyAsync(tmdbIdsNeedingMetadata);
 
         var mediaImported = 0;
         var reviewsImported = 0;
@@ -277,9 +276,16 @@ public class ExcelService(RankflixDbContext db, TMDbClient tmdbClient) : IExcelS
                 existingMedia[tmdbId] = media;
             }
 
-            if (string.IsNullOrWhiteSpace(media.PosterUrl) && posterByTmdbId.TryGetValue(tmdbId, out var posterUrl))
+            if (string.IsNullOrWhiteSpace(media.PosterUrl) &&
+                metadataByTmdbId.TryGetValue(tmdbId, out var metadata) && metadata?.PosterUrl is not null)
             {
-                media.PosterUrl = posterUrl;
+                media.PosterUrl = metadata.PosterUrl;
+            }
+
+            if (media.RuntimeMinutes is null &&
+                metadataByTmdbId.TryGetValue(tmdbId, out var runtimeMetadata) && runtimeMetadata?.RuntimeMinutes is not null)
+            {
+                media.RuntimeMinutes = runtimeMetadata.RuntimeMinutes;
             }
 
             var groupMedia = existingGroupMediaByTmdbId.GetValueOrDefault(tmdbId);
@@ -434,54 +440,4 @@ public class ExcelService(RankflixDbContext db, TMDbClient tmdbClient) : IExcelS
             ? backgroundColor.Indexed == 13
             : backgroundColor.Color == XLColor.Yellow.Color;
 
-    private async Task<string?> TryFetchPosterUrlAsync(int tmdbId, string mediaType)
-    {
-        try
-        {
-            if (mediaType == "tv")
-            {
-                var tv = await tmdbClient.GetTvShowAsync(tmdbId);
-                return tv?.PosterPath is not null ? $"{TmdbPosterBaseUrl}{tv.PosterPath}" : null;
-            }
-
-            var movie = await tmdbClient.GetMovieAsync(tmdbId);
-            return movie?.PosterPath is not null ? $"{TmdbPosterBaseUrl}{movie.PosterPath}" : null;
-        }
-        catch
-        {
-            // TMDb lookup is best-effort during import (rate limits, unknown/removed ids, etc.) -
-            // missing a poster shouldn't fail the whole import.
-            return null;
-        }
-    }
-
-    // TMDb's public API rate limit is generous (~50 req/s) but not unlimited, so instead of firing
-    // hundreds of requests at once (which would trip 429s) or doing them one-by-one (which is what
-    // made large imports slow), we fan out with a small bounded concurrency and let TMDbLib retry
-    // 429s internally. 8 concurrent requests is comfortably under the limit while still cutting
-    // import time roughly 8x for spreadsheets with many distinct titles.
-    private const int MaxConcurrentTmdbRequests = 8;
-
-    private async Task<Dictionary<int, string?>> FetchPostersAsync(List<(int TmdbId, string MediaType)> items)
-    {
-        var result = new System.Collections.Concurrent.ConcurrentDictionary<int, string?>();
-        if (items.Count == 0) return new Dictionary<int, string?>();
-
-        using var throttle = new SemaphoreSlim(MaxConcurrentTmdbRequests);
-        var tasks = items.Select(async item =>
-        {
-            await throttle.WaitAsync();
-            try
-            {
-                result[item.TmdbId] = await TryFetchPosterUrlAsync(item.TmdbId, item.MediaType);
-            }
-            finally
-            {
-                throttle.Release();
-            }
-        });
-
-        await Task.WhenAll(tasks);
-        return new Dictionary<int, string?>(result);
-    }
 }

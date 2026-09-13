@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Avatar } from "./Avatar";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { formatWatchTime } from "../utils/time";
 
 interface MemberModalStats {
   moviesWatched: number;
   tvWatched: number;
   totalRatingsGiven: number;
   averageRatingGiven: number | null;
+  watchTimeMinutes: number;
 }
 
 interface MemberDetailModalProps {
@@ -148,6 +150,12 @@ export function MemberDetailModal({
               {stats?.averageRatingGiven != null ? `★ ${stats.averageRatingGiven.toFixed(1)}` : "—"}
             </span>
             <span className="member-modal-stat-label">Avg rating</span>
+          </div>
+          <div className="member-modal-stat">
+            <span className="member-modal-stat-value">
+              {stats && stats.watchTimeMinutes > 0 ? formatWatchTime(stats.watchTimeMinutes) : "—"}
+            </span>
+            <span className="member-modal-stat-label">Watch time</span>
           </div>
         </div>
       </div>

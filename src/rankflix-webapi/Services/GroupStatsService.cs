@@ -9,7 +9,7 @@ public interface IGroupStatsService
     Task<GroupStatsResponse> GetGroupStatsAsync(int groupId);
 }
 
-public class GroupStatsService(RankflixDbContext db) : IGroupStatsService
+public class GroupStatsService(RankflixDbContext db, IMediaMetadataService mediaMetadataService) : IGroupStatsService
 {
     public async Task<GroupStatsResponse> GetGroupStatsAsync(int groupId)
     {
@@ -28,6 +28,23 @@ public class GroupStatsService(RankflixDbContext db) : IGroupStatsService
         var mediaById = await db.Media
             .Where(m => mediaIds.Contains(m.TmdbId))
             .ToDictionaryAsync(m => m.TmdbId);
+
+        // Older media rows (added before we started tracking runtime) won't have it yet - fetch
+        // it from TMDB on demand and persist it so this only happens once per title.
+        var mediaMissingRuntime = mediaById.Values.Where(m => m.RuntimeMinutes is null).ToList();
+        if (mediaMissingRuntime.Count > 0)
+        {
+            var metadataByTmdbId = await mediaMetadataService.FetchManyAsync(
+                mediaMissingRuntime.Select(m => (m.TmdbId, m.Type)).ToList());
+
+            foreach (var media in mediaMissingRuntime)
+            {
+                if (metadataByTmdbId.TryGetValue(media.TmdbId, out var metadata) && metadata?.RuntimeMinutes is not null)
+                    media.RuntimeMinutes = metadata.RuntimeMinutes;
+            }
+
+            await db.SaveChangesAsync();
+        }
 
         var watchStatuses = await db.RankGroupWatchStatuses
             .Where(w => w.GroupId == groupId)
@@ -57,7 +74,8 @@ public class GroupStatsService(RankflixDbContext db) : IGroupStatsService
                 MoviesWatched = watchedMedia.Count(m => m.Type == "movie"),
                 TvWatched = watchedMedia.Count(m => m.Type == "tv"),
                 TotalRatingsGiven = userReviews.Count,
-                AverageRatingGiven = userReviews.Count > 0 ? userReviews.Average(r => r.Rating) : null
+                AverageRatingGiven = userReviews.Count > 0 ? userReviews.Average(r => r.Rating) : null,
+                WatchTimeMinutes = watchedMedia.Sum(m => m.RuntimeMinutes ?? 0)
             };
         }).ToList();
 
@@ -90,7 +108,8 @@ public class GroupStatsService(RankflixDbContext db) : IGroupStatsService
                 MoviesWatched = watchedMedia.Count(m => m.Type == "movie"),
                 TvWatched = watchedMedia.Count(m => m.Type == "tv"),
                 TotalRatingsGiven = discordReviews.Count,
-                AverageRatingGiven = discordReviews.Count > 0 ? discordReviews.Average(r => r.Rating) : null
+                AverageRatingGiven = discordReviews.Count > 0 ? discordReviews.Average(r => r.Rating) : null,
+                WatchTimeMinutes = watchedMedia.Sum(m => m.RuntimeMinutes ?? 0)
             };
         }).ToList();
 
@@ -118,6 +137,19 @@ public class GroupStatsService(RankflixDbContext db) : IGroupStatsService
             };
         }
 
-        return new GroupStatsResponse { Members = memberStats, PendingMembers = pendingMemberStats, TopMedia = topMedia };
+        // Group total counts each distinct watched title once (not once per watcher), matching
+        // the "how much have we collectively watched" framing rather than a sum of everyone's time.
+        var watchedTmdbIdsForGroup = watchStatuses.Select(w => w.MediaId).Distinct();
+        var totalWatchTimeMinutes = watchedTmdbIdsForGroup
+            .Where(mediaById.ContainsKey)
+            .Sum(id => mediaById[id].RuntimeMinutes ?? 0);
+
+        return new GroupStatsResponse
+        {
+            Members = memberStats,
+            PendingMembers = pendingMemberStats,
+            TopMedia = topMedia,
+            TotalWatchTimeMinutes = totalWatchTimeMinutes
+        };
     }
 }

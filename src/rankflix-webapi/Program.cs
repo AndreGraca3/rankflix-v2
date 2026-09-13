@@ -36,6 +36,7 @@ builder.Services.AddSingleton<ISseService, SseService>();
 var tmdbApiKey = builder.Configuration["Tmdb:ApiKey"];
 builder.Services.AddSingleton(new TMDbClient(string.IsNullOrWhiteSpace(tmdbApiKey) ? "missing-api-key" : tmdbApiKey));
 builder.Services.AddScoped<IMediaSearchService, MediaSearchService>();
+builder.Services.AddScoped<IMediaMetadataService, MediaMetadataService>();
 
 var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
                   ?? throw new InvalidOperationException("Missing Jwt configuration section");

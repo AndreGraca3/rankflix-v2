@@ -16,7 +16,7 @@ public interface IMediaService
     Task RemoveMediaFromGroupAsync(int groupId, int tmdbId);
 }
 
-public class MediaService(RankflixDbContext db, ISseService sse) : IMediaService
+public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataService mediaMetadataService) : IMediaService
 {
     public async Task<GroupMediaResponse> AddMediaToGroupAsync(int groupId, int addedByUserId, AddMediaRequest request)
     {
@@ -36,6 +36,14 @@ public class MediaService(RankflixDbContext db, ISseService sse) : IMediaService
             media.Title = request.Title;
             media.Type = request.Type;
             if (!string.IsNullOrWhiteSpace(request.PosterUrl)) media.PosterUrl = request.PosterUrl;
+        }
+
+        // Search results don't carry runtime, so fetch it once here for the watch-time stats
+        // (best-effort - a TMDB hiccup shouldn't block adding the media).
+        if (media.RuntimeMinutes is null)
+        {
+            var metadata = await mediaMetadataService.FetchAsync(request.TmdbId, request.Type);
+            if (metadata?.RuntimeMinutes is not null) media.RuntimeMinutes = metadata.RuntimeMinutes;
         }
 
         var alreadyInGroup = await db.RankGroupMedia

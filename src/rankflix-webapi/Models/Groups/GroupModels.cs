@@ -59,6 +59,7 @@ public class MemberStatsResponse
     public required int TvWatched { get; init; }
     public required int TotalRatingsGiven { get; init; }
     public double? AverageRatingGiven { get; init; }
+    public required int WatchTimeMinutes { get; init; }
 }
 
 public class PendingMemberStatsResponse
@@ -69,6 +70,7 @@ public class PendingMemberStatsResponse
     public required int TvWatched { get; init; }
     public required int TotalRatingsGiven { get; init; }
     public double? AverageRatingGiven { get; init; }
+    public required int WatchTimeMinutes { get; init; }
 }
 
 public class GroupStatsResponse
@@ -76,6 +78,9 @@ public class GroupStatsResponse
     public required List<MemberStatsResponse> Members { get; init; }
     public required List<PendingMemberStatsResponse> PendingMembers { get; init; }
     public TopMediaInGroupResponse? TopMedia { get; init; }
+    // Sum of each distinct watched media's runtime counted once, regardless of how many
+    // members watched it - an estimate of the group's total combined watch time.
+    public required int TotalWatchTimeMinutes { get; init; }
 }
 
 public class TopMediaInGroupResponse

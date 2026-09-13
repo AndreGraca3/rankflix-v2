@@ -1993,6 +1993,10 @@ td select {
   font-size: 13px;
 }
 
+.group-watch-time-summary {
+  margin: -8px 0 20px;
+}
+
 section {
   margin-bottom: 32px;
 }

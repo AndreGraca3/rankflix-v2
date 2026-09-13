@@ -108,6 +108,7 @@ export interface MemberStats {
   tvWatched: number;
   totalRatingsGiven: number;
   averageRatingGiven: number | null;
+  watchTimeMinutes: number;
 }
 
 export interface PendingMemberStats {
@@ -117,6 +118,7 @@ export interface PendingMemberStats {
   tvWatched: number;
   totalRatingsGiven: number;
   averageRatingGiven: number | null;
+  watchTimeMinutes: number;
 }
 
 export interface TopMediaInGroup {
@@ -130,4 +132,5 @@ export interface GroupStats {
   members: MemberStats[];
   pendingMembers: PendingMemberStats[];
   topMedia: TopMediaInGroup | null;
+  totalWatchTimeMinutes: number;
 }
