@@ -8,6 +8,7 @@ import { Toast } from "../components/Toast";
 import { GroupPoster, GroupPosterEditor, GroupEditForm } from "../components/GroupEditor";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
 import { EmptyState } from "../components/EmptyState";
+import { Modal } from "../components/Modal";
 import { useAuth } from "../auth/AuthContext";
 import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
@@ -105,48 +106,48 @@ export function DashboardPage() {
           )}
         </div>
         {showCreateForm && (
-          <div className="media-modal-overlay" onClick={() => setShowCreateForm(false)}>
-            <div className="media-modal group-edit-modal" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="media-modal-close"
-                title="Close"
-                type="button"
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setNewGroupName("");
-                  setNewGroupImageUrl("");
-                  setNewGroupImportFile(null);
-                }}
-              >
-                ×
-              </button>
-              <form className="new-group-card" onSubmit={createGroup}>
-                <h2>New group</h2>
-                <div className="group-edit-poster-row">
-                  <GroupPosterEditor imageUrl={newGroupImageUrl} name={newGroupName || "New group"} onChange={setNewGroupImageUrl} />
-                </div>
-                <div className="row">
-                  <input
-                    placeholder="New group name"
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                    autoFocus
-                  />
-                  <button type="submit" disabled={creating}>
-                    {creating ? "Creating..." : "Create group"}
-                  </button>
-                </div>
-                <label className="file-input-label excel-btn new-group-import-label">
-                  {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
-                  <input
-                    type="file"
-                    accept=".xlsx"
-                    onChange={(e) => setNewGroupImportFile(e.target.files?.[0] ?? null)}
-                  />
-                </label>
-              </form>
-            </div>
-          </div>
+          <Modal
+            modalClassName="media-modal group-edit-modal"
+            onClose={() => {
+              setShowCreateForm(false);
+              setNewGroupName("");
+              setNewGroupImageUrl("");
+              setNewGroupImportFile(null);
+            }}
+          >
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                  ×
+                </button>
+                <form className="new-group-card" onSubmit={createGroup}>
+                  <h2>New group</h2>
+                  <div className="group-edit-poster-row">
+                    <GroupPosterEditor imageUrl={newGroupImageUrl} name={newGroupName || "New group"} onChange={setNewGroupImageUrl} />
+                  </div>
+                  <div className="row">
+                    <input
+                      placeholder="New group name"
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      autoFocus
+                    />
+                    <button type="submit" disabled={creating}>
+                      {creating ? "Creating..." : "Create group"}
+                    </button>
+                  </div>
+                  <label className="file-input-label excel-btn new-group-import-label">
+                    {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
+                    <input
+                      type="file"
+                      accept=".xlsx"
+                      onChange={(e) => setNewGroupImportFile(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                </form>
+              </>
+            )}
+          </Modal>
         )}
         {loading && <Spinner />}
         {!loading && displayedGroups.length === 0 && (
@@ -191,18 +192,20 @@ export function DashboardPage() {
         </div>
         {hasMoreGroups && <InfiniteScrollLoader sentinelRef={groupsSentinelRef} />}
         {editingGroup && (
-          <div className="media-modal-overlay" onClick={() => setEditingId(null)}>
-            <div className="media-modal group-edit-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="media-modal-close" title="Close" type="button" onClick={() => setEditingId(null)}>
-                ×
-              </button>
-              <GroupEditForm
-                group={editingGroup}
-                onSaved={() => { setEditingId(null); load(viewFilter); }}
-                onCancel={() => setEditingId(null)}
-              />
-            </div>
-          </div>
+          <Modal modalClassName="media-modal group-edit-modal" onClose={() => setEditingId(null)}>
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                  ×
+                </button>
+                <GroupEditForm
+                  group={editingGroup}
+                  onSaved={() => { setEditingId(null); load(viewFilter); }}
+                  onCancel={requestClose}
+                />
+              </>
+            )}
+          </Modal>
         )}
       </main>
       {error && <Toast variant="error" title={error} duration={7000} onClose={() => setError(null)} />}

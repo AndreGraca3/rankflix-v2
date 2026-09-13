@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { cropToResizedDataUrl } from "../utils/image";
+import { Modal } from "./Modal";
 
 export function ImageCropModal({
   imageSrc,
@@ -37,42 +38,44 @@ export function ImageCropModal({
   };
 
   return (
-    <div className="crop-modal-overlay" onClick={onCancel}>
-      <div className="crop-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>Crop image</h2>
-        <div className={`crop-area${round ? " crop-area-round" : ""}`}>
-          <Cropper
-            image={imageSrc}
-            crop={crop}
-            zoom={zoom}
-            aspect={aspect}
-            cropShape={round ? "round" : "rect"}
-            showGrid={!round}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={onCropComplete}
-          />
-        </div>
-        <label className="crop-zoom-label">
-          Zoom
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.05}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-          />
-        </label>
-        <div className="row">
-          <button type="button" onClick={confirm} disabled={processing}>
-            {processing ? "Saving..." : "Upload"}
-          </button>
-          <button type="button" className="btn-secondary" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+    <Modal overlayClassName="crop-modal-overlay" modalClassName="crop-modal" onClose={onCancel} disableBackdropClose={processing}>
+      {(requestClose) => (
+        <>
+          <h2>Crop image</h2>
+          <div className={`crop-area${round ? " crop-area-round" : ""}`}>
+            <Cropper
+              image={imageSrc}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              cropShape={round ? "round" : "rect"}
+              showGrid={!round}
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+          <label className="crop-zoom-label">
+            Zoom
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.05}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+            />
+          </label>
+          <div className="row">
+            <button type="button" onClick={confirm} disabled={processing}>
+              {processing ? "Saving..." : "Upload"}
+            </button>
+            <button type="button" className="btn-secondary" onClick={requestClose} disabled={processing}>
+              Cancel
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }

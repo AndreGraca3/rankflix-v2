@@ -15,6 +15,7 @@ import { Toast } from "../components/Toast";
 import { GroupEditForm } from "../components/GroupEditor";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
 import { EmptyState } from "../components/EmptyState";
+import { Modal } from "../components/Modal";
 import { useAuth } from "../auth/AuthContext";
 import { usePresence } from "../presence/PresenceContext";
 import { useServerEvent } from "../hooks/useServerEvent";
@@ -569,128 +570,118 @@ export function GroupPage() {
         </div>
 
         {isGroupOwner && showEditGroup && (
-          <div className="media-modal-overlay" onClick={() => setShowEditGroup(false)}>
-            <div className="media-modal group-edit-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="media-modal-close" title="Close" type="button" onClick={() => setShowEditGroup(false)}>
-                ×
-              </button>
-              <GroupEditForm
-                group={group}
-                onSaved={() => { setShowEditGroup(false); load(); }}
-                onCancel={() => setShowEditGroup(false)}
-              />
-            </div>
-          </div>
+          <Modal modalClassName="media-modal group-edit-modal" onClose={() => setShowEditGroup(false)}>
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                  ×
+                </button>
+                <GroupEditForm
+                  group={group}
+                  onSaved={() => { setShowEditGroup(false); load(); }}
+                  onCancel={requestClose}
+                />
+              </>
+            )}
+          </Modal>
         )}
 
         {isGroupOwner && showAddMedia && (
-          <div
-            className="media-modal-overlay"
-            onClick={() => {
+          <Modal
+            modalClassName="media-modal add-media-modal"
+            onClose={() => {
               setNewMedia({ tmdbId: "", title: "", type: "movie", posterUrl: null, votingDurationHours: "", watchedByUserIds: [] });
               setShowAddMedia(false);
             }}
           >
-            <div className="media-modal add-media-modal" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="media-modal-close"
-                title="Close"
-                type="button"
-                onClick={() => {
-                  setNewMedia({ tmdbId: "", title: "", type: "movie", posterUrl: null, votingDurationHours: "", watchedByUserIds: [] });
-                  setShowAddMedia(false);
-                }}
-              >
-                ×
-              </button>
-              <h2>Add media</h2>
-              <div className="add-media-form">
-                <div className="add-media-search-row">
-                  <select value={newMedia.type} onChange={(e) => setNewMedia({ ...newMedia, type: e.target.value })}>
-                    <option value="movie">movie</option>
-                    <option value="tv">tv</option>
-                  </select>
-                  <MediaAutocomplete onSelect={handleMediaSelected} />
-                </div>
-                {(group.members.length > 0 || group.pendingMembers.length > 0) && (
-                  <div className="add-media-watched">
-                    <span className="muted add-media-watched-label">Already watched by:</span>
-                    <div className="add-media-watched-chips">
-                      {group.members.map((m) => {
-                        const checked = newMedia.watchedByUserIds.includes(m.userId);
-                        return (
-                          <button
-                            type="button"
-                            key={m.userId}
-                            className={`add-media-watched-chip${checked ? " active" : ""}`}
-                            onClick={() =>
-                              setNewMedia((prev) => ({
-                                ...prev,
-                                watchedByUserIds: checked
-                                  ? prev.watchedByUserIds.filter((id) => id !== m.userId)
-                                  : [...prev.watchedByUserIds, m.userId],
-                              }))
-                            }
-                          >
-                            {checked && "✓ "}
-                            {m.username}
-                          </button>
-                        );
-                      })}
-                      {group.pendingMembers.map((p) => {
-                        const checked = newMedia.watchedByUserIds.includes(p.discordId);
-                        return (
-                          <button
-                            type="button"
-                            key={p.discordId}
-                            className={`add-media-watched-chip${checked ? " active" : ""}`}
-                            onClick={() =>
-                              setNewMedia((prev) => ({
-                                ...prev,
-                                watchedByUserIds: checked
-                                  ? prev.watchedByUserIds.filter((id) => id !== p.discordId)
-                                  : [...prev.watchedByUserIds, p.discordId],
-                              }))
-                            }
-                          >
-                            {checked && "✓ "}
-                            {p.displayName || p.discordId}
-                          </button>
-                        );
-                      })}
-                    </div>
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                  ×
+                </button>
+                <h2>Add media</h2>
+                <div className="add-media-form">
+                  <div className="add-media-search-row">
+                    <select value={newMedia.type} onChange={(e) => setNewMedia({ ...newMedia, type: e.target.value })}>
+                      <option value="movie">movie</option>
+                      <option value="tv">tv</option>
+                    </select>
+                    <MediaAutocomplete onSelect={handleMediaSelected} />
                   </div>
-                )}
-                <div className="row">
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="Voting hours (default 24)"
-                    value={newMedia.votingDurationHours}
-                    onChange={(e) => setNewMedia({ ...newMedia, votingDurationHours: e.target.value })}
-                  />
-                  <button
-                    onClick={async () => {
-                      await addMedia();
-                      setShowAddMedia(false);
-                    }}
-                    disabled={!newMedia.tmdbId || !newMedia.title}
-                  >
-                    Add media
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() => {
-                      setNewMedia({ tmdbId: "", title: "", type: "movie", posterUrl: null, votingDurationHours: "", watchedByUserIds: [] });
-                      setShowAddMedia(false);
-                    }}
-                  >
-                    Cancel
-                  </button>
+                  {(group.members.length > 0 || group.pendingMembers.length > 0) && (
+                    <div className="add-media-watched">
+                      <span className="muted add-media-watched-label">Already watched by:</span>
+                      <div className="add-media-watched-chips">
+                        {group.members.map((m) => {
+                          const checked = newMedia.watchedByUserIds.includes(m.userId);
+                          return (
+                            <button
+                              type="button"
+                              key={m.userId}
+                              className={`add-media-watched-chip${checked ? " active" : ""}`}
+                              onClick={() =>
+                                setNewMedia((prev) => ({
+                                  ...prev,
+                                  watchedByUserIds: checked
+                                    ? prev.watchedByUserIds.filter((id) => id !== m.userId)
+                                    : [...prev.watchedByUserIds, m.userId],
+                                }))
+                              }
+                            >
+                              {checked && "✓ "}
+                              {m.username}
+                            </button>
+                          );
+                        })}
+                        {group.pendingMembers.map((p) => {
+                          const checked = newMedia.watchedByUserIds.includes(p.discordId);
+                          return (
+                            <button
+                              type="button"
+                              key={p.discordId}
+                              className={`add-media-watched-chip${checked ? " active" : ""}`}
+                              onClick={() =>
+                                setNewMedia((prev) => ({
+                                  ...prev,
+                                  watchedByUserIds: checked
+                                    ? prev.watchedByUserIds.filter((id) => id !== p.discordId)
+                                    : [...prev.watchedByUserIds, p.discordId],
+                                }))
+                              }
+                            >
+                              {checked && "✓ "}
+                              {p.displayName || p.discordId}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <div className="row">
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Voting hours (default 24)"
+                      value={newMedia.votingDurationHours}
+                      onChange={(e) => setNewMedia({ ...newMedia, votingDurationHours: e.target.value })}
+                    />
+                    <button
+                      onClick={async () => {
+                        await addMedia();
+                        requestClose();
+                      }}
+                      disabled={!newMedia.tmdbId || !newMedia.title}
+                    >
+                      Add media
+                    </button>
+                    <button className="secondary" onClick={requestClose}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </>
+            )}
+          </Modal>
         )}
 
         <div className="group-layout">
@@ -950,31 +941,37 @@ export function GroupPage() {
       )}
 
       {pendingRemove && (
-        <div className="comment-modal-overlay" onClick={() => setPendingRemove(null)}>
-          <div className="comment-modal confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="media-modal-close" onClick={() => setPendingRemove(null)} title="Close" type="button">
-              ×
-            </button>
-            <p>
-              Remove <strong>{pendingRemove.label}</strong> from this group?
-            </p>
-            <div className="media-modal-confirm-delete confirm-modal-actions">
-              <button
-                className="danger"
-                onClick={() => {
-                  if (pendingRemove.kind === "member") removeMember(pendingRemove.userId);
-                  else removePendingMember(pendingRemove.discordId);
-                  setPendingRemove(null);
-                }}
-              >
-                Yes, remove
+        <Modal
+          overlayClassName="comment-modal-overlay"
+          modalClassName="comment-modal confirm-modal"
+          onClose={() => setPendingRemove(null)}
+        >
+          {(requestClose) => (
+            <>
+              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+                ×
               </button>
-              <button className="secondary" onClick={() => setPendingRemove(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+              <p>
+                Remove <strong>{pendingRemove.label}</strong> from this group?
+              </p>
+              <div className="media-modal-confirm-delete confirm-modal-actions">
+                <button
+                  className="danger"
+                  onClick={() => {
+                    if (pendingRemove.kind === "member") removeMember(pendingRemove.userId);
+                    else removePendingMember(pendingRemove.discordId);
+                    requestClose();
+                  }}
+                >
+                  Yes, remove
+                </button>
+                <button className="secondary" onClick={requestClose}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
       )}
 
       {showScrollTop && (
@@ -988,24 +985,26 @@ export function GroupPage() {
       )}
 
       {pendingImportFile && (
-        <div className="media-modal-overlay" onClick={importing ? undefined : cancelImport}>
-          <div className="media-modal confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Import "{pendingImportFile.name}"?</h2>
-            <p className="muted">
-              This replaces this group's media list with the spreadsheet's: media, reviews, and watch statuses not
-              found in the file will be removed, and everything in the file will be imported/updated. This can't be
-              undone. Continue?
-            </p>
-            <div className="row confirm-modal-actions">
-              <button onClick={confirmImport} disabled={importing}>
-                {importing ? "Importing…" : "Yes, import & overwrite"}
-              </button>
-              <button className="secondary" onClick={cancelImport} disabled={importing}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <Modal modalClassName="media-modal confirm-modal" onClose={cancelImport} disableBackdropClose={importing}>
+          {(requestClose) => (
+            <>
+              <h2>Import "{pendingImportFile.name}"?</h2>
+              <p className="muted">
+                This replaces this group's media list with the spreadsheet's: media, reviews, and watch statuses not
+                found in the file will be removed, and everything in the file will be imported/updated. This can't be
+                undone. Continue?
+              </p>
+              <div className="row confirm-modal-actions">
+                <button onClick={confirmImport} disabled={importing}>
+                  {importing ? "Importing…" : "Yes, import & overwrite"}
+                </button>
+                <button className="secondary" onClick={requestClose} disabled={importing}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
       )}
       {importToast && (
         <Toast

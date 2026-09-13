@@ -5,6 +5,7 @@ import { VotingProgress } from "./VotingProgress";
 import { RatingModal } from "./RatingModal";
 import { StarRating } from "./StarRating";
 import { Avatar } from "./Avatar";
+import { Modal } from "./Modal";
 
 interface MediaDetailModalProps {
   media: GroupMedia;
@@ -299,168 +300,154 @@ export function MediaDetailModal({
       )}
 
       {watcherModalFor && (
-        <div
-          className="comment-modal-overlay"
-          onClick={(e) => {
-            e.stopPropagation();
-            setWatcherModalKey(null);
-          }}
-        >
-          <div className="comment-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="media-modal-close" onClick={() => setWatcherModalKey(null)} title="Close" type="button">
-              ×
-            </button>
-            <p className="comment-modal-author">
-              <Avatar username={watcherModalFor.username} avatarUrl={watcherModalFor.avatarUrl} size={28} />
-              {watcherModalFor.username}
-              {watcherModalFor.isPending && <span className="member-pending-badge">Pending</span>}
-            </p>
+        <Modal overlayClassName="comment-modal-overlay" modalClassName="comment-modal" onClose={() => setWatcherModalKey(null)}>
+          {(requestClose) => (
+            <>
+              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+                ×
+              </button>
+              <p className="comment-modal-author">
+                <Avatar username={watcherModalFor.username} avatarUrl={watcherModalFor.avatarUrl} size={28} />
+                {watcherModalFor.username}
+                {watcherModalFor.isPending && <span className="member-pending-badge">Pending</span>}
+              </p>
 
-            {watcherModalFor.hasWatched ? (
-              watcherModalFor.rating !== null ? (
-                <p className="comment-modal-rating-row">
-                  <StarRating value={watcherModalFor.rating} readOnly size={20} />
-                  <span className="comment-modal-rating">{watcherModalFor.rating}/10</span>
-                  {canManage && watcherModalFor.userId !== null && (media.votingOpen || isSiteAdmin) && (
-                    <button
-                      className="media-modal-remove-review"
-                      title="Remove this rating"
-                      onClick={() => {
-                        setPendingRemoveReview({ userId: watcherModalFor.userId!, username: watcherModalFor.username });
-                        setWatcherModalKey(null);
-                      }}
-                    >
-                      ×
-                    </button>
-                  )}
-                </p>
+              {watcherModalFor.hasWatched ? (
+                watcherModalFor.rating !== null ? (
+                  <p className="comment-modal-rating-row">
+                    <StarRating value={watcherModalFor.rating} readOnly size={20} />
+                    <span className="comment-modal-rating">{watcherModalFor.rating}/10</span>
+                    {canManage && watcherModalFor.userId !== null && (media.votingOpen || isSiteAdmin) && (
+                      <button
+                        className="media-modal-remove-review"
+                        title="Remove this rating"
+                        onClick={() => {
+                          setPendingRemoveReview({ userId: watcherModalFor.userId!, username: watcherModalFor.username });
+                          setWatcherModalKey(null);
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </p>
+                ) : (
+                  <p className="comment-modal-rating-row">
+                    <StarRating value={0} readOnly size={20} />
+                    <span className="muted">Not rated yet</span>
+                  </p>
+                )
               ) : (
                 <p className="comment-modal-rating-row">
                   <StarRating value={0} readOnly size={20} />
-                  <span className="muted">Not rated yet</span>
+                  <span className="muted">Hasn't watched yet</span>
                 </p>
-              )
-            ) : (
-              <p className="comment-modal-rating-row">
-                <StarRating value={0} readOnly size={20} />
-                <span className="muted">Hasn't watched yet</span>
-              </p>
-            )}
+              )}
 
-            {watcherModalFor.rating !== null && watcherModalFor.ratedAt && (
-              <p className="comment-modal-rated-at muted">
-                Voted {new Date(watcherModalFor.ratedAt).toLocaleString()}
-              </p>
-            )}
+              {watcherModalFor.rating !== null && watcherModalFor.ratedAt && (
+                <p className="comment-modal-rated-at muted">
+                  Voted {new Date(watcherModalFor.ratedAt).toLocaleString()}
+                </p>
+              )}
 
-            {watcherModalFor.comment && <p className="comment-modal-text">{watcherModalFor.comment}</p>}
+              {watcherModalFor.comment && <p className="comment-modal-text">{watcherModalFor.comment}</p>}
 
-            {canManage &&
-              (watcherModalFor.userId !== null || watcherModalFor.discordId) &&
-              (media.votingOpen || (isSiteAdmin && watcherModalFor.hasWatched)) && (
-              <button
-                type="button"
-                className={`media-modal-watcher-action${watcherModalFor.hasWatched ? " remove" : " add"}`}
-                onClick={() => {
-                  if (watcherModalFor.hasWatched) {
-                    setPendingRemoveWatcher({
-                      userId: watcherModalFor.userId,
-                      discordId: watcherModalFor.discordId ?? null,
-                      username: watcherModalFor.username,
-                    });
+              {canManage &&
+                (watcherModalFor.userId !== null || watcherModalFor.discordId) &&
+                (media.votingOpen || (isSiteAdmin && watcherModalFor.hasWatched)) && (
+                <button
+                  type="button"
+                  className={`media-modal-watcher-action${watcherModalFor.hasWatched ? " remove" : " add"}`}
+                  onClick={() => {
+                    if (watcherModalFor.hasWatched) {
+                      setPendingRemoveWatcher({
+                        userId: watcherModalFor.userId,
+                        discordId: watcherModalFor.discordId ?? null,
+                        username: watcherModalFor.username,
+                      });
+                      setWatcherModalKey(null);
+                      return;
+                    }
+                    if (watcherModalFor.userId !== null) onSetWatched(watcherModalFor.userId, true);
+                    else if (watcherModalFor.discordId) onSetWatchedPending(watcherModalFor.discordId, true);
                     setWatcherModalKey(null);
-                    return;
-                  }
-                  if (watcherModalFor.userId !== null) onSetWatched(watcherModalFor.userId, true);
-                  else if (watcherModalFor.discordId) onSetWatchedPending(watcherModalFor.discordId, true);
-                  setWatcherModalKey(null);
-                }}
-              >
-                {watcherModalFor.hasWatched ? "Remove watcher" : "+ Add watcher"}
-              </button>
-            )}
-          </div>
-        </div>
+                  }}
+                >
+                  {watcherModalFor.hasWatched ? "Remove watcher" : "+ Add watcher"}
+                </button>
+              )}
+            </>
+          )}
+        </Modal>
       )}
 
       {pendingRemoveWatcher && (
-        <div
-          className="comment-modal-overlay"
-          onClick={(e) => {
-            e.stopPropagation();
-            setPendingRemoveWatcher(null);
-          }}
+        <Modal
+          overlayClassName="comment-modal-overlay"
+          modalClassName="comment-modal confirm-modal"
+          onClose={() => setPendingRemoveWatcher(null)}
         >
-          <div className="comment-modal confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="media-modal-close"
-              onClick={() => setPendingRemoveWatcher(null)}
-              title="Close"
-              type="button"
-            >
-              ×
-            </button>
-            <p>
-              Remove <strong>{pendingRemoveWatcher.username}</strong> as a watcher?
-              {pendingRemoveWatcher.userId !== null || pendingRemoveWatcher.discordId ? (
-                <span className="muted"> Their rating and comment for this title will also be deleted.</span>
-              ) : null}
-            </p>
-            <div className="media-modal-confirm-delete confirm-modal-actions">
-              <button
-                className="danger"
-                onClick={() => {
-                  if (pendingRemoveWatcher.userId !== null) onSetWatched(pendingRemoveWatcher.userId, false);
-                  else if (pendingRemoveWatcher.discordId) onSetWatchedPending(pendingRemoveWatcher.discordId, false);
-                  setPendingRemoveWatcher(null);
-                }}
-              >
-                Yes, remove
+          {(requestClose) => (
+            <>
+              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+                ×
               </button>
-              <button className="secondary" onClick={() => setPendingRemoveWatcher(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+              <p>
+                Remove <strong>{pendingRemoveWatcher.username}</strong> as a watcher?
+                {pendingRemoveWatcher.userId !== null || pendingRemoveWatcher.discordId ? (
+                  <span className="muted"> Their rating and comment for this title will also be deleted.</span>
+                ) : null}
+              </p>
+              <div className="media-modal-confirm-delete confirm-modal-actions">
+                <button
+                  className="danger"
+                  onClick={() => {
+                    if (pendingRemoveWatcher.userId !== null) onSetWatched(pendingRemoveWatcher.userId, false);
+                    else if (pendingRemoveWatcher.discordId) onSetWatchedPending(pendingRemoveWatcher.discordId, false);
+                    requestClose();
+                  }}
+                >
+                  Yes, remove
+                </button>
+                <button className="secondary" onClick={requestClose}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
       )}
 
       {pendingRemoveReview && (
-        <div
-          className="comment-modal-overlay"
-          onClick={(e) => {
-            e.stopPropagation();
-            setPendingRemoveReview(null);
-          }}
+        <Modal
+          overlayClassName="comment-modal-overlay"
+          modalClassName="comment-modal confirm-modal"
+          onClose={() => setPendingRemoveReview(null)}
         >
-          <div className="comment-modal confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="media-modal-close"
-              onClick={() => setPendingRemoveReview(null)}
-              title="Close"
-              type="button"
-            >
-              ×
-            </button>
-            <p>
-              Remove <strong>{pendingRemoveReview.username}</strong>&apos;s rating for this title?
-            </p>
-            <div className="media-modal-confirm-delete confirm-modal-actions">
-              <button
-                className="danger"
-                onClick={() => {
-                  onRemoveReview(pendingRemoveReview.userId);
-                  setPendingRemoveReview(null);
-                }}
-              >
-                Yes, remove
+          {(requestClose) => (
+            <>
+              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+                ×
               </button>
-              <button className="secondary" onClick={() => setPendingRemoveReview(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+              <p>
+                Remove <strong>{pendingRemoveReview.username}</strong>&apos;s rating for this title?
+              </p>
+              <div className="media-modal-confirm-delete confirm-modal-actions">
+                <button
+                  className="danger"
+                  onClick={() => {
+                    onRemoveReview(pendingRemoveReview.userId);
+                    requestClose();
+                  }}
+                >
+                  Yes, remove
+                </button>
+                <button className="secondary" onClick={requestClose}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </Modal>
       )}
     </div>
   );

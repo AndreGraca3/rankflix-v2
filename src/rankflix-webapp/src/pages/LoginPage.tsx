@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { Modal } from "../components/Modal";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -64,17 +65,19 @@ export function LoginPage() {
           Forgot password?
         </button>
         {showForgot && (
-          <div className="media-modal-overlay" onClick={() => setShowForgot(false)}>
-            <div className="media-modal forgot-password-modal" onClick={(e) => e.stopPropagation()}>
-              <button className="media-modal-close" title="Close" type="button" onClick={() => setShowForgot(false)}>
-                ×
-              </button>
-              <h2>Forgot password?</h2>
-              <p className="muted">
-                Ask a group admin to reset your password for you — self-service reset isn't available yet.
-              </p>
-            </div>
-          </div>
+          <Modal modalClassName="media-modal forgot-password-modal" onClose={() => setShowForgot(false)}>
+            {(requestClose) => (
+              <>
+                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                  ×
+                </button>
+                <h2>Forgot password?</h2>
+                <p className="muted">
+                  Ask a group admin to reset your password for you — self-service reset isn't available yet.
+                </p>
+              </>
+            )}
+          </Modal>
         )}
         <p>
           No account? <Link to="/register">Register</Link>

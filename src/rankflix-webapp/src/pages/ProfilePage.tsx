@@ -102,7 +102,7 @@ export function ProfilePage() {
               </button>
             )}
           />
-          <div>
+          <div className="profile-header-info">
             {editingUsername ? (
               <form className="username-edit-form" onSubmit={handleSubmit}>
                 <input

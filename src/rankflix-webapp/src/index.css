@@ -30,6 +30,11 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -923,6 +928,11 @@ button.link:hover {
   justify-content: center;
   z-index: 200;
   padding: 20px;
+  animation: media-modal-fade-in 0.15s ease;
+}
+
+.crop-modal-overlay.closing {
+  animation: media-modal-fade-out 0.15s ease forwards;
 }
 
 .crop-modal {
@@ -936,6 +946,11 @@ button.link:hover {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  animation: media-modal-pop-in 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.crop-modal.closing {
+  animation: media-modal-pop-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .crop-modal h2 {
@@ -1518,6 +1533,10 @@ section ul li {
   animation: media-modal-fade-in 0.15s ease;
 }
 
+.comment-modal-overlay.closing {
+  animation: media-modal-fade-out 0.15s ease forwards;
+}
+
 .comment-modal {
   position: relative;
   background: var(--surface, #1b1b1f);
@@ -1528,6 +1547,10 @@ section ul li {
   max-width: 420px;
   width: 90%;
   animation: media-modal-pop-in 0.18s ease;
+}
+
+.comment-modal.closing {
+  animation: media-modal-pop-out 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .comment-modal-author {
@@ -1821,6 +1844,11 @@ button.danger:hover {
 }
 
 /* Tables */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
@@ -1954,11 +1982,18 @@ section {
   margin-bottom: 24px;
 }
 
+.profile-header-info {
+  min-width: 0;
+  flex: 1;
+}
+
 .profile-header h1 {
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .username-edit-btn {
@@ -1984,8 +2019,10 @@ section {
 .username-edit-form {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .username-edit-form input {
@@ -1993,6 +2030,9 @@ section {
   font-weight: 700;
   padding: 4px 8px;
   width: auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 120px;
 }
 
 .avatar-edit-trigger {
@@ -3202,7 +3242,47 @@ button.secondary:hover {
   }
 
   .media-modal {
-    padding: 18px;
+    padding: 16px;
+  }
+
+  .media-modal-overlay {
+    padding: 10px;
+  }
+
+  .media-modal-body {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .media-modal-poster-wrap {
+    width: 130px;
+    margin: 0 auto;
+  }
+
+  .media-modal-info h2 {
+    font-size: 19px;
+  }
+
+  .media-modal-close {
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .media-modal-admin-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .media-modal-confirm-delete {
+    flex-wrap: wrap;
+  }
+
+  .comment-modal,
+  .crop-modal {
+    padding: 16px;
+    width: calc(100% - 20px);
   }
 
   .user-edit-actions-row {
