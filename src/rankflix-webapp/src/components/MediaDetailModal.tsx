@@ -53,6 +53,15 @@ export function MediaDetailModal({
   const [addWatcherPos, setAddWatcherPos] = useState({ top: 0, left: 0 });
   const notWatchedMembers = media.watchers.filter((w) => !w.hasWatched && (w.userId !== null || w.discordId));
 
+  // Lock background scroll while open - see Modal.tsx for why this matters on mobile.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   useEffect(() => {
     if (!addWatcherOpen) return;
     const onDocClick = (e: MouseEvent) => {

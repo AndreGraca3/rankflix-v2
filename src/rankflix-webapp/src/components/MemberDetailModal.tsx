@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar } from "./Avatar";
 
 interface MemberModalStats {
@@ -39,6 +39,15 @@ export function MemberDetailModal({
 }: MemberDetailModalProps) {
   const [closing, setClosing] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Lock background scroll while open - see Modal.tsx for why this matters on mobile.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const requestClose = () => {
     if (closing) return;

@@ -713,6 +713,13 @@ button.link:hover {
   .member-sidebar-row .member-remove {
     opacity: 0.85;
   }
+
+  /* Bump up small icon-only tap targets closer to the ~40px recommended minimum for touch. */
+  .member-remove {
+    width: 26px;
+    height: 26px;
+    font-size: 18px;
+  }
 }
 
 .group-card-info {
@@ -3191,6 +3198,14 @@ button.secondary:hover {
 
 /* Mobile clean-up: tighter spacing, stacked toolbars, full-width controls */
 @media (max-width: 680px) {
+  /* iOS Safari auto-zooms the whole page when focusing an input smaller than 16px -
+     bump it up on mobile only, to avoid changing the desktop form-control look. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
   .page {
     padding: 18px 14px 48px;
   }

@@ -1,4 +1,4 @@
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 
 interface ModalProps {
   onClose: () => void;
@@ -22,6 +22,17 @@ export function Modal({
   children,
 }: ModalProps) {
   const [closing, setClosing] = useState(false);
+
+  // Lock background scroll while the modal is mounted - otherwise touch-scrolling on
+  // mobile can drag the page behind the overlay (position:fixed doesn't stop this on
+  // iOS Safari), leaving the page at a different scroll position once the modal closes.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const requestClose = () => {
     if (closing) return;
