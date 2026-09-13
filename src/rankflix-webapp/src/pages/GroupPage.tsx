@@ -823,9 +823,14 @@ export function GroupPage() {
                         </div>
                         <div className="media-ranking-info">
                           <span className="media-card-title">{m.title}</span>
-                          <span className="muted">
-                            {m.type} · {ratedCount}/{watchedList.length} rated
-                            {m.runtimeMinutes ? ` · ${formatWatchTime(m.runtimeMinutes)}` : ""}
+                          <span className="media-ranking-meta muted">
+                            <span className="media-ranking-meta-item">{m.type}</span>
+                            <span className="media-ranking-meta-item">
+                              {ratedCount}/{watchedList.length} rated
+                            </span>
+                            {m.runtimeMinutes ? (
+                              <span className="media-ranking-meta-item">{formatWatchTime(m.runtimeMinutes)}</span>
+                            ) : null}
                           </span>
                           <VotingStatusBadge media={m} />
                         </div>

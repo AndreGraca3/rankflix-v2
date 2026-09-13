@@ -2730,6 +2730,18 @@ button.secondary:hover {
   text-overflow: ellipsis;
 }
 
+.media-ranking-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.media-ranking-meta-item + .media-ranking-meta-item::before {
+  content: "·";
+  margin: 0 6px;
+}
+
 .media-ranking-score {
   flex-shrink: 0;
   font-weight: 700;
@@ -3343,6 +3355,17 @@ button.secondary:hover {
     max-width: 100%;
   }
 
+  .media-ranking-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+
+  .media-ranking-meta-item + .media-ranking-meta-item::before {
+    content: none;
+    margin: 0;
+  }
+
   .media-modal {
     padding: 20px 18px 22px;
   }
@@ -3369,9 +3392,7 @@ button.secondary:hover {
     font-size: 17px;
     margin-bottom: 8px;
     overflow-wrap: break-word;
-  }
-
-  .media-modal-meta {
+  }  .media-modal-meta {
     font-size: 12px;
     gap: 8px;
     margin-bottom: 4px;
