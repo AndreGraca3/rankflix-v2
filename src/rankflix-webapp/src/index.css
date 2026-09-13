@@ -3412,15 +3412,19 @@ button.secondary:hover {
   }
 
   .media-modal-vote-cta {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin: 14px 0;
     padding: 8px 12px;
     font-size: 13px;
   }
 
+  .media-modal-vote-cta-stars {
+    display: none;
+  }
+
   .media-modal-vote-cta-edit {
-    margin-left: 0;
-    width: 100%;
+    margin-left: auto;
+    width: auto;
     text-align: right;
   }
 

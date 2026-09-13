@@ -152,7 +152,9 @@ export function MediaDetailModal({
               <button type="button" className="media-modal-vote-cta" onClick={() => setShowRatingModal(true)}>
                 {me.rating !== null ? (
                   <>
-                    <StarRating value={me.rating} readOnly size={18} />
+                    <span className="media-modal-vote-cta-stars">
+                      <StarRating value={me.rating} readOnly size={18} />
+                    </span>
                     <span>Your rating: {me.rating}/10</span>
                     <span className="media-modal-vote-cta-edit">Edit</span>
                   </>
