@@ -436,7 +436,13 @@ a:hover {
   cursor: pointer;
 }
 
-.link-btn:hover {
+.link-btn:hover,
+.link-btn:focus,
+.link-btn:focus-visible,
+.link-btn:active {
+  background: none;
+  outline: none;
+  transform: none;
   color: var(--text);
 }
 
@@ -455,9 +461,13 @@ a:hover {
   border-radius: 4px;
 }
 
-.forgot-password-hint {
-  margin-top: 6px;
-  font-size: 13px;
+.forgot-password-modal {
+  max-width: 380px;
+  text-align: left;
+}
+
+.forgot-password-modal h2 {
+  margin-top: 0;
 }
 
 /* Form controls */

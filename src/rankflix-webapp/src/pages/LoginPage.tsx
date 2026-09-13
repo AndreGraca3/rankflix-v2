@@ -60,13 +60,21 @@ export function LoginPage() {
             {submitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <button type="button" className="link-btn" onClick={() => setShowForgot((v) => !v)}>
+        <button type="button" className="link-btn" onClick={() => setShowForgot(true)}>
           Forgot password?
         </button>
         {showForgot && (
-          <p className="muted forgot-password-hint">
-            Ask a group admin to reset your password for you — self-service reset isn't available yet.
-          </p>
+          <div className="media-modal-overlay" onClick={() => setShowForgot(false)}>
+            <div className="media-modal forgot-password-modal" onClick={(e) => e.stopPropagation()}>
+              <button className="media-modal-close" title="Close" type="button" onClick={() => setShowForgot(false)}>
+                ×
+              </button>
+              <h2>Forgot password?</h2>
+              <p className="muted">
+                Ask a group admin to reset your password for you — self-service reset isn't available yet.
+              </p>
+            </div>
+          </div>
         )}
         <p>
           No account? <Link to="/register">Register</Link>
