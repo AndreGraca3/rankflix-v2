@@ -65,6 +65,7 @@ export interface GroupMedia {
   votingOpen: boolean;
   averageRating: number | null;
   watchers: Watcher[];
+  runtimeMinutes?: number | null;
 }
 
 export interface ExcelImportResult {

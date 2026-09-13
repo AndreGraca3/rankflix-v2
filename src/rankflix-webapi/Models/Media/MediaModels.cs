@@ -41,4 +41,5 @@ public class GroupMediaResponse
     public required bool VotingOpen { get; init; }
     public required double? AverageRating { get; init; }
     public required List<WatcherStatusResponse> Watchers { get; init; }
+    public int? RuntimeMinutes { get; init; }
 }

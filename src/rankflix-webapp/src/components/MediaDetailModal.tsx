@@ -7,6 +7,7 @@ import { StarRating } from "./StarRating";
 import { Avatar } from "./Avatar";
 import { Modal } from "./Modal";
 import { useScrollLock } from "../hooks/useScrollLock";
+import { formatWatchTime } from "../utils/time";
 
 interface MediaDetailModalProps {
   media: GroupMedia;
@@ -126,6 +127,7 @@ export function MediaDetailModal({
               <span>
                 {watchedCount}/{media.watchers.length} watched
               </span>
+              {media.runtimeMinutes ? <span>{formatWatchTime(media.runtimeMinutes)}</span> : null}
             </p>
 
             {media.averageRating !== null && (

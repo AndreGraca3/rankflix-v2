@@ -124,6 +124,24 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             .Where(m => tmdbIds.Contains(m.TmdbId))
             .ToDictionaryAsync(m => m.TmdbId);
 
+        // Older media rows (added before we tracked runtime) won't have it yet - fetch it from
+        // TMDB on demand and persist it so this only happens once per title (see also
+        // GroupStatsService, which does the same lazy backfill for the stats endpoint).
+        var mediaMissingRuntime = mediaById.Values.Where(m => m.RuntimeMinutes is null).ToList();
+        if (mediaMissingRuntime.Count > 0)
+        {
+            var metadataByTmdbId = await mediaMetadataService.FetchManyAsync(
+                mediaMissingRuntime.Select(m => (m.TmdbId, m.Type)).ToList());
+
+            foreach (var media in mediaMissingRuntime)
+            {
+                if (metadataByTmdbId.TryGetValue(media.TmdbId, out var metadata) && metadata?.RuntimeMinutes is not null)
+                    media.RuntimeMinutes = metadata.RuntimeMinutes;
+            }
+
+            await db.SaveChangesAsync();
+        }
+
         var members = await (
             from m in db.RankGroupMembers
             join u in db.Users on m.UserId equals u.Id
@@ -379,7 +397,8 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             VotingClosesAt = votingClosesAt,
             VotingOpen = DateTime.UtcNow < votingClosesAt,
             AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : groupMedia.ImportedAverageRating,
-            Watchers = watchers
+            Watchers = watchers,
+            RuntimeMinutes = media.RuntimeMinutes
         };
     }
 }

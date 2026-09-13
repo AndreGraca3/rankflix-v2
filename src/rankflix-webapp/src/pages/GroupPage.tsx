@@ -825,6 +825,7 @@ export function GroupPage() {
                           <span className="media-card-title">{m.title}</span>
                           <span className="muted">
                             {m.type} · {ratedCount}/{watchedList.length} rated
+                            {m.runtimeMinutes ? ` · ${formatWatchTime(m.runtimeMinutes)}` : ""}
                           </span>
                           <VotingStatusBadge media={m} />
                         </div>
