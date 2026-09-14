@@ -1446,7 +1446,7 @@ export function GroupPage() {
               ? [`${importToast.unmatchedDiscordIds.length} discord id(s) saved as pending — link later via account settings`]
               : []),
           ]}
-          duration={importToast.unmatchedDiscordIds.length ? 12000 : 6000}
+          duration={importToast.unmatchedDiscordIds.length ? 7000 : 4500}
           onClose={() => setImportToast(null)}
         />
       )}
