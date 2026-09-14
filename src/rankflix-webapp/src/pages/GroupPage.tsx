@@ -124,16 +124,37 @@ export function GroupPage() {
     loadMedia(0, MEDIA_PAGE_SIZE);
   };
 
-  // Refetches just one media item and swaps it into the current list in place (no reordering,
-  // no pagination reset) - used for watcher/rating/voting-duration changes, which only affect a
-  // single already-loaded row and don't need the whole (possibly multi-page) list refetched.
-  // If the item's gone (e.g. removed by someone else in the same instant), it's dropped locally.
+  // Mirrors the backend's ranking sort (MediaService.GetGroupMediaAsync): highest-rated first
+  // from whichever ranking-member's perspective is active, unrated items last, stable otherwise.
+  // Used to re-sort the already-loaded list locally after a rating/watch patch so the affected
+  // row's rank position updates immediately instead of staying stuck where it loaded.
+  const ratingOfForRanking = (m: GroupMedia): number | null => {
+    if (rankingMemberId === "average") return m.averageRating;
+    if (typeof rankingMemberId === "number") return m.watchers.find((w) => w.userId === rankingMemberId)?.rating ?? null;
+    return m.watchers.find((w) => w.discordId === rankingMemberId)?.rating ?? null;
+  };
+
+  const sortMediaByRanking = (list: GroupMedia[]): GroupMedia[] =>
+    [...list].sort((a, b) => {
+      const ra = ratingOfForRanking(a);
+      const rb = ratingOfForRanking(b);
+      if (ra === null && rb === null) return 0;
+      if (ra === null) return 1;
+      if (rb === null) return -1;
+      return rb - ra;
+    });
+
+  // Refetches just one media item and swaps it into the current list in place (re-sorted by the
+  // current ranking so its rank position stays accurate) - used for watcher/rating/voting-duration
+  // changes, which only affect a single already-loaded row and don't need the whole (possibly
+  // multi-page) list refetched. If the item's gone (e.g. removed by someone else at the same
+  // instant), it's dropped locally.
   const patchMediaItem = (tmdbId: number) => {
     if (!groupId) return;
     api
       .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
       .then((updated) => {
-        setMedia((cur) => cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
+        setMedia((cur) => sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m))));
       })
       .catch(() => {
         setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
@@ -316,15 +337,17 @@ export function GroupPage() {
   const setWatched = async (tmdbId: number, userId: number, watched: boolean) => {
     const prevMedia = media;
     setMedia((cur) =>
-      cur.map((m) => {
-        if (m.tmdbId !== tmdbId) return m;
-        // Un-marking as watched also clears any rating server-side, so mirror that here too.
-        const watchers = m.watchers.map((w) =>
-          w.userId === userId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
-        );
-        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-        return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
-      })
+      sortMediaByRanking(
+        cur.map((m) => {
+          if (m.tmdbId !== tmdbId) return m;
+          // Un-marking as watched also clears any rating server-side, so mirror that here too.
+          const watchers = m.watchers.map((w) =>
+            w.userId === userId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
+          );
+          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+          return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
+        })
+      )
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch/${userId}?watched=${watched}`);
@@ -339,14 +362,16 @@ export function GroupPage() {
   const setWatchedPending = async (tmdbId: number, discordId: string, watched: boolean) => {
     const prevMedia = media;
     setMedia((cur) =>
-      cur.map((m) => {
-        if (m.tmdbId !== tmdbId) return m;
-        const watchers = m.watchers.map((w) =>
-          w.discordId === discordId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
-        );
-        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-        return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
-      })
+      sortMediaByRanking(
+        cur.map((m) => {
+          if (m.tmdbId !== tmdbId) return m;
+          const watchers = m.watchers.map((w) =>
+            w.discordId === discordId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
+          );
+          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+          return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
+        })
+      )
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch-pending/${discordId}?watched=${watched}`);
@@ -362,14 +387,16 @@ export function GroupPage() {
     const prevMedia = media;
     const myId = user?.id;
     setMedia((cur) =>
-      cur.map((m) => {
-        if (m.tmdbId !== tmdbId) return m;
-        const watchers = m.watchers.map((w) =>
-          w.userId === myId ? { ...w, rating, comment: comment ?? null, hasWatched: true } : w
-        );
-        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-        return { ...m, watchers, averageRating: computeAverage(ratings) };
-      })
+      sortMediaByRanking(
+        cur.map((m) => {
+          if (m.tmdbId !== tmdbId) return m;
+          const watchers = m.watchers.map((w) =>
+            w.userId === myId ? { ...w, rating, comment: comment ?? null, hasWatched: true } : w
+          );
+          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+          return { ...m, watchers, averageRating: computeAverage(ratings) };
+        })
+      )
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/reviews`, {
@@ -387,12 +414,14 @@ export function GroupPage() {
   const removeReview = async (tmdbId: number, userId: number) => {
     const prevMedia = media;
     setMedia((cur) =>
-      cur.map((m) => {
-        if (m.tmdbId !== tmdbId) return m;
-        const watchers = m.watchers.map((w) => (w.userId === userId ? { ...w, rating: null, comment: null } : w));
-        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-        return { ...m, watchers, averageRating: computeAverage(ratings) };
-      })
+      sortMediaByRanking(
+        cur.map((m) => {
+          if (m.tmdbId !== tmdbId) return m;
+          const watchers = m.watchers.map((w) => (w.userId === userId ? { ...w, rating: null, comment: null } : w));
+          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+          return { ...m, watchers, averageRating: computeAverage(ratings) };
+        })
+      )
     );
     try {
       await api.delete(`/api/groups/${groupId}/media/${tmdbId}/reviews/${userId}`);
