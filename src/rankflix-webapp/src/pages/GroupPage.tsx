@@ -1068,7 +1068,7 @@ export function GroupPage() {
               {mediaHasMore && <InfiniteScrollLoader sentinelRef={mediaSentinelRef} />}
           </div>
 
-          <aside className="member-sidebar">
+          <aside className={`member-sidebar${membersExpanded ? " expanded" : ""}`}>
             <div className="member-sidebar-header">
               <h2>Members — {group.members.length + group.pendingMembers.length}</h2>
               <div className="member-sidebar-header-actions">

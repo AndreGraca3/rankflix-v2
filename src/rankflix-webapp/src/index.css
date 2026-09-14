@@ -3575,19 +3575,33 @@ button.secondary:hover {
   }
 
   .media-toolbar-left {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     overflow-x: visible;
+    gap: 8px;
   }
 
   /* Collapse the always-visible desktop filter row into the single "Filters" icon
      popover + members shortcut, so the toolbar doesn't stack into a tall pile of
-     wrapped rows before the media list even starts. */
+     wrapped rows before the media list even starts - sort, search, and the two icon
+     buttons all fit on one line. */
   .media-filters-inline {
     display: none;
   }
 
   .media-filters-mobile {
     display: flex;
+    flex-shrink: 0;
+  }
+
+  /* The member sidebar (and its own header/toggle) is fully hidden by default - the
+     toolbar's 👥 icon is now the only way to reveal it, instead of always showing a
+     "Members" header/add-member row above the toolbar and media list. */
+  .member-sidebar {
+    display: none;
+  }
+
+  .member-sidebar.expanded {
+    display: block;
   }
 
   .ranking-member-trigger {
@@ -3615,7 +3629,8 @@ button.secondary:hover {
   }
 
   .media-search-wrap {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .media-search-input {
