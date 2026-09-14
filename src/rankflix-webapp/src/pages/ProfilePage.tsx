@@ -165,7 +165,8 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {stats && (
+        <div className="profile-sections">
+          {stats && (
           <div className="card stats-card">
             <h2>Your stats</h2>
             <div className="stats-grid">
@@ -206,8 +207,9 @@ export function ProfilePage() {
               </div>
             )}
           </div>
-        )}
+          )}
 
+          <div className="profile-cards-row">
         <div className="card">
           <h2>Account</h2>
           <form onSubmit={handleUsernameSubmit}>
@@ -273,6 +275,8 @@ export function ProfilePage() {
               {changingPassword ? "Changing..." : "Change password"}
             </button>
           </form>
+        </div>
+          </div>
         </div>
       </main>
       {error && <Toast variant="error" title={error} duration={7000} onClose={() => setError(null)} />}
