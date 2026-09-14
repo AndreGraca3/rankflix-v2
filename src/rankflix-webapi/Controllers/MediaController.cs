@@ -12,12 +12,12 @@ namespace Rankflix.Controllers;
 public class MediaController(IMediaService mediaService, IGroupService groupService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<GroupMediaResponse>>> GetMedia(int groupId)
+    public async Task<ActionResult<PagedGroupMediaResponse>> GetMedia(int groupId, [FromQuery] GetGroupMediaQuery query)
     {
         try
         {
             await EnsureAccessAsync(groupId);
-            return await mediaService.GetGroupMediaAsync(groupId);
+            return await mediaService.GetGroupMediaAsync(groupId, query);
         }
         catch (AppException ex)
         {

@@ -45,3 +45,33 @@ public class GroupMediaResponse
     public string? Genre { get; init; }
     public int? Year { get; init; }
 }
+
+// Query params for GET /api/groups/{id}/media. Filtering/sorting/pagination all happen
+// server-side so the client only ever transfers one page of the (possibly narrowed-down) list.
+public class GetGroupMediaQuery
+{
+    public int Skip { get; set; } = 0;
+    public int Take { get; set; } = 30;
+    public string? Search { get; set; }
+    public List<string>? Genre { get; set; }
+    public double? MinRating { get; set; }
+    public bool UnratedOnly { get; set; }
+    public string VotingStatus { get; set; } = "all"; // all | open | closed
+    public bool PendingVotesOnly { get; set; }
+
+    // "average" (default), a numeric real-member user id, or a pending (Excel-imported) member's
+    // Discord id - determines both what rating each item is ranked/sorted by and, for a specific
+    // member, that only media they've watched is included (matches the old client-side behavior).
+    public string RankingMember { get; set; } = "average";
+}
+
+public class PagedGroupMediaResponse
+{
+    public required List<GroupMediaResponse> Items { get; init; }
+    public required int TotalCount { get; init; }
+    public required bool HasMore { get; init; }
+    // Total media in the group regardless of active filters - lets the client tell "no media in
+    // this group at all" apart from "no media matches the current filters".
+    public required int TotalMediaInGroup { get; init; }
+    public required List<string> AvailableGenres { get; init; }
+}

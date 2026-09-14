@@ -77,6 +77,14 @@ export interface GroupMedia {
   year?: number | null;
 }
 
+export interface PagedGroupMedia {
+  items: GroupMedia[];
+  totalCount: number;
+  hasMore: boolean;
+  availableGenres: string[];
+  totalMediaInGroup: number;
+}
+
 export interface ExcelImportResult {
   mediaImported: number;
   reviewsImported: number;

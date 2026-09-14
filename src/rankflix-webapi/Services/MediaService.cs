@@ -9,7 +9,7 @@ namespace Rankflix.Services;
 public interface IMediaService
 {
     Task<GroupMediaResponse> AddMediaToGroupAsync(int groupId, int addedByUserId, AddMediaRequest request);
-    Task<List<GroupMediaResponse>> GetGroupMediaAsync(int groupId);
+    Task<PagedGroupMediaResponse> GetGroupMediaAsync(int groupId, GetGroupMediaQuery query);
     Task<GroupMediaResponse> UpdateVotingDurationAsync(int groupId, int tmdbId, int votingDurationHours);
     Task SetWatchedAsync(int groupId, int tmdbId, int userId, bool watched, bool isSiteAdmin);
     Task SetWatchedPendingAsync(int groupId, int tmdbId, string discordId, bool watched, bool isSiteAdmin);
@@ -113,15 +113,19 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
         return await BuildResponseAsync(groupId, request.TmdbId);
     }
 
-    public async Task<List<GroupMediaResponse>> GetGroupMediaAsync(int groupId)
+    public async Task<PagedGroupMediaResponse> GetGroupMediaAsync(int groupId, GetGroupMediaQuery query)
     {
         // Batch-fetch everything for the whole group in a handful of queries instead of the
         // previous N+1 pattern (which issued ~6 sequential round-trips per media item - noticeably
-        // slow once a group has dozens of titles). Everything below is then joined in memory.
+        // slow once a group has dozens of titles). Everything below is then joined in memory, then
+        // filtered/sorted/paginated in memory too - group media counts are small enough that this
+        // is simpler than pushing every filter combination into SQL, while still only sending one
+        // page of results back over the wire.
         var groupMediaList = await db.RankGroupMedia
             .Where(gm => gm.GroupId == groupId)
             .ToListAsync();
-        if (groupMediaList.Count == 0) return [];
+        if (groupMediaList.Count == 0)
+            return new PagedGroupMediaResponse { Items = [], TotalCount = 0, HasMore = false, AvailableGenres = [], TotalMediaInGroup = 0 };
 
         var tmdbIds = groupMediaList.Select(gm => gm.MediaId).ToList();
 
@@ -175,7 +179,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             .ToListAsync();
         var pendingDisplayNames = pendingGroupMembers.ToDictionary(p => p.DiscordId, p => p.DisplayName);
 
-        var results = new List<GroupMediaResponse>();
+        var allResponses = new List<GroupMediaResponse>();
         foreach (var groupMedia in groupMediaList)
         {
             if (!mediaById.TryGetValue(groupMedia.MediaId, out var media)) continue;
@@ -183,10 +187,93 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             var watchStatuses = watchStatusesByMedia.GetValueOrDefault(groupMedia.MediaId, []);
             var reviews = reviewsByMedia.GetValueOrDefault(groupMedia.MediaId, []);
 
-            results.Add(BuildResponse(groupMedia, media, members, watchStatuses, reviews, pendingDisplayNames));
+            allResponses.Add(BuildResponse(groupMedia, media, members, watchStatuses, reviews, pendingDisplayNames));
         }
 
-        return results;
+        // Genre options come from the *full* unfiltered set so the dropdown doesn't shrink as the
+        // user narrows results down with other filters.
+        var availableGenres = allResponses
+            .SelectMany(r => (r.Genre ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // "average" (default), a numeric real-member user id, or a pending member's Discord id.
+        int? rankingUserId = null;
+        string? rankingDiscordId = null;
+        if (!string.IsNullOrEmpty(query.RankingMember) && query.RankingMember != "average")
+        {
+            if (int.TryParse(query.RankingMember, out var parsedId)) rankingUserId = parsedId;
+            else rankingDiscordId = query.RankingMember;
+        }
+
+        double? RatingOf(GroupMediaResponse m) =>
+            rankingUserId is not null
+                ? m.Watchers.FirstOrDefault(w => w.UserId == rankingUserId)?.Rating
+                : rankingDiscordId is not null
+                    ? m.Watchers.FirstOrDefault(w => w.DiscordId == rankingDiscordId)?.Rating
+                    : m.AverageRating;
+
+        bool WatchedByRankingMember(GroupMediaResponse m) =>
+            rankingUserId is not null
+                ? m.Watchers.Any(w => w.UserId == rankingUserId && w.HasWatched)
+                : m.Watchers.Any(w => w.DiscordId == rankingDiscordId && w.HasWatched);
+
+        IEnumerable<GroupMediaResponse> filtered = allResponses;
+
+        if (rankingUserId is not null || rankingDiscordId is not null)
+            filtered = filtered.Where(WatchedByRankingMember);
+
+        if (query.VotingStatus is "open" or "closed")
+            filtered = filtered.Where(m => query.VotingStatus == "open" ? m.VotingOpen : !m.VotingOpen);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            filtered = filtered.Where(m => m.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var wantedGenres = query.Genre?.Select(g => g.Trim()).Where(g => g.Length > 0).ToList();
+        if (wantedGenres is { Count: > 0 })
+        {
+            filtered = filtered.Where(m =>
+            {
+                var genres = (m.Genre ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                return wantedGenres.Any(g => genres.Contains(g, StringComparer.OrdinalIgnoreCase));
+            });
+        }
+
+        if (query.UnratedOnly)
+            filtered = filtered.Where(m => m.AverageRating is null);
+        else if (query.MinRating is not null)
+            filtered = filtered.Where(m => m.AverageRating is not null && m.AverageRating >= query.MinRating);
+
+        if (query.PendingVotesOnly)
+            filtered = filtered.Where(m => m.Watchers.Any(w => w.HasWatched && w.Rating is null));
+
+        // Highest-rated first (from whichever ranking-member perspective was requested), unrated
+        // items last, original order preserved within each of those two groups.
+        var sorted = filtered
+            .Select(m => (Media: m, Rating: RatingOf(m)))
+            .OrderByDescending(x => x.Rating is not null)
+            .ThenByDescending(x => x.Rating ?? 0)
+            .Select(x => x.Media)
+            .ToList();
+
+        var totalCount = sorted.Count;
+        var skip = Math.Max(0, query.Skip);
+        var take = Math.Clamp(query.Take, 1, 200);
+        var pageItems = sorted.Skip(skip).Take(take).ToList();
+        var hasMore = totalCount > skip + take;
+
+        return new PagedGroupMediaResponse
+        {
+            Items = pageItems,
+            TotalCount = totalCount,
+            HasMore = hasMore,
+            AvailableGenres = availableGenres,
+            TotalMediaInGroup = allResponses.Count
+        };
     }
 
     public async Task<GroupMediaResponse> UpdateVotingDurationAsync(int groupId, int tmdbId, int votingDurationHours)

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useInfiniteScroll } from "react-infinite-scroll-component";
 import { api } from "../api/client";
-import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, UserDirectoryItem } from "../api/types";
+import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, PagedGroupMedia, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
 import { Avatar } from "../components/Avatar";
 import { MediaAutocomplete } from "../components/MediaAutocomplete";
@@ -34,6 +35,10 @@ export function GroupPage() {
   const [group, setGroup] = useState<Group | null>(null);
   const [media, setMedia] = useState<GroupMedia[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
+  const [mediaTotalCount, setMediaTotalCount] = useState(0);
+  const [mediaHasMore, setMediaHasMore] = useState(false);
+  const [totalMediaInGroup, setTotalMediaInGroup] = useState(0);
+  const [availableGenres, setAvailableGenres] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<UserDirectoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedTmdbId, setSelectedTmdbId] = useState<number | null>(null);
@@ -67,18 +72,68 @@ export function GroupPage() {
     watchedByUserIds: (number | string)[];
   }>({ tmdbId: "", title: "", type: "movie", posterUrl: null, votingDurationHours: "", watchedByUserIds: [] });
 
-  const load = () => {
+  const buildMediaQuery = (skip: number, take = 30) => {
+    const params = new URLSearchParams();
+    params.set("skip", String(skip));
+    params.set("take", String(take));
+    if (mediaSearch) params.set("search", mediaSearch);
+    selectedGenres.forEach((g) => params.append("genre", g));
+    if (ratingFilter === "unrated") params.set("unratedOnly", "true");
+    else if (ratingFilter !== null) params.set("minRating", String(ratingFilter));
+    if (votingFilter !== "all") params.set("votingStatus", votingFilter);
+    if (pendingVotesOnly) params.set("pendingVotesOnly", "true");
+    if (rankingMemberId !== "average") params.set("rankingMember", String(rankingMemberId));
+    return params.toString();
+  };
+
+  // All filtering/sorting/pagination for the media list now happens server-side (see
+  // MediaService.GetGroupMediaAsync) - this just fetches one page at a time and appends
+  // (skip > 0) or replaces (skip === 0) the accumulated `media` list.
+  const loadMedia = (skip: number, take = 30) => {
+    if (!groupId) return Promise.resolve();
+    const isFirstPage = skip === 0;
+    if (isFirstPage) setMediaLoading(true);
+    return api
+      .get<PagedGroupMedia>(`/api/groups/${groupId}/media?${buildMediaQuery(skip, take)}`)
+      .then((res) => {
+        setMedia((cur) => (isFirstPage ? res.items : [...cur, ...res.items]));
+        setMediaTotalCount(res.totalCount);
+        setMediaHasMore(res.hasMore);
+        setAvailableGenres(res.availableGenres);
+        setTotalMediaInGroup(res.totalMediaInGroup);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load media"))
+      .finally(() => {
+        if (isFirstPage) setMediaLoading(false);
+      });
+  };
+
+  const loadGroupAndStats = () => {
     if (!groupId) return;
     api.get<Group>(`/api/groups/${groupId}`).then(setGroup).catch((e) => setError(e.message));
-    api
-      .get<GroupMedia[]>(`/api/groups/${groupId}/media`)
-      .then(setMedia)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load media"))
-      .finally(() => setMediaLoading(false));
     api.get<GroupStats>(`/api/groups/${groupId}/stats`).then(setGroupStats).catch(() => {});
   };
 
-  useEffect(load, [groupId]);
+  // Used by mutation success handlers and SSE events below to resync everything - this resets
+  // the media list back to its first page under the current filters (rather than trying to
+  // preserve however many pages were scrolled into), which keeps the refresh logic simple.
+  const load = () => {
+    loadGroupAndStats();
+    loadMedia(0, 30);
+  };
+
+  useEffect(() => {
+    loadGroupAndStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]);
+
+  // Re-fetch page 1 whenever the group or any media filter/search/ranking-member changes
+  // (covers the very first fetch on mount too, since groupId goes from undefined to set).
+  useEffect(() => {
+    if (!groupId) return;
+    loadMedia(0, 30);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
 
   // Any group/media/voting/rating mutation from anyone (including this same user in
   // another tab) re-fetches this group's data so everything stays live.
@@ -126,64 +181,6 @@ export function GroupPage() {
     const t = setTimeout(() => setMediaSearch(mediaSearchInput.trim().toLowerCase()), 300);
     return () => clearTimeout(t);
   }, [mediaSearchInput]);
-
-  const availableGenres = useMemo(() => {
-    const set = new Set<string>();
-    media.forEach((m) => {
-      m.genre?.split(",").forEach((g) => {
-        const trimmed = g.trim();
-        if (trimmed) set.add(trimmed);
-      });
-    });
-    return Array.from(set).sort();
-  }, [media]);
-
-  const filteredMedia = useMemo(() => {
-    let list = media;
-    if (votingFilter !== "all") {
-      list = list.filter((m) => (votingFilter === "open" ? m.votingOpen : !m.votingOpen));
-    }
-    if (mediaSearch) {
-      list = list.filter((m) => m.title.toLowerCase().includes(mediaSearch));
-    }
-    if (selectedGenres.length > 0) {
-      list = list.filter((m) => {
-        const genres = m.genre?.split(",").map((g) => g.trim()) ?? [];
-        return selectedGenres.some((g) => genres.includes(g));
-      });
-    }
-    if (ratingFilter !== null) {
-      list = list.filter((m) =>
-        ratingFilter === "unrated" ? m.averageRating === null : m.averageRating !== null && m.averageRating >= ratingFilter
-      );
-    }
-    if (pendingVotesOnly) {
-      list = list.filter((m) => m.watchers.some((w) => w.hasWatched && w.rating === null));
-    }
-    return list;
-  }, [media, votingFilter, mediaSearch, selectedGenres, ratingFilter, pendingVotesOnly]);
-
-  const rankedMedia = useMemo(() => {
-    const hasWatched = (m: (typeof media)[number]): boolean =>
-      typeof rankingMemberId === "number"
-        ? m.watchers.some((w) => w.userId === rankingMemberId && w.hasWatched)
-        : m.watchers.some((w) => w.discordId === rankingMemberId && w.hasWatched);
-    const ratingOf = (m: (typeof media)[number]): number | null =>
-      rankingMemberId === "average"
-        ? m.averageRating
-        : typeof rankingMemberId === "number"
-          ? m.watchers.find((w) => w.userId === rankingMemberId)?.rating ?? null
-          : m.watchers.find((w) => w.discordId === rankingMemberId)?.rating ?? null;
-    const base = rankingMemberId === "average" ? filteredMedia : filteredMedia.filter(hasWatched);
-    return [...base].sort((a, b) => {
-      const aRating = ratingOf(a);
-      const bRating = ratingOf(b);
-      if (aRating === null && bRating === null) return 0;
-      if (aRating === null) return 1;
-      if (bRating === null) return -1;
-      return bRating - aRating;
-    });
-  }, [filteredMedia, rankingMemberId]);
 
   const memberStatsByUserId = useMemo(() => {
     const map = new Map<number, GroupStats["members"][number]>();
@@ -248,11 +245,14 @@ export function GroupPage() {
 
   const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`;
 
-  const {
-    visibleItems: visibleRankedMedia,
-    sentinelRef: mediaSentinelRef,
-    hasMore: hasMoreMedia,
-  } = useInfiniteList(rankedMedia, mediaFilterSignature);
+  // Media itself is now paginated server-side (see loadMedia above) - this just triggers
+  // fetching the next server page when the sentinel scrolls into view.
+  const { sentinelRef: mediaSentinelRef } = useInfiniteScroll({
+    next: () => loadMedia(media.length, 30),
+    hasMore: mediaHasMore,
+    dataLength: media.length,
+    scrollThreshold: "300px",
+  });
 
   const {
     visibleItems: visibleMembers,
@@ -917,12 +917,12 @@ export function GroupPage() {
               )}
             </div>
 
-            {!mediaLoading && media.length > 0 && (
+            {!mediaLoading && totalMediaInGroup > 0 && (
               <p className="muted list-count-text">
-                {rankedMedia.length} media {rankedMedia.length === 1 ? "item" : "items"}
+                {mediaTotalCount} media {mediaTotalCount === 1 ? "item" : "items"}
               </p>
             )}
-            {!mediaLoading && media.length === 0 && (
+            {!mediaLoading && totalMediaInGroup === 0 && (
               <EmptyState
                 icon="🍿"
                 title="No media in this group"
@@ -939,12 +939,12 @@ export function GroupPage() {
               </ol>
             ) : (
             <ol className="media-ranking-list">
-                {media.length > 0 && rankedMedia.length === 0 && (
+                {totalMediaInGroup > 0 && media.length === 0 && (
                   <p className="muted">
                     {mediaSearch ? `No media matches "${mediaSearchInput}".` : "No media matches the current filters."}
                   </p>
                 )}
-                {visibleRankedMedia.map((m, i) => {
+                {media.map((m, i) => {
                   const watchedList = m.watchers.filter((w) => w.hasWatched);
                   const ratedCount = watchedList.filter((w) => w.rating !== null).length;
                   const displayRating =
@@ -997,7 +997,7 @@ export function GroupPage() {
                 })}
               </ol>
             )}
-              {hasMoreMedia && <InfiniteScrollLoader sentinelRef={mediaSentinelRef} />}
+              {mediaHasMore && <InfiniteScrollLoader sentinelRef={mediaSentinelRef} />}
           </div>
 
           <aside className="member-sidebar">
