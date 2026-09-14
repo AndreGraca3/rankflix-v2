@@ -2088,6 +2088,10 @@ section {
   gap: 14px;
 }
 
+.card h2:first-child {
+  margin-top: 0;
+}
+
 .card label {
   display: flex;
   flex-direction: column;
