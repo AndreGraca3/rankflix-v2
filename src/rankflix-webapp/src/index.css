@@ -3428,7 +3428,7 @@ button.secondary:hover {
   }
 
   .media-modal {
-    padding: 20px 18px 22px;
+    padding: 16px 14px 18px;
   }
 
   .media-modal-overlay {
@@ -3468,7 +3468,7 @@ button.secondary:hover {
 
   .media-modal-avg-rating {
     flex-wrap: wrap;
-    margin: 10px 0;
+    margin: 6px 0;
   }
 
   .media-modal-avg-rating-value {
@@ -3479,10 +3479,14 @@ button.secondary:hover {
     --star-size: 16px !important;
   }
 
+  .voting-progress-header {
+    margin: 6px 0 2px;
+  }
+
   .media-modal-vote-cta {
     flex-wrap: nowrap;
-    margin: 14px 0;
-    padding: 8px 12px;
+    margin: 8px 0;
+    padding: 7px 10px;
     font-size: 13px;
   }
 
