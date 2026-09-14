@@ -811,6 +811,11 @@ export function GroupPage() {
               )}
             </div>
 
+            {!mediaLoading && media.length > 0 && (
+              <p className="muted list-count-text">
+                {rankedMedia.length} media {rankedMedia.length === 1 ? "item" : "items"}
+              </p>
+            )}
             {!mediaLoading && media.length === 0 && (
               <EmptyState
                 icon="🍿"

@@ -2451,6 +2451,11 @@ button.secondary:hover {
   margin-bottom: 20px;
 }
 
+.list-count-text {
+  margin: 8px 0 16px;
+  font-size: 13px;
+}
+
 .media-toolbar-left {
   display: flex;
   align-items: center;

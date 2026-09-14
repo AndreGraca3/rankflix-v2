@@ -200,6 +200,11 @@ export function DashboardPage() {
             )}
           </Modal>
         )}
+        {!loading && (
+          <p className="muted list-count-text">
+            {displayedGroups.length} group{displayedGroups.length === 1 ? "" : "s"}
+          </p>
+        )}
         {loading && <Spinner />}
         {!loading && displayedGroups.length === 0 && (
           <EmptyState
