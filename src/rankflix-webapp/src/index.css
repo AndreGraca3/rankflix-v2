@@ -1256,6 +1256,7 @@ section ul li {
 
 .media-modal-info h2 {
   margin-top: 0;
+  margin-bottom: 6px;
   border-bottom: none;
   padding-bottom: 0;
 }
@@ -2759,16 +2760,32 @@ button.secondary:hover {
   gap: 0;
 }
 
+.media-ranking-meta .media-modal-type-badge {
+  margin-right: 6px;
+}
+
 .media-ranking-meta-item + .media-ranking-meta-item::before {
   content: "·";
   margin: 0 6px;
 }
 
-.media-ranking-score {
+.media-ranking-score-wrap {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.media-ranking-score {
   font-weight: 700;
   font-size: 15px;
   color: var(--accent);
+}
+
+.media-ranking-rated-count {
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .member-sidebar {
@@ -3454,7 +3471,7 @@ button.secondary:hover {
 
   .media-modal-info h2 {
     font-size: 17px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     overflow-wrap: break-word;
   }
 
