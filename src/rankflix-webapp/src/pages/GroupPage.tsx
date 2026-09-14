@@ -1412,17 +1412,13 @@ export function GroupPage() {
           variant="success"
           title="Import complete"
           details={[
-            `Imported ${importToast.mediaImported} media, ${importToast.reviewsImported} reviews, ${importToast.watchStatusesImported} watch statuses.`,
-            ...(importToast.mediaRemoved
-              ? [`Removed ${importToast.mediaRemoved} media that wasn't in the spreadsheet.`]
-              : []),
+            `${importToast.mediaImported} media, ${importToast.reviewsImported} reviews, ${importToast.watchStatusesImported} watch statuses imported`,
+            ...(importToast.mediaRemoved ? [`${importToast.mediaRemoved} media removed (not in file)`] : []),
             ...(importToast.unmatchedDiscordIds.length
-              ? [
-                  `Saved as pending for ${importToast.unmatchedDiscordIds.length} discord id(s) without an account yet — nothing was lost. Create their accounts and set their discord ID to attach it: ${importToast.unmatchedDiscordIds.join(", ")}`,
-                ]
+              ? [`${importToast.unmatchedDiscordIds.length} discord id(s) saved as pending — link later via account settings`]
               : []),
           ]}
-          duration={importToast.unmatchedDiscordIds.length ? 15000 : 8000}
+          duration={importToast.unmatchedDiscordIds.length ? 12000 : 6000}
           onClose={() => setImportToast(null)}
         />
       )}
