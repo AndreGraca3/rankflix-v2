@@ -438,7 +438,7 @@ export function MediaDetailModal({
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 ×
               </button>
-              <p>
+              <p className="confirm-modal-message">
                 Remove <strong>{pendingRemoveWatcher.displayName}</strong> as a watcher?
                 {pendingRemoveWatcher.userId !== null || pendingRemoveWatcher.discordId ? (
                   <span className="muted"> Their rating will also be deleted.</span>
@@ -475,7 +475,7 @@ export function MediaDetailModal({
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 ×
               </button>
-              <p>
+              <p className="confirm-modal-message">
                 Remove <strong>{pendingRemoveReview.displayName}</strong>&apos;s rating for this title?
               </p>
               <div className="media-modal-confirm-delete confirm-modal-actions">

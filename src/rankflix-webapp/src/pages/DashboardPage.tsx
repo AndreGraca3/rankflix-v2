@@ -302,7 +302,7 @@ export function DashboardPage() {
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   ×
                 </button>
-                <p>
+                <p className="confirm-modal-message">
                   Delete <strong>{deletingGroup.name}</strong>? This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">

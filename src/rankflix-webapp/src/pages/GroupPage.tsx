@@ -799,6 +799,20 @@ export function GroupPage() {
     </div>
   );
 
+  const statsSummary =
+    groupStats && (groupStats.totalWatchTimeMinutes > 0 || groupStats.totalRatingsCount > 0) ? (
+      <>
+        {groupStats.totalWatchTimeMinutes > 0 && (
+          <p className="muted">⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)}</p>
+        )}
+        {groupStats.totalRatingsCount > 0 && (
+          <p className="muted">
+            ★ {groupStats.overallAverageRating?.toFixed(1)} · {groupStats.totalRatingsCount}
+          </p>
+        )}
+      </>
+    ) : null;
+
   const renderPendingVotesToggle = () => (
     <button
       type="button"
@@ -830,6 +844,7 @@ export function GroupPage() {
               </button>
             )}
           </div>
+          {statsSummary && <div className="group-stats-summary group-stats-summary-mobile">{statsSummary}</div>}
           <div className="row">
             <button className="excel-btn" onClick={exportExcel}>Export .xlsx</button>
             {isGroupOwner && (
@@ -846,18 +861,7 @@ export function GroupPage() {
           </div>
         </div>
 
-        {groupStats && (groupStats.totalWatchTimeMinutes > 0 || groupStats.totalRatingsCount > 0) && (
-          <div className="group-stats-summary">
-            {groupStats.totalWatchTimeMinutes > 0 && (
-              <p className="muted">⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)}</p>
-            )}
-            {groupStats.totalRatingsCount > 0 && (
-              <p className="muted">
-                ★ {groupStats.overallAverageRating?.toFixed(1)} · {groupStats.totalRatingsCount}
-              </p>
-            )}
-          </div>
-        )}
+        {statsSummary && <div className="group-stats-summary group-stats-summary-desktop">{statsSummary}</div>}
 
         {isGroupOwner && showEditGroup && (
           <Modal modalClassName="media-modal group-edit-modal" onClose={() => setShowEditGroup(false)}>
@@ -895,7 +899,7 @@ export function GroupPage() {
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   ×
                 </button>
-                <p>
+                <p className="confirm-modal-message">
                   Delete <strong>{group.name}</strong>? This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">
@@ -1353,7 +1357,7 @@ export function GroupPage() {
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 ×
               </button>
-              <p>
+              <p className="confirm-modal-message">
                 Remove <strong>{pendingRemove.label}</strong> from this group?
               </p>
               <div className="media-modal-confirm-delete confirm-modal-actions">

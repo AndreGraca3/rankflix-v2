@@ -1227,6 +1227,12 @@ section ul li {
   max-width: 440px;
 }
 
+.confirm-modal-message {
+  margin: 28px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 .confirm-modal-actions {
   margin-top: 16px;
 }
@@ -2035,6 +2041,10 @@ td select {
 
 .group-stats-summary p {
   margin: 0;
+}
+
+.group-stats-summary-mobile {
+  display: none;
 }
 
 section {
@@ -3636,6 +3646,15 @@ button.secondary:hover {
     flex: 1 1 auto;
     justify-content: center;
     text-align: center;
+  }
+
+  .group-stats-summary-mobile {
+    display: flex;
+    margin: -4px 0 0;
+  }
+
+  .group-stats-summary-desktop {
+    display: none;
   }
 
   .media-toolbar {
