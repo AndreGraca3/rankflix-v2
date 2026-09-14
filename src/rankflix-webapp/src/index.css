@@ -2459,16 +2459,10 @@ button.secondary:hover {
 .media-toolbar-left {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   min-width: 0;
   flex: 1 1 auto;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.media-toolbar-left::-webkit-scrollbar {
-  display: none;
 }
 
 .media-toolbar-add-btn {
@@ -2672,6 +2666,148 @@ button.secondary:hover {
 .ranking-member-list li.active {
   background: var(--accent);
   color: var(--accent-text);
+}
+
+.filter-popover {
+  position: relative;
+}
+
+.filter-popover-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-popover-trigger:hover {
+  border-color: var(--accent);
+}
+
+.filter-popover-trigger.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.filter-popover-chevron {
+  font-size: 15px;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.filter-popover-panel {
+  position: fixed;
+  z-index: 2000;
+  min-width: 170px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  padding: 6px;
+}
+
+.filter-popover-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-popover-list button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.filter-popover-list button:hover {
+  background: var(--surface-hover);
+}
+
+.filter-popover-list button.active {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.filter-popover-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-popover-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.filter-popover-checkbox-row:hover {
+  background: var(--surface-hover);
+}
+
+.filter-popover-checkbox-row input {
+  cursor: pointer;
+}
+
+.filter-popover-clear-btn {
+  margin-top: 4px;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  padding: 8px 10px 4px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.filter-popover-clear-btn:hover {
+  color: var(--accent);
+}
+
+.filter-toggle-pill {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 14px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.filter-toggle-pill:hover {
+  border-color: var(--accent);
+}
+
+.filter-toggle-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .media-ranking-list {

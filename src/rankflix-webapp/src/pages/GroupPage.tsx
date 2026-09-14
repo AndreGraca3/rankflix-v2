@@ -9,6 +9,7 @@ import { MediaDetailModal } from "../components/MediaDetailModal";
 import { MemberDetailModal } from "../components/MemberDetailModal";
 import { AddMemberDropdown } from "../components/AddMemberDropdown";
 import { RankingMemberSelect } from "../components/RankingMemberSelect";
+import { FilterPopover } from "../components/FilterPopover";
 import { VotingStatusBadge } from "../components/VotingStatusBadge";
 import { Spinner } from "../components/Spinner";
 import { Toast } from "../components/Toast";
@@ -43,6 +44,9 @@ export function GroupPage() {
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [rankingMemberId, setRankingMemberId] = useState<number | string | "average">("average");
   const [votingFilter, setVotingFilter] = useState<"all" | "open" | "closed">("all");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [ratingFilter, setRatingFilter] = useState<number | "unrated" | null>(null);
+  const [pendingVotesOnly, setPendingVotesOnly] = useState(false);
   const [groupStats, setGroupStats] = useState<GroupStats | null>(null);
   const [memberSortMode, setMemberSortMode] = useState<"az" | "rating" | "watched">("az");
   const [membersExpanded, setMembersExpanded] = useState(false);
@@ -123,6 +127,17 @@ export function GroupPage() {
     return () => clearTimeout(t);
   }, [mediaSearchInput]);
 
+  const availableGenres = useMemo(() => {
+    const set = new Set<string>();
+    media.forEach((m) => {
+      m.genre?.split(",").forEach((g) => {
+        const trimmed = g.trim();
+        if (trimmed) set.add(trimmed);
+      });
+    });
+    return Array.from(set).sort();
+  }, [media]);
+
   const filteredMedia = useMemo(() => {
     let list = media;
     if (votingFilter !== "all") {
@@ -131,8 +146,22 @@ export function GroupPage() {
     if (mediaSearch) {
       list = list.filter((m) => m.title.toLowerCase().includes(mediaSearch));
     }
+    if (selectedGenres.length > 0) {
+      list = list.filter((m) => {
+        const genres = m.genre?.split(",").map((g) => g.trim()) ?? [];
+        return selectedGenres.some((g) => genres.includes(g));
+      });
+    }
+    if (ratingFilter !== null) {
+      list = list.filter((m) =>
+        ratingFilter === "unrated" ? m.averageRating === null : m.averageRating !== null && m.averageRating >= ratingFilter
+      );
+    }
+    if (pendingVotesOnly) {
+      list = list.filter((m) => m.watchers.some((w) => w.hasWatched && w.rating === null));
+    }
     return list;
-  }, [media, votingFilter, mediaSearch]);
+  }, [media, votingFilter, mediaSearch, selectedGenres, ratingFilter, pendingVotesOnly]);
 
   const rankedMedia = useMemo(() => {
     const hasWatched = (m: (typeof media)[number]): boolean =>
@@ -221,7 +250,10 @@ export function GroupPage() {
     visibleItems: visibleRankedMedia,
     sentinelRef: mediaSentinelRef,
     hasMore: hasMoreMedia,
-  } = useInfiniteList(rankedMedia, `${votingFilter}|${mediaSearch}|${rankingMemberId}`);
+  } = useInfiniteList(
+    rankedMedia,
+    `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`
+  );
 
   const {
     visibleItems: visibleMembers,
@@ -802,6 +834,81 @@ export function GroupPage() {
                     Closed
                   </button>
                 </div>
+
+                {availableGenres.length > 0 && (
+                  <FilterPopover
+                    label={selectedGenres.length > 0 ? `Genre (${selectedGenres.length})` : "Genre"}
+                    active={selectedGenres.length > 0}
+                  >
+                    {() => (
+                      <div className="filter-popover-checklist">
+                        {availableGenres.map((g) => (
+                          <label key={g} className="filter-popover-checkbox-row">
+                            <input
+                              type="checkbox"
+                              checked={selectedGenres.includes(g)}
+                              onChange={() =>
+                                setSelectedGenres((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]))
+                              }
+                            />
+                            {g}
+                          </label>
+                        ))}
+                        {selectedGenres.length > 0 && (
+                          <button type="button" className="filter-popover-clear-btn" onClick={() => setSelectedGenres([])}>
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </FilterPopover>
+                )}
+
+                <FilterPopover
+                  label={
+                    ratingFilter === null
+                      ? "Rating"
+                      : ratingFilter === "unrated"
+                        ? "Unrated"
+                        : `${ratingFilter}+`
+                  }
+                  active={ratingFilter !== null}
+                >
+                  {(close) => (
+                    <div className="filter-popover-list">
+                      {[
+                        { value: null, label: "Any rating" },
+                        { value: 9, label: "9+" },
+                        { value: 8, label: "8+" },
+                        { value: 7, label: "7+" },
+                        { value: 6, label: "6+" },
+                        { value: 5, label: "5+" },
+                        { value: "unrated" as const, label: "Unrated only" },
+                      ].map((opt) => (
+                        <button
+                          type="button"
+                          key={String(opt.value)}
+                          className={ratingFilter === opt.value ? "active" : ""}
+                          onClick={() => {
+                            setRatingFilter(opt.value);
+                            close();
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </FilterPopover>
+
+                <button
+                  type="button"
+                  className={`filter-toggle-pill${pendingVotesOnly ? " active" : ""}`}
+                  title="Only show media where someone who watched hasn't voted yet"
+                  onClick={() => setPendingVotesOnly((v) => !v)}
+                >
+                  Pending votes
+                </button>
               </div>
 
               {isGroupOwner && !showAddMedia && (
@@ -833,8 +940,10 @@ export function GroupPage() {
               </ol>
             ) : (
             <ol className="media-ranking-list">
-                {media.length > 0 && rankedMedia.length === 0 && mediaSearch && (
-                  <p className="muted">No media matches "{mediaSearchInput}".</p>
+                {media.length > 0 && rankedMedia.length === 0 && (
+                  <p className="muted">
+                    {mediaSearch ? `No media matches "${mediaSearchInput}".` : "No media matches the current filters."}
+                  </p>
                 )}
                 {visibleRankedMedia.map((m, i) => {
                   const watchedList = m.watchers.filter((w) => w.hasWatched);
