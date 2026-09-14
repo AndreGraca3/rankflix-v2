@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import confetti from "canvas-confetti";
 import { api } from "../api/client";
 import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, PagedGroupMedia, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -144,6 +145,41 @@ export function GroupPage() {
       return rb - ra;
     });
 
+  // "Fully rated" = every watcher who's marked as having watched it has also rated it - i.e.
+  // there's no one left whose vote could still change its score.
+  const isFullyRated = (m: GroupMedia): boolean => {
+    const watched = m.watchers.filter((w) => w.hasWatched);
+    return watched.length > 0 && watched.every((w) => w.rating !== null);
+  };
+
+  const fireConfetti = () => {
+    confetti({
+      particleCount: 140,
+      spread: 80,
+      startVelocity: 45,
+      origin: { y: 0.3 },
+      zIndex: 3000,
+    });
+  };
+
+  // Celebrates the exact moment a media item's last outstanding rating comes in AND that
+  // completion pushes it into the #1 spot under the current ranking - not just any rating, and
+  // not a media that was already sitting at #1 before this change. Returns a toast message (and
+  // fires the confetti burst as a side effect) when that happens, otherwise null.
+  const getNewNumberOneCelebration = (tmdbId: number, prevList: GroupMedia[], nextSortedList: GroupMedia[]): string | null => {
+    const prevItem = prevList.find((m) => m.tmdbId === tmdbId);
+    const nextItem = nextSortedList.find((m) => m.tmdbId === tmdbId);
+    if (!prevItem || !nextItem) return null;
+    if (isFullyRated(prevItem) || !isFullyRated(nextItem)) return null;
+
+    const prevSorted = sortMediaByRanking(prevList);
+    if (prevSorted[0]?.tmdbId === tmdbId) return null; // was already #1, nothing new to celebrate
+    if (nextSortedList[0]?.tmdbId !== tmdbId) return null;
+
+    fireConfetti();
+    return `🎉 "${nextItem.title}" is now #1!`;
+  };
+
   // Refetches just one media item and swaps it into the current list in place (re-sorted by the
   // current ranking so its rank position stays accurate) - used for watcher/rating/voting-duration
   // changes, which only affect a single already-loaded row and don't need the whole (possibly
@@ -154,7 +190,12 @@ export function GroupPage() {
     api
       .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
       .then((updated) => {
-        setMedia((cur) => sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m))));
+        setMedia((cur) => {
+          const nextList = sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
+          const celebration = getNewNumberOneCelebration(tmdbId, cur, nextList);
+          if (celebration) setSuccessToast(celebration);
+          return nextList;
+        });
       })
       .catch(() => {
         setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
@@ -386,24 +427,24 @@ export function GroupPage() {
   const submitRating = async (tmdbId: number, rating: number, comment?: string) => {
     const prevMedia = media;
     const myId = user?.id;
-    setMedia((cur) =>
-      sortMediaByRanking(
-        cur.map((m) => {
-          if (m.tmdbId !== tmdbId) return m;
-          const watchers = m.watchers.map((w) =>
-            w.userId === myId ? { ...w, rating, comment: comment ?? null, hasWatched: true } : w
-          );
-          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-          return { ...m, watchers, averageRating: computeAverage(ratings) };
-        })
-      )
+    const nextMedia = sortMediaByRanking(
+      prevMedia.map((m) => {
+        if (m.tmdbId !== tmdbId) return m;
+        const watchers = m.watchers.map((w) =>
+          w.userId === myId ? { ...w, rating, comment: comment ?? null, hasWatched: true } : w
+        );
+        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+        return { ...m, watchers, averageRating: computeAverage(ratings) };
+      })
     );
+    const celebration = getNewNumberOneCelebration(tmdbId, prevMedia, nextMedia);
+    setMedia(nextMedia);
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/reviews`, {
         rating,
         comment: comment || undefined,
       });
-      setSuccessToast("Rating saved");
+      setSuccessToast(celebration ?? "Rating saved");
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
