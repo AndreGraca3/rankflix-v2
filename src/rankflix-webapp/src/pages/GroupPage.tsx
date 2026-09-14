@@ -854,13 +854,11 @@ export function GroupPage() {
                           )}
                         </div>
                         <div className="media-ranking-info">
-                          <div className="media-ranking-title-row">
-                            <span className="media-card-title">
-                              {m.title}
-                              {m.year ? <span className="media-modal-year"> ({m.year})</span> : null}
-                            </span>
+                          <span className="media-card-title">
+                            {m.title}
+                            {m.year ? <span className="media-modal-year"> ({m.year})</span> : null}{" "}
                             <span className="media-modal-type-badge">{m.type}</span>
-                          </div>
+                          </span>
                           <span className="media-ranking-meta muted">
                             <span className="media-ranking-meta-item">
                               {ratedCount}/{watchedList.length} rated

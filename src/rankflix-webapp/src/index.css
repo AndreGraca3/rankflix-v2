@@ -2748,19 +2748,8 @@ button.secondary:hover {
   text-overflow: ellipsis;
 }
 
-.media-ranking-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.media-ranking-title-row .media-card-title {
-  min-width: 0;
-}
-
-.media-ranking-title-row .media-modal-type-badge {
-  flex-shrink: 0;
+.media-ranking-info .media-card-title .media-modal-type-badge {
+  vertical-align: middle;
 }
 
 .media-ranking-meta {
