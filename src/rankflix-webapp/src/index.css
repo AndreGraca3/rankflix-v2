@@ -869,8 +869,8 @@ button.link:hover {
 }
 
 .group-header-poster {
-  width: 108px;
-  height: 108px;
+  width: 128px;
+  height: 128px;
   border-radius: var(--radius);
   object-fit: cover;
   border: 1px solid var(--border);
@@ -2139,8 +2139,8 @@ section {
 
 .avatar-edit-trigger {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 112px;
+  height: 112px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -2158,7 +2158,7 @@ section {
   border-radius: 50%;
   background: rgba(11, 11, 13, 0.55);
   color: #fff;
-  font-size: 26px;
+  font-size: 28px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
@@ -3764,8 +3764,8 @@ button.secondary:hover {
   }
 
   .group-header-poster {
-    width: 56px;
-    height: 56px;
+    width: 68px;
+    height: 68px;
   }
 
   .group-grid {

@@ -89,7 +89,7 @@ export function ProfilePage() {
                 onImage={(dataUrl) => setAvatarUrl(dataUrl)}
                 renderTrigger={(open) => (
                   <button type="button" className="avatar-edit-trigger" onClick={open} title="Change avatar">
-                    <Avatar name={displayName || user.displayName} avatarUrl={avatarUrl} size={96} />
+                    <Avatar name={displayName || user.displayName} avatarUrl={avatarUrl} size={112} />
                     <span className="avatar-edit-overlay">✎</span>
                   </button>
                 )}
