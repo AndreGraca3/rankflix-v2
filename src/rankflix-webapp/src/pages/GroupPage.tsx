@@ -36,6 +36,13 @@ export function GroupPage() {
   const isAdmin = user?.role === "admin";
   const [group, setGroup] = useState<Group | null>(null);
   const [media, setMedia] = useState<GroupMedia[]>([]);
+  // Kept in sync with `media` via effect below so async callbacks (SSE patches, post-save
+  // resyncs) can read the *current* list/length without depending on a stale render's closure.
+  const mediaRef = useRef<GroupMedia[]>([]);
+  // Bumped by every operation that replaces the whole visible window (initial/page-1 load or a
+  // ranking resync); a resync whose sequence number was superseded by a newer one before it
+  // resolved is discarded instead of applied, so out-of-order responses can't clobber fresher data.
+  const mediaWindowSeqRef = useRef(0);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [mediaTotalCount, setMediaTotalCount] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
@@ -90,14 +97,18 @@ export function GroupPage() {
 
   // All filtering/sorting/pagination for the media list now happens server-side (see
   // MediaService.GetGroupMediaAsync) - this just fetches one page at a time and appends
-  // (skip > 0) or replaces (skip === 0) the accumulated `media` list.
+  // (skip > 0) or replaces (skip === 0) the accumulated `media` list. A page-1 (skip === 0)
+  // fetch bumps `mediaWindowSeqRef` and is only applied if still the latest such request when
+  // it resolves, so it can't race with (and lose to, or clobber) a concurrent ranking resync.
   const loadMedia = (skip: number, take = MEDIA_PAGE_SIZE) => {
     if (!groupId) return Promise.resolve();
     const isFirstPage = skip === 0;
     if (isFirstPage) setMediaLoading(true);
+    const seq = isFirstPage ? ++mediaWindowSeqRef.current : mediaWindowSeqRef.current;
     return api
       .get<PagedGroupMedia>(`/api/groups/${groupId}/media?${buildMediaQuery(skip, take)}`)
       .then((res) => {
+        if (isFirstPage && seq !== mediaWindowSeqRef.current) return;
         setMedia((cur) => (isFirstPage ? res.items : [...cur, ...res.items]));
         setMediaTotalCount(res.totalCount);
         setMediaHasMore(res.hasMore);
@@ -125,26 +136,6 @@ export function GroupPage() {
     loadMedia(0, MEDIA_PAGE_SIZE);
   };
 
-  // Mirrors the backend's ranking sort (MediaService.GetGroupMediaAsync): highest-rated first
-  // from whichever ranking-member's perspective is active, unrated items last, stable otherwise.
-  // Used to re-sort the already-loaded list locally after a rating/watch patch so the affected
-  // row's rank position updates immediately instead of staying stuck where it loaded.
-  const ratingOfForRanking = (m: GroupMedia): number | null => {
-    if (rankingMemberId === "average") return m.averageRating;
-    if (typeof rankingMemberId === "number") return m.watchers.find((w) => w.userId === rankingMemberId)?.rating ?? null;
-    return m.watchers.find((w) => w.discordId === rankingMemberId)?.rating ?? null;
-  };
-
-  const sortMediaByRanking = (list: GroupMedia[]): GroupMedia[] =>
-    [...list].sort((a, b) => {
-      const ra = ratingOfForRanking(a);
-      const rb = ratingOfForRanking(b);
-      if (ra === null && rb === null) return 0;
-      if (ra === null) return 1;
-      if (rb === null) return -1;
-      return rb - ra;
-    });
-
   // "Fully rated" = every watcher who's marked as having watched it has also rated it - i.e.
   // there's no one left whose vote could still change its score.
   const isFullyRated = (m: GroupMedia): boolean => {
@@ -163,8 +154,8 @@ export function GroupPage() {
   };
 
   // True when `tmdbId` is both fully rated and sitting in the #1 slot within `list`. `list` is
-  // expected to already be in ranking order (both the server's initial page and every local
-  // patch keep `media` sorted that way), so `list[0]` is genuinely the current #1.
+  // expected to already be in ranking order (both the server's initial page and every ranking
+  // resync return items pre-sorted), so `list[0]` is genuinely the current #1.
   const isTopAndFullyRated = (list: GroupMedia[], tmdbId: number): boolean => {
     const item = list.find((m) => m.tmdbId === tmdbId);
     return !!item && isFullyRated(item) && list[0]?.tmdbId === tmdbId;
@@ -185,40 +176,56 @@ export function GroupPage() {
     return `🎉 "${title}" is now #1!`;
   };
 
-  // Refetches just one media item and swaps it into the current list in place (re-sorted by the
-  // current ranking so its rank position stays accurate) - used for watcher/rating/voting-duration
-  // changes, which only affect a single already-loaded row. If the item isn't currently loaded
-  // (e.g. a brand-new, still-unrated item that sorted past the first page and was never scrolled
-  // into), it's appended instead of silently dropped - otherwise every vote on a fresh media item
-  // would look like nothing happened for anyone who hasn't scrolled that far yet. If the item's
-  // gone entirely (e.g. removed by someone else at the same instant), it's dropped locally.
+  // Re-fetches the *entire currently-loaded window* (same skip=0, same count as what's already
+  // loaded, same filters) fresh from the server and replaces `media` with it wholesale, instead
+  // of trying to re-sort or splice a single patched item into the existing local list.
+  //
+  // Why: the server is the only place that knows the true rank of an item relative to the *whole*
+  // group's media, not just whatever subset happens to be loaded locally. A rating change can move
+  // an item across a page boundary in either direction (e.g. a low rating should sink it past the
+  // end of what's loaded, or a high rating should pull an off-page item onto the visible page) -
+  // no amount of client-side re-sorting of a partial list can get that right, since the items it'd
+  // need to compare against aren't loaded yet. This is what caused the earlier bug where a newly
+  // 0.5-rated item briefly sat at the wrong local position until a scroll-triggered fetch corrected
+  // it. Resyncing the whole window from the server after every rating/watch/duration change is the
+  // only way to guarantee the visible order is always exactly correct, at the cost of one extra
+  // request per change (fine at this app's scale).
+  //
+  // `mediaWindowSeqRef` guards against this resync's response arriving after a newer page-1
+  // load/resync already replaced `media` with something else - stale responses are discarded.
+  const resyncMediaWindow = (options?: { tmdbId?: number; celebrationPrevList?: GroupMedia[]; fallbackToast?: string }) => {
+    if (!groupId) return Promise.resolve();
+    const take = Math.max(mediaRef.current.length, MEDIA_PAGE_SIZE);
+    const seq = ++mediaWindowSeqRef.current;
+    return api
+      .get<PagedGroupMedia>(`/api/groups/${groupId}/media?${buildMediaQuery(0, take)}`)
+      .then((res) => {
+        if (seq !== mediaWindowSeqRef.current) return;
+        setMedia(res.items);
+        setMediaTotalCount(res.totalCount);
+        setMediaHasMore(res.hasMore);
+        setAvailableGenres(res.availableGenres);
+        setTotalMediaInGroup(res.totalMediaInGroup);
+        if (options?.tmdbId === undefined) return;
+        let celebration: string | null = null;
+        try {
+          celebration = getNewNumberOneCelebration(options.tmdbId, options.celebrationPrevList ?? mediaRef.current, res.items);
+        } catch (err) {
+          console.error("Celebration check failed", err);
+        }
+        if (celebration) setSuccessToast(celebration);
+        else if (options.fallbackToast) setSuccessToast(options.fallbackToast);
+      })
+      .catch(() => {});
+  };
+
+  // The actual reordering for watcher/rating/voting-duration changes is handled by
+  // resyncMediaWindow above, called with the pre-change list snapshot so the celebration check
+  // still compares true before/after state. If the item was removed by someone else at the same
+  // instant, the resynced window simply won't contain it anymore - no separate handling needed.
   const patchMediaItem = (tmdbId: number) => {
     if (!groupId) return;
-    api
-      .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
-      .then((updated) => {
-        // The celebration check must run *inside* this updater, using its own `cur`/`nextList` -
-        // React 18 batches state updates from promise callbacks, so the updater here doesn't run
-        // synchronously right after setMedia() is called; reading a variable meant to be filled by
-        // it immediately afterwards would see it still empty and silently never celebrate. It's
-        // still wrapped in try/catch so a throw there can never abort the list update itself.
-        setMedia((cur) => {
-          const alreadyLoaded = cur.some((m) => m.tmdbId === tmdbId);
-          const nextList = sortMediaByRanking(
-            alreadyLoaded ? cur.map((m) => (m.tmdbId === tmdbId ? updated : m)) : [...cur, updated]
-          );
-          try {
-            const celebration = getNewNumberOneCelebration(tmdbId, cur, nextList);
-            if (celebration) setSuccessToast(celebration);
-          } catch (err) {
-            console.error("Celebration check failed", err);
-          }
-          return nextList;
-        });
-      })
-      .catch(() => {
-        setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
-      });
+    resyncMediaWindow({ tmdbId, celebrationPrevList: mediaRef.current });
   };
 
   // Drops one item from the local list without a network round-trip (used for removals, which
@@ -228,6 +235,12 @@ export function GroupPage() {
     setMediaTotalCount((c) => Math.max(0, c - 1));
     setTotalMediaInGroup((c) => Math.max(0, c - 1));
   };
+
+  // Keep a ref mirror of `media` up to date for async callbacks (SSE handlers, post-save
+  // resyncs) that need the *current* list/length without capturing a stale render's closure.
+  useEffect(() => {
+    mediaRef.current = media;
+  }, [media]);
 
   useEffect(() => {
     loadGroupAndStats();
@@ -405,22 +418,23 @@ export function GroupPage() {
 
   const setWatched = async (tmdbId: number, userId: number, watched: boolean) => {
     const prevMedia = media;
+    // Optimistic update only touches this item's own fields, not its list position - the
+    // authoritative position (which can move across page boundaries) comes from
+    // resyncMediaWindow once the save succeeds; see its comment for why.
     setMedia((cur) =>
-      sortMediaByRanking(
-        cur.map((m) => {
-          if (m.tmdbId !== tmdbId) return m;
-          // Un-marking as watched also clears any rating server-side, so mirror that here too.
-          const watchers = m.watchers.map((w) =>
-            w.userId === userId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
-          );
-          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-          return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
-        })
-      )
+      cur.map((m) => {
+        if (m.tmdbId !== tmdbId) return m;
+        // Un-marking as watched also clears any rating server-side, so mirror that here too.
+        const watchers = m.watchers.map((w) =>
+          w.userId === userId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
+        );
+        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+        return { ...m, watchers, averageRating: computeAverage(ratings) };
+      })
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch/${userId}?watched=${watched}`);
-      setSuccessToast(watched ? "Marked as watched" : "Removed watched status");
+      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
@@ -431,20 +445,18 @@ export function GroupPage() {
   const setWatchedPending = async (tmdbId: number, discordId: string, watched: boolean) => {
     const prevMedia = media;
     setMedia((cur) =>
-      sortMediaByRanking(
-        cur.map((m) => {
-          if (m.tmdbId !== tmdbId) return m;
-          const watchers = m.watchers.map((w) =>
-            w.discordId === discordId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
-          );
-          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-          return { ...m, watchers, averageRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null };
-        })
-      )
+      cur.map((m) => {
+        if (m.tmdbId !== tmdbId) return m;
+        const watchers = m.watchers.map((w) =>
+          w.discordId === discordId ? { ...w, hasWatched: watched, ...(watched ? {} : { rating: null, comment: null }) } : w
+        );
+        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+        return { ...m, watchers, averageRating: computeAverage(ratings) };
+      })
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch-pending/${discordId}?watched=${watched}`);
-      setSuccessToast(watched ? "Marked as watched" : "Removed watched status");
+      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
@@ -455,8 +467,10 @@ export function GroupPage() {
   const submitRating = async (tmdbId: number, rating: number, comment?: string) => {
     const prevMedia = media;
     const myId = user?.id;
-    const nextMedia = sortMediaByRanking(
-      prevMedia.map((m) => {
+    // Optimistic update only touches this item's own fields, not its list position - see
+    // resyncMediaWindow's comment for why the actual position can only come from the server.
+    setMedia((cur) =>
+      cur.map((m) => {
         if (m.tmdbId !== tmdbId) return m;
         const watchers = m.watchers.map((w) =>
           w.userId === myId ? { ...w, rating, comment: comment ?? null, hasWatched: true } : w
@@ -465,22 +479,12 @@ export function GroupPage() {
         return { ...m, watchers, averageRating: computeAverage(ratings) };
       })
     );
-    // Apply the reordered list first - the celebration/confetti check is a best-effort extra
-    // and must never be able to throw *before* setMedia runs, which would otherwise silently
-    // skip the reorder entirely along with the celebration.
-    setMedia(nextMedia);
-    let celebration: string | null = null;
-    try {
-      celebration = getNewNumberOneCelebration(tmdbId, prevMedia, nextMedia);
-    } catch (err) {
-      console.error("Celebration check failed", err);
-    }
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/reviews`, {
         rating,
         comment: comment || undefined,
       });
-      setSuccessToast(celebration ?? "Rating saved");
+      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: "Rating saved" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
@@ -491,18 +495,16 @@ export function GroupPage() {
   const removeReview = async (tmdbId: number, userId: number) => {
     const prevMedia = media;
     setMedia((cur) =>
-      sortMediaByRanking(
-        cur.map((m) => {
-          if (m.tmdbId !== tmdbId) return m;
-          const watchers = m.watchers.map((w) => (w.userId === userId ? { ...w, rating: null, comment: null } : w));
-          const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
-          return { ...m, watchers, averageRating: computeAverage(ratings) };
-        })
-      )
+      cur.map((m) => {
+        if (m.tmdbId !== tmdbId) return m;
+        const watchers = m.watchers.map((w) => (w.userId === userId ? { ...w, rating: null, comment: null } : w));
+        const ratings = watchers.map((w) => w.rating).filter((r): r is number => r !== null);
+        return { ...m, watchers, averageRating: computeAverage(ratings) };
+      })
     );
     try {
       await api.delete(`/api/groups/${groupId}/media/${tmdbId}/reviews/${userId}`);
-      setSuccessToast("Rating removed");
+      resyncMediaWindow({ fallbackToast: "Rating removed" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
