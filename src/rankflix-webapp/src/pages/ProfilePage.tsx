@@ -4,6 +4,7 @@ import { NavBar } from "../components/NavBar";
 import { Avatar } from "../components/Avatar";
 import { ImageUploadButton } from "../components/ImageUploadButton";
 import { Toast } from "../components/Toast";
+import { StatsCardSkeleton } from "../components/StatsCardSkeleton";
 import { api } from "../api/client";
 import type { UserStats } from "../api/types";
 
@@ -132,6 +133,7 @@ export function ProfilePage() {
         </div>
 
           <div className="profile-cards-row">
+          {!stats && <StatsCardSkeleton />}
           {stats && (
           <div className="card stats-card">
             <h2>Your stats</h2>

@@ -3,9 +3,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Group } from "../api/types";
 import { NavBar } from "../components/NavBar";
-import { Spinner } from "../components/Spinner";
 import { Toast } from "../components/Toast";
 import { GroupPoster, GroupPosterEditor, GroupEditForm } from "../components/GroupEditor";
+import { GroupCardSkeleton } from "../components/GroupCardSkeleton";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
 import { EmptyState } from "../components/EmptyState";
 import { Modal } from "../components/Modal";
@@ -205,7 +205,13 @@ export function DashboardPage() {
             {displayedGroups.length} group{displayedGroups.length === 1 ? "" : "s"}
           </p>
         )}
-        {loading && <Spinner />}
+        {loading && (
+          <div className="group-grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <GroupCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
         {!loading && displayedGroups.length === 0 && (
           <EmptyState
             icon="🎬"
@@ -218,7 +224,7 @@ export function DashboardPage() {
           />
         )}
         <div className="group-grid">
-          {visibleGroups.map((g) => (
+          {!loading && visibleGroups.map((g) => (
             <div className="group-card" key={g.id}>
               <Link to={`/groups/${g.id}`} className="group-card-link">
                 <div className="group-poster-wrap">

@@ -25,6 +25,8 @@ import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
 import { formatWatchTime } from "../utils/time";
 
+const MEDIA_PAGE_SIZE = 30;
+
 export function GroupPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
@@ -72,7 +74,7 @@ export function GroupPage() {
     watchedByUserIds: (number | string)[];
   }>({ tmdbId: "", title: "", type: "movie", posterUrl: null, votingDurationHours: "", watchedByUserIds: [] });
 
-  const buildMediaQuery = (skip: number, take = 30) => {
+  const buildMediaQuery = (skip: number, take = MEDIA_PAGE_SIZE) => {
     const params = new URLSearchParams();
     params.set("skip", String(skip));
     params.set("take", String(take));
@@ -89,7 +91,7 @@ export function GroupPage() {
   // All filtering/sorting/pagination for the media list now happens server-side (see
   // MediaService.GetGroupMediaAsync) - this just fetches one page at a time and appends
   // (skip > 0) or replaces (skip === 0) the accumulated `media` list.
-  const loadMedia = (skip: number, take = 30) => {
+  const loadMedia = (skip: number, take = MEDIA_PAGE_SIZE) => {
     if (!groupId) return Promise.resolve();
     const isFirstPage = skip === 0;
     if (isFirstPage) setMediaLoading(true);
@@ -119,7 +121,7 @@ export function GroupPage() {
   // preserve however many pages were scrolled into), which keeps the refresh logic simple.
   const load = () => {
     loadGroupAndStats();
-    loadMedia(0, 30);
+    loadMedia(0, MEDIA_PAGE_SIZE);
   };
 
   useEffect(() => {
@@ -131,7 +133,7 @@ export function GroupPage() {
   // (covers the very first fetch on mount too, since groupId goes from undefined to set).
   useEffect(() => {
     if (!groupId) return;
-    loadMedia(0, 30);
+    loadMedia(0, MEDIA_PAGE_SIZE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
 
@@ -248,7 +250,7 @@ export function GroupPage() {
   // Media itself is now paginated server-side (see loadMedia above) - this just triggers
   // fetching the next server page when the sentinel scrolls into view.
   const { sentinelRef: mediaSentinelRef } = useInfiniteScroll({
-    next: () => loadMedia(media.length, 30),
+    next: () => loadMedia(media.length, MEDIA_PAGE_SIZE),
     hasMore: mediaHasMore,
     dataLength: media.length,
     scrollThreshold: "300px",
@@ -953,11 +955,12 @@ export function GroupPage() {
                       : typeof rankingMemberId === "number"
                         ? m.watchers.find((w) => w.userId === rankingMemberId)?.rating ?? null
                         : m.watchers.find((w) => w.discordId === rankingMemberId)?.rating ?? null;
+                  const posInPage = i % MEDIA_PAGE_SIZE;
                   return (
                     <li
                       key={`${m.tmdbId}:${mediaFilterSignature}`}
                       className="media-row-enter"
-                      style={{ animationDelay: `${60 + Math.min(i, 15) * 35}ms` }}
+                      style={{ animationDelay: `${Math.min(posInPage, 15) * 25}ms` }}
                     >
                       <button type="button" className="media-ranking-row" onClick={() => setSelectedTmdbId(m.tmdbId)}>
                         <span className="media-ranking-number">#{i + 1}</span>

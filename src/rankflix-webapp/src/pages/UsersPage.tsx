@@ -5,6 +5,7 @@ import { NavBar } from "../components/NavBar";
 import { Avatar } from "../components/Avatar";
 import { Toast } from "../components/Toast";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
+import { UserRowSkeleton } from "../components/UserRowSkeleton";
 import { Modal } from "../components/Modal";
 import { usePresence } from "../presence/PresenceContext";
 import { useInfiniteList } from "../hooks/useInfiniteList";
@@ -12,6 +13,7 @@ import { useInfiniteList } from "../hooks/useInfiniteList";
 export function UsersPage() {
   const { isOnline } = usePresence();
   const [users, setUsers] = useState<UserListItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ variant: "success" | "error"; title: string } | null>(null);
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -24,7 +26,8 @@ export function UsersPage() {
     api
       .get<UserListItem[]>("/api/users")
       .then(setUsers)
-      .catch((e) => setToast({ variant: "error", title: e instanceof Error ? e.message : "Failed to load users" }));
+      .catch((e) => setToast({ variant: "error", title: e instanceof Error ? e.message : "Failed to load users" }))
+      .finally(() => setLoading(false));
 
   useEffect(() => {
     loadUsers();
@@ -120,7 +123,8 @@ export function UsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleUsers.map((u) => (
+                {loading && Array.from({ length: 8 }).map((_, i) => <UserRowSkeleton key={i} />)}
+                {!loading && visibleUsers.map((u) => (
                   <tr key={u.id} className="users-row" onClick={() => openEdit(u)}>
                     <td>
                       <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={28} online={isOnline(u.id)} />
