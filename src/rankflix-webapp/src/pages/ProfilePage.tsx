@@ -10,13 +10,11 @@ import type { UserStats } from "../api/types";
 export function ProfilePage() {
   const { user, updateProfile, changePassword } = useAuth();
   const [username, setUsername] = useState(user?.username ?? "");
-  const [usernameSubmitting, setUsernameSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
-  const [editingDisplayName, setEditingDisplayName] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? null);
+  const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [avatarSaving, setAvatarSaving] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -32,34 +30,25 @@ export function ProfilePage() {
 
   if (!user) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setSubmitting(true);
-    try {
-      await updateProfile({ displayName });
-      setSuccess("Profile updated");
-      setEditingDisplayName(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const accountDirty =
+    username !== user.username || displayName !== user.displayName || avatarUrl !== user.avatarUrl;
 
-  const handleUsernameSubmit = async (e: React.FormEvent) => {
+  const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setUsernameSubmitting(true);
+    setAccountSubmitting(true);
     try {
-      await updateProfile({ username });
-      setSuccess("Username updated");
+      const patch: { username?: string; displayName?: string; avatarUrl?: string } = {};
+      if (username !== user.username) patch.username = username;
+      if (displayName !== user.displayName) patch.displayName = displayName;
+      if (avatarUrl !== user.avatarUrl) patch.avatarUrl = avatarUrl ?? "";
+      await updateProfile(patch);
+      setSuccess("Profile updated");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
-      setUsernameSubmitting(false);
+      setAccountSubmitting(false);
     }
   };
 
@@ -85,18 +74,6 @@ export function ProfilePage() {
     }
   };
 
-  const handleAvatarChange = async (dataUrl: string) => {
-    setAvatarSaving(true);
-    setError(null);
-    try {
-      await updateProfile({ avatarUrl: dataUrl });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update avatar");
-    } finally {
-      setAvatarSaving(false);
-    }
-  };
-
   return (
     <div>
       <NavBar />
@@ -104,71 +81,37 @@ export function ProfilePage() {
         <div className="profile-sections">
         <div className="card account-card">
           <h2>Account</h2>
-          <div className="account-identity-row">
-            <ImageUploadButton
-              aspect={1}
-              round
-              onImage={handleAvatarChange}
-              renderTrigger={(open) => (
-                <button
-                  type="button"
-                  className="avatar-edit-trigger"
-                  onClick={open}
-                  disabled={avatarSaving}
-                  title="Change avatar"
-                >
-                  <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size={64} />
-                  <span className="avatar-edit-overlay">{avatarSaving ? "…" : "✎"}</span>
-                </button>
-              )}
-            />
-            <div className="account-identity-info">
-              {editingDisplayName ? (
-                <form className="username-edit-form" onSubmit={handleSubmit}>
+          <form onSubmit={handleAccountSubmit}>
+            <div className="account-identity-row">
+              <ImageUploadButton
+                aspect={1}
+                round
+                onImage={(dataUrl) => setAvatarUrl(dataUrl)}
+                renderTrigger={(open) => (
+                  <button type="button" className="avatar-edit-trigger" onClick={open} title="Change avatar">
+                    <Avatar name={displayName || user.displayName} avatarUrl={avatarUrl} size={64} />
+                    <span className="avatar-edit-overlay">✎</span>
+                  </button>
+                )}
+              />
+              <div className="account-identity-info">
+                <label>
+                  Display name
                   <input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    autoFocus
                     required
                     minLength={1}
                     maxLength={60}
                   />
-                  <button type="submit" disabled={submitting}>
-                    {submitting ? "Saving…" : "Save"}
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => {
-                      setDisplayName(user.displayName);
-                      setEditingDisplayName(false);
-                      setError(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </form>
-              ) : (
-                <h1>
-                  {user.displayName}
-                  <button
-                    type="button"
-                    className="username-edit-btn"
-                    title="Change display name"
-                    onClick={() => setEditingDisplayName(true)}
-                  >
-                    ✎
-                  </button>
-                </h1>
-              )}
-              <div className="badge-row">
-                <span className="badge">{user.role}</span>
-                {user.discordId && <span className="badge badge-outline">Discord: {user.discordId}</span>}
+                </label>
+                <div className="badge-row">
+                  <span className="badge">{user.role}</span>
+                  {user.discordId && <span className="badge badge-outline">Discord: {user.discordId}</span>}
+                </div>
               </div>
             </div>
-          </div>
 
-          <form className="account-username-form" onSubmit={handleUsernameSubmit}>
             <label>
               Username
               <input
@@ -181,8 +124,9 @@ export function ProfilePage() {
               />
             </label>
             <p className="muted account-username-hint">Private — used only to sign in, never shown to other users.</p>
-            <button type="submit" disabled={usernameSubmitting || username === user.username}>
-              {usernameSubmitting ? "Saving…" : "Save username"}
+
+            <button type="submit" disabled={accountSubmitting || !accountDirty}>
+              {accountSubmitting ? "Saving…" : "Save changes"}
             </button>
           </form>
         </div>
