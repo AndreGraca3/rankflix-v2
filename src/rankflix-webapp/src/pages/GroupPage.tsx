@@ -153,27 +153,63 @@ export function GroupPage() {
     });
   };
 
-  // True when `tmdbId` is both fully rated and sitting in the #1 slot within `list`. `list` is
-  // expected to already be in ranking order (both the server's initial page and every ranking
-  // resync return items pre-sorted), so `list[0]` is genuinely the current #1.
-  const isTopAndFullyRated = (list: GroupMedia[], tmdbId: number): boolean => {
-    const item = list.find((m) => m.tmdbId === tmdbId);
-    return !!item && isFullyRated(item) && list[0]?.tmdbId === tmdbId;
+  // Tracks the group's *true* current #1 (highest-ranked, fully-rated) item from the active
+  // ranking perspective, independent of any display filter/search - so a search/genre/rating/
+  // voting-status filter narrowing the visible list can never make an item merely #1-of-the-
+  // filtered-subset look like a real #1 (e.g. an item that's genuinely #2 overall, but the only
+  // other item matching an active filter happens to be rated lower, would otherwise wrongly look
+  // like #1 within that filtered view). `rankingMemberId` is kept as the only query param here
+  // since it's a legitimate ranking axis (whose ratings to sort by), not a filter that shrinks
+  // the candidate pool.
+  const trueTopIdRef = useRef<number | null>(null);
+
+  const fetchTrueTopFullyRated = async (): Promise<GroupMedia | null> => {
+    if (!groupId) return null;
+    const params = new URLSearchParams();
+    params.set("skip", "0");
+    params.set("take", "1");
+    if (rankingMemberId !== "average") params.set("rankingMember", String(rankingMemberId));
+    const res = await api.get<PagedGroupMedia>(`/api/groups/${groupId}/media?${params.toString()}`);
+    const top = res.items[0];
+    return top && isFullyRated(top) ? top : null;
   };
 
-  // Celebrates the moment a media item flips into "fully rated AND #1" as a *result* of this
-  // update - i.e. it wasn't already in that state right before. Comparing state-to-state (rather
-  // than "was this the first-ever rating") means re-rating something down and then back up to
-  // #1 celebrates again each time, not just the very first time it's completed. `prevList` not
-  // containing the item at all (e.g. a passive viewer who never had a brand-new item loaded yet)
-  // is naturally treated as "wasn't already top", so this still fires for that case too.
-  const getNewNumberOneCelebration = (tmdbId: number, prevList: GroupMedia[], nextSortedList: GroupMedia[]): string | null => {
-    if (isTopAndFullyRated(prevList, tmdbId)) return null;
-    if (!isTopAndFullyRated(nextSortedList, tmdbId)) return null;
+  // Silently (re)establishes the true-#1 baseline whenever the group or ranking perspective
+  // changes, so the very first live update afterwards has something correct to compare against
+  // instead of possibly celebrating (or failing to celebrate) based on a stale/absent baseline.
+  useEffect(() => {
+    if (!groupId) return;
+    fetchTrueTopFullyRated()
+      .then((top) => {
+        trueTopIdRef.current = top?.tmdbId ?? null;
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, rankingMemberId]);
 
-    fireConfetti();
-    const title = nextSortedList.find((m) => m.tmdbId === tmdbId)?.title ?? "It";
-    return `🎉 "${title}" is now #1!`;
+  // Celebrates the moment `tmdbId` becomes the group's true #1 (fully rated, highest-ranked
+  // overall) as a *result* of the update that just happened - i.e. it wasn't already the true #1
+  // beforehand. Always re-derives "true #1" from a dedicated, filter-independent request rather
+  // than the (possibly filtered/searched) locally-loaded list, so an active filter can't produce
+  // a false celebration for an item that only looks like #1 within a narrowed-down view. Returns
+  // whether it celebrated, so callers can fall back to a plain toast when it didn't.
+  const checkCelebration = async (tmdbId: number): Promise<boolean> => {
+    if (!groupId) return false;
+    const prevTopId = trueTopIdRef.current;
+    let top: GroupMedia | null = null;
+    try {
+      top = await fetchTrueTopFullyRated();
+    } catch (err) {
+      console.error("Top-rank check failed", err);
+      return false;
+    }
+    trueTopIdRef.current = top?.tmdbId ?? null;
+    if (top && top.tmdbId === tmdbId && prevTopId !== tmdbId) {
+      fireConfetti();
+      setSuccessToast(`🎉 "${top.title}" is now #1!`);
+      return true;
+    }
+    return false;
   };
 
   // Re-fetches the *entire currently-loaded window* (same skip=0, same count as what's already
@@ -193,39 +229,31 @@ export function GroupPage() {
   //
   // `mediaWindowSeqRef` guards against this resync's response arriving after a newer page-1
   // load/resync already replaced `media` with something else - stale responses are discarded.
-  const resyncMediaWindow = (options?: { tmdbId?: number; celebrationPrevList?: GroupMedia[]; fallbackToast?: string }) => {
+  const resyncMediaWindow = (options?: { tmdbId?: number; fallbackToast?: string }) => {
     if (!groupId) return Promise.resolve();
     const take = Math.max(mediaRef.current.length, MEDIA_PAGE_SIZE);
     const seq = ++mediaWindowSeqRef.current;
     return api
       .get<PagedGroupMedia>(`/api/groups/${groupId}/media?${buildMediaQuery(0, take)}`)
-      .then((res) => {
+      .then(async (res) => {
         if (seq !== mediaWindowSeqRef.current) return;
         setMedia(res.items);
         setMediaTotalCount(res.totalCount);
         setMediaHasMore(res.hasMore);
         setAvailableGenres(res.availableGenres);
         setTotalMediaInGroup(res.totalMediaInGroup);
-        if (options?.tmdbId === undefined) return;
-        let celebration: string | null = null;
-        try {
-          celebration = getNewNumberOneCelebration(options.tmdbId, options.celebrationPrevList ?? mediaRef.current, res.items);
-        } catch (err) {
-          console.error("Celebration check failed", err);
-        }
-        if (celebration) setSuccessToast(celebration);
-        else if (options.fallbackToast) setSuccessToast(options.fallbackToast);
+        const celebrated = options?.tmdbId !== undefined ? await checkCelebration(options.tmdbId) : false;
+        if (!celebrated && options?.fallbackToast) setSuccessToast(options.fallbackToast);
       })
       .catch(() => {});
   };
 
   // The actual reordering for watcher/rating/voting-duration changes is handled by
-  // resyncMediaWindow above, called with the pre-change list snapshot so the celebration check
-  // still compares true before/after state. If the item was removed by someone else at the same
-  // instant, the resynced window simply won't contain it anymore - no separate handling needed.
+  // resyncMediaWindow above. If the item was removed by someone else at the same instant, the
+  // resynced window simply won't contain it anymore - no separate handling needed.
   const patchMediaItem = (tmdbId: number) => {
     if (!groupId) return;
-    resyncMediaWindow({ tmdbId, celebrationPrevList: mediaRef.current });
+    resyncMediaWindow({ tmdbId });
   };
 
   // Drops one item from the local list without a network round-trip (used for removals, which
@@ -434,7 +462,7 @@ export function GroupPage() {
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch/${userId}?watched=${watched}`);
-      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
+      resyncMediaWindow({ tmdbId, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
@@ -456,7 +484,7 @@ export function GroupPage() {
     );
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch-pending/${discordId}?watched=${watched}`);
-      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
+      resyncMediaWindow({ tmdbId, fallbackToast: watched ? "Marked as watched" : "Removed watched status" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
@@ -484,7 +512,7 @@ export function GroupPage() {
         rating,
         comment: comment || undefined,
       });
-      resyncMediaWindow({ tmdbId, celebrationPrevList: prevMedia, fallbackToast: "Rating saved" });
+      resyncMediaWindow({ tmdbId, fallbackToast: "Rating saved" });
       loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
