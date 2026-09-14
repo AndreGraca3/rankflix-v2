@@ -859,7 +859,7 @@ export function GroupPage() {
                             {m.year ? <span className="media-modal-year"> ({m.year})</span> : null}
                           </span>
                           <span className="media-ranking-meta muted">
-                            <span className="media-ranking-meta-item">{m.type}</span>
+                            <span className="media-modal-type-badge">{m.type}</span>
                             <span className="media-ranking-meta-item">
                               {ratedCount}/{watchedList.length} rated
                             </span>
