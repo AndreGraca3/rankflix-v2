@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useInfiniteScroll } from "react-infinite-scroll-component";
 import { api } from "../api/client";
 import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, PagedGroupMedia, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -179,6 +178,32 @@ export function GroupPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Plain scroll-position check instead of an IntersectionObserver sentinel: the observer
+  // only fires on isIntersecting *transitions*, and the browser's sampling is coarse enough
+  // that a fast scroll/fling can carry the trigger zone through in a single frame, skipping
+  // the transition entirely and silently never firing next-page. Checking actual scroll
+  // metrics on every scroll event can't miss like that. Re-subscribes whenever the media
+  // list, its filters, or hasMore change, so the closure never reads stale values.
+  useEffect(() => {
+    if (!mediaHasMore) return;
+    let loadingMore = false;
+    const checkForLoadMore = () => {
+      if (loadingMore) return;
+      const distanceToBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+      if (distanceToBottom > 1200) return;
+      loadingMore = true;
+      loadMedia(media.length, MEDIA_PAGE_SIZE).finally(() => {
+        loadingMore = false;
+      });
+    };
+    window.addEventListener("scroll", checkForLoadMore, { passive: true });
+    // Handle the case where the loaded page is already short enough that no further scroll
+    // event will ever fire (e.g. a tall viewport with few filtered results left).
+    checkForLoadMore();
+    return () => window.removeEventListener("scroll", checkForLoadMore);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mediaHasMore, media.length, groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
+
   useEffect(() => {
     const t = setTimeout(() => setMediaSearch(mediaSearchInput.trim().toLowerCase()), 300);
     return () => clearTimeout(t);
@@ -247,17 +272,9 @@ export function GroupPage() {
 
   const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`;
 
-  // Media itself is now paginated server-side (see loadMedia above) - this just triggers
-  // fetching the next server page when the sentinel scrolls into view.
-  const { sentinelRef: mediaSentinelRef } = useInfiniteScroll({
-    next: () => loadMedia(media.length, MEDIA_PAGE_SIZE),
-    hasMore: mediaHasMore,
-    dataLength: media.length,
-    // A wide margin so the sentinel is still caught even on a fast fling/scroll - a fast
-    // scroll can otherwise carry the sentinel through a narrower zone between two of the
-    // browser's IntersectionObserver sampling passes, silently skipping the next-page fetch.
-    scrollThreshold: "1200px",
-  });
+  // Purely decorative now - the actual next-page trigger is the scroll-position check effect
+  // above, not this element entering the viewport.
+  const mediaSentinelRef = useRef<HTMLDivElement>(null);
 
   const {
     visibleItems: visibleMembers,
