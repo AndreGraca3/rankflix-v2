@@ -303,8 +303,7 @@ export function DashboardPage() {
                   ×
                 </button>
                 <p>
-                  Delete <strong>{deletingGroup.name}</strong>? This permanently removes the group, its media,
-                  reviews, and watch history. This can't be undone.
+                  Delete <strong>{deletingGroup.name}</strong>? This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">
                   <button className="danger" onClick={deleteGroup}>

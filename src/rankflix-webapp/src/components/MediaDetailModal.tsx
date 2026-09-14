@@ -441,7 +441,7 @@ export function MediaDetailModal({
               <p>
                 Remove <strong>{pendingRemoveWatcher.displayName}</strong> as a watcher?
                 {pendingRemoveWatcher.userId !== null || pendingRemoveWatcher.discordId ? (
-                  <span className="muted"> Their rating and comment for this title will also be deleted.</span>
+                  <span className="muted"> Their rating will also be deleted.</span>
                 ) : null}
               </p>
               <div className="media-modal-confirm-delete confirm-modal-actions">

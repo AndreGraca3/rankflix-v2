@@ -896,8 +896,7 @@ export function GroupPage() {
                   ×
                 </button>
                 <p>
-                  Delete <strong>{group.name}</strong>? This permanently removes the group, its media, reviews, and
-                  watch history. This can't be undone.
+                  Delete <strong>{group.name}</strong>? This can't be undone.
                 </p>
                 <div className="media-modal-confirm-delete confirm-modal-actions">
                   <button className="danger" onClick={deleteGroup}>
@@ -1392,11 +1391,7 @@ export function GroupPage() {
           {(requestClose) => (
             <>
               <h2>Import "{pendingImportFile.name}"?</h2>
-              <p className="muted">
-                This replaces this group's media list with the spreadsheet's: media, reviews, and watch statuses not
-                found in the file will be removed, and everything in the file will be imported/updated. This can't be
-                undone. Continue?
-              </p>
+              <p className="muted">This overwrites the group's media, reviews, and watch statuses. Can't be undone.</p>
               <div className="row confirm-modal-actions">
                 <button onClick={confirmImport}>Yes, import & overwrite</button>
                 <button className="secondary" onClick={requestClose}>
