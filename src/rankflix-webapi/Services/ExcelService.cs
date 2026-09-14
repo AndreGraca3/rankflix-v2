@@ -21,7 +21,7 @@ public interface IExcelService
 /// (col C = tmdb id, col D = title); one rating column per user ("rating - comment", or blank);
 /// red background = not watched, yellow background = watched but not yet rated; last column = average.
 /// </summary>
-public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetadataService) : IExcelService
+public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetadataService, ISseService sse) : IExcelService
 {
     private const int UserRowIdx = 3; // row 3 (1-based) = discord ids
     private const int UsernameRowIdx = 4; // row 4 = usernames
@@ -414,6 +414,15 @@ public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetad
             .ToListAsync();
         db.RankGroupMedia.RemoveRange(staleMedia);
         await db.SaveChangesAsync();
+
+        // Import can add/remove media, members, ratings, and watch statuses all at once - tell
+        // every connected member (including on other devices/tabs) to refetch, the same way any
+        // other group mutation does, otherwise an overwrite import silently doesn't show up live.
+        var memberIds = await db.RankGroupMembers
+            .Where(m => m.GroupId == groupId)
+            .Select(m => m.UserId)
+            .ToListAsync();
+        sse.PublishToUsers(memberIds, "group-updated", new { groupId });
 
         return new ExcelImportResult(mediaImported, reviewsImported, watchStatusesImported, unmatchedDiscordIds,
             staleMedia.Count);
