@@ -2026,8 +2026,15 @@ td select {
   font-size: 13px;
 }
 
-.group-watch-time-summary {
+.group-stats-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin: -8px 0 20px;
+}
+
+.group-stats-summary p {
+  margin: 0;
 }
 
 section {

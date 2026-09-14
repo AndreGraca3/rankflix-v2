@@ -846,11 +846,17 @@ export function GroupPage() {
           </div>
         </div>
 
-        {groupStats && groupStats.totalRatingsCount > 0 && (
-          <p className="group-watch-time-summary muted">
-            ★ {groupStats.overallAverageRating?.toFixed(1)} average · {groupStats.totalRatingsCount} rating
-            {groupStats.totalRatingsCount === 1 ? "" : "s"}
-          </p>
+        {groupStats && (groupStats.totalWatchTimeMinutes > 0 || groupStats.totalRatingsCount > 0) && (
+          <div className="group-stats-summary">
+            {groupStats.totalWatchTimeMinutes > 0 && (
+              <p className="muted">⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)}</p>
+            )}
+            {groupStats.totalRatingsCount > 0 && (
+              <p className="muted">
+                ★ {groupStats.overallAverageRating?.toFixed(1)} · {groupStats.totalRatingsCount}
+              </p>
+            )}
+          </div>
         )}
 
         {isGroupOwner && showEditGroup && (
