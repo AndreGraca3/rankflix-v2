@@ -253,7 +253,10 @@ export function GroupPage() {
     next: () => loadMedia(media.length, MEDIA_PAGE_SIZE),
     hasMore: mediaHasMore,
     dataLength: media.length,
-    scrollThreshold: "300px",
+    // A wide margin so the sentinel is still caught even on a fast fling/scroll - a fast
+    // scroll can otherwise carry the sentinel through a narrower zone between two of the
+    // browser's IntersectionObserver sampling passes, silently skipping the next-page fetch.
+    scrollThreshold: "1200px",
   });
 
   const {
