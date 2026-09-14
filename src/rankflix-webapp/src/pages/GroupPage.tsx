@@ -182,24 +182,24 @@ export function GroupPage() {
   // only fires on isIntersecting *transitions*, and the browser's sampling is coarse enough
   // that a fast scroll/fling can carry the trigger zone through in a single frame, skipping
   // the transition entirely and silently never firing next-page. Checking actual scroll
-  // metrics on every scroll event can't miss like that. Re-subscribes whenever the media
-  // list, its filters, or hasMore change, so the closure never reads stale values.
+  // metrics on every real scroll event can't miss like that. Re-subscribes whenever the
+  // media list, its filters, or hasMore change, so the closure never reads stale values.
+  // Deliberately does NOT check on mount/re-subscribe (only on an actual "scroll" event) -
+  // doing so previously caused it to auto-fetch every time the effect re-ran, with no
+  // scrolling at all, whenever the page happened to already be within the margin.
   useEffect(() => {
     if (!mediaHasMore) return;
     let loadingMore = false;
     const checkForLoadMore = () => {
       if (loadingMore) return;
       const distanceToBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
-      if (distanceToBottom > 1200) return;
+      if (distanceToBottom > 600) return;
       loadingMore = true;
       loadMedia(media.length, MEDIA_PAGE_SIZE).finally(() => {
         loadingMore = false;
       });
     };
     window.addEventListener("scroll", checkForLoadMore, { passive: true });
-    // Handle the case where the loaded page is already short enough that no further scroll
-    // event will ever fire (e.g. a tall viewport with few filtered results left).
-    checkForLoadMore();
     return () => window.removeEventListener("scroll", checkForLoadMore);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mediaHasMore, media.length, groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
