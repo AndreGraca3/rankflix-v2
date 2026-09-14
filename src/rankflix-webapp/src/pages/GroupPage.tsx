@@ -179,17 +179,15 @@ export function GroupPage() {
   };
 
   // Celebrates the exact moment a media item's last outstanding rating comes in AND that
-  // completion pushes it into the #1 spot under the current ranking - not just any rating, and
-  // not a media that was already sitting at #1 before this change. Returns a toast message (and
-  // fires the confetti burst as a side effect) when that happens, otherwise null.
+  // completion leaves it sitting at #1 under the current ranking. Returns a toast message (and
+  // fires the confetti burst as a side effect) when that happens, otherwise null. Deliberately
+  // doesn't care whether it was *already* #1 before this vote (e.g. leading on partial ratings) -
+  // completing the last vote while in the #1 spot is still worth celebrating.
   const getNewNumberOneCelebration = (tmdbId: number, prevList: GroupMedia[], nextSortedList: GroupMedia[]): string | null => {
     const prevItem = prevList.find((m) => m.tmdbId === tmdbId);
     const nextItem = nextSortedList.find((m) => m.tmdbId === tmdbId);
     if (!prevItem || !nextItem) return null;
     if (wasFullyRatedBefore(prevItem, nextItem) || !isFullyRated(nextItem)) return null;
-
-    const prevSorted = sortMediaByRanking(prevList);
-    if (prevSorted[0]?.tmdbId === tmdbId) return null; // was already #1, nothing new to celebrate
     if (nextSortedList[0]?.tmdbId !== tmdbId) return null;
 
     fireConfetti();
