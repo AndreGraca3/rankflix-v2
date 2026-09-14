@@ -152,6 +152,22 @@ export function GroupPage() {
     return watched.length > 0 && watched.every((w) => w.rating !== null);
   };
 
+  // Was the item already "complete" going into this update, judged against the watcher set it
+  // has *now* (not the watcher set it had before)? This matters because rating something for the
+  // first time also marks you watched in the same action: if you weren't a watcher before, the
+  // old isFullyRated(prevItem) check would ignore you and could wrongly report "already complete"
+  // even though your vote is what just completed it - so instead we check every currently-watched
+  // watcher's *previous* rating, which correctly counts a brand-new voter as missing beforehand.
+  const wasFullyRatedBefore = (prevItem: GroupMedia, nextItem: GroupMedia): boolean => {
+    const watchedNow = nextItem.watchers.filter((w) => w.hasWatched);
+    if (watchedNow.length === 0) return false;
+    return watchedNow.every((w) => {
+      const key = w.userId ?? w.discordId;
+      const prevWatcher = prevItem.watchers.find((pw) => (pw.userId ?? pw.discordId) === key);
+      return prevWatcher?.rating !== null && prevWatcher?.rating !== undefined;
+    });
+  };
+
   const fireConfetti = () => {
     confetti({
       particleCount: 140,
@@ -170,7 +186,7 @@ export function GroupPage() {
     const prevItem = prevList.find((m) => m.tmdbId === tmdbId);
     const nextItem = nextSortedList.find((m) => m.tmdbId === tmdbId);
     if (!prevItem || !nextItem) return null;
-    if (isFullyRated(prevItem) || !isFullyRated(nextItem)) return null;
+    if (wasFullyRatedBefore(prevItem, nextItem) || !isFullyRated(nextItem)) return null;
 
     const prevSorted = sortMediaByRanking(prevList);
     if (prevSorted[0]?.tmdbId === tmdbId) return null; // was already #1, nothing new to celebrate
