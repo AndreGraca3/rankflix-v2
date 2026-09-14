@@ -183,11 +183,16 @@ export function GroupPage() {
   // fires the confetti burst as a side effect) when that happens, otherwise null. Deliberately
   // doesn't care whether it was *already* #1 before this vote (e.g. leading on partial ratings) -
   // completing the last vote while in the #1 spot is still worth celebrating.
+  // `prevItem` may legitimately be missing on a passive viewer who never had this item loaded yet
+  // (e.g. a brand-new item that sorted past their loaded page) - in that case there's nothing to
+  // compare against, so we treat it as "wasn't already fully rated" rather than bailing out, since
+  // otherwise a live watcher-changed/rating-changed event for such an item could never celebrate.
   const getNewNumberOneCelebration = (tmdbId: number, prevList: GroupMedia[], nextSortedList: GroupMedia[]): string | null => {
     const prevItem = prevList.find((m) => m.tmdbId === tmdbId);
     const nextItem = nextSortedList.find((m) => m.tmdbId === tmdbId);
-    if (!prevItem || !nextItem) return null;
-    if (wasFullyRatedBefore(prevItem, nextItem) || !isFullyRated(nextItem)) return null;
+    if (!nextItem) return null;
+    const alreadyFullyRated = prevItem ? wasFullyRatedBefore(prevItem, nextItem) : false;
+    if (alreadyFullyRated || !isFullyRated(nextItem)) return null;
     if (nextSortedList[0]?.tmdbId !== tmdbId) return null;
 
     fireConfetti();
