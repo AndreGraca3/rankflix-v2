@@ -957,7 +957,7 @@ export function GroupPage() {
                     <li
                       key={`${m.tmdbId}:${mediaFilterSignature}`}
                       className="media-row-enter"
-                      style={{ animationDelay: `${Math.min(i, 15) * 35}ms` }}
+                      style={{ animationDelay: `${60 + Math.min(i, 15) * 35}ms` }}
                     >
                       <button type="button" className="media-ranking-row" onClick={() => setSelectedTmdbId(m.tmdbId)}>
                         <span className="media-ranking-number">#{i + 1}</span>
