@@ -152,22 +152,6 @@ export function GroupPage() {
     return watched.length > 0 && watched.every((w) => w.rating !== null);
   };
 
-  // Was the item already "complete" going into this update, judged against the watcher set it
-  // has *now* (not the watcher set it had before)? This matters because rating something for the
-  // first time also marks you watched in the same action: if you weren't a watcher before, the
-  // old isFullyRated(prevItem) check would ignore you and could wrongly report "already complete"
-  // even though your vote is what just completed it - so instead we check every currently-watched
-  // watcher's *previous* rating, which correctly counts a brand-new voter as missing beforehand.
-  const wasFullyRatedBefore = (prevItem: GroupMedia, nextItem: GroupMedia): boolean => {
-    const watchedNow = nextItem.watchers.filter((w) => w.hasWatched);
-    if (watchedNow.length === 0) return false;
-    return watchedNow.every((w) => {
-      const key = w.userId ?? w.discordId;
-      const prevWatcher = prevItem.watchers.find((pw) => (pw.userId ?? pw.discordId) === key);
-      return prevWatcher?.rating !== null && prevWatcher?.rating !== undefined;
-    });
-  };
-
   const fireConfetti = () => {
     confetti({
       particleCount: 140,
@@ -178,25 +162,27 @@ export function GroupPage() {
     });
   };
 
-  // Celebrates the exact moment a media item's last outstanding rating comes in AND that
-  // completion leaves it sitting at #1 under the current ranking. Returns a toast message (and
-  // fires the confetti burst as a side effect) when that happens, otherwise null. Deliberately
-  // doesn't care whether it was *already* #1 before this vote (e.g. leading on partial ratings) -
-  // completing the last vote while in the #1 spot is still worth celebrating.
-  // `prevItem` may legitimately be missing on a passive viewer who never had this item loaded yet
-  // (e.g. a brand-new item that sorted past their loaded page) - in that case there's nothing to
-  // compare against, so we treat it as "wasn't already fully rated" rather than bailing out, since
-  // otherwise a live watcher-changed/rating-changed event for such an item could never celebrate.
+  // True when `tmdbId` is both fully rated and sitting in the #1 slot within `list`. `list` is
+  // expected to already be in ranking order (both the server's initial page and every local
+  // patch keep `media` sorted that way), so `list[0]` is genuinely the current #1.
+  const isTopAndFullyRated = (list: GroupMedia[], tmdbId: number): boolean => {
+    const item = list.find((m) => m.tmdbId === tmdbId);
+    return !!item && isFullyRated(item) && list[0]?.tmdbId === tmdbId;
+  };
+
+  // Celebrates the moment a media item flips into "fully rated AND #1" as a *result* of this
+  // update - i.e. it wasn't already in that state right before. Comparing state-to-state (rather
+  // than "was this the first-ever rating") means re-rating something down and then back up to
+  // #1 celebrates again each time, not just the very first time it's completed. `prevList` not
+  // containing the item at all (e.g. a passive viewer who never had a brand-new item loaded yet)
+  // is naturally treated as "wasn't already top", so this still fires for that case too.
   const getNewNumberOneCelebration = (tmdbId: number, prevList: GroupMedia[], nextSortedList: GroupMedia[]): string | null => {
-    const prevItem = prevList.find((m) => m.tmdbId === tmdbId);
-    const nextItem = nextSortedList.find((m) => m.tmdbId === tmdbId);
-    if (!nextItem) return null;
-    const alreadyFullyRated = prevItem ? wasFullyRatedBefore(prevItem, nextItem) : false;
-    if (alreadyFullyRated || !isFullyRated(nextItem)) return null;
-    if (nextSortedList[0]?.tmdbId !== tmdbId) return null;
+    if (isTopAndFullyRated(prevList, tmdbId)) return null;
+    if (!isTopAndFullyRated(nextSortedList, tmdbId)) return null;
 
     fireConfetti();
-    return `🎉 "${nextItem.title}" is now #1!`;
+    const title = nextSortedList.find((m) => m.tmdbId === tmdbId)?.title ?? "It";
+    return `🎉 "${title}" is now #1!`;
   };
 
   // Refetches just one media item and swaps it into the current list in place (re-sorted by the
@@ -211,25 +197,24 @@ export function GroupPage() {
     api
       .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
       .then((updated) => {
-        // The celebration check (and confetti as its side effect) must never be able to
-        // abort this update - a state updater function throwing would silently drop the
-        // whole setMedia call, leaving every viewer's list stuck showing stale data/order
-        // with no error surfaced anywhere. Compute the new list first and always apply it,
-        // then treat the celebration as a best-effort extra on top.
-        let nextList: GroupMedia[] = [];
+        // The celebration check must run *inside* this updater, using its own `cur`/`nextList` -
+        // React 18 batches state updates from promise callbacks, so the updater here doesn't run
+        // synchronously right after setMedia() is called; reading a variable meant to be filled by
+        // it immediately afterwards would see it still empty and silently never celebrate. It's
+        // still wrapped in try/catch so a throw there can never abort the list update itself.
         setMedia((cur) => {
           const alreadyLoaded = cur.some((m) => m.tmdbId === tmdbId);
-          nextList = sortMediaByRanking(
+          const nextList = sortMediaByRanking(
             alreadyLoaded ? cur.map((m) => (m.tmdbId === tmdbId ? updated : m)) : [...cur, updated]
           );
+          try {
+            const celebration = getNewNumberOneCelebration(tmdbId, cur, nextList);
+            if (celebration) setSuccessToast(celebration);
+          } catch (err) {
+            console.error("Celebration check failed", err);
+          }
           return nextList;
         });
-        try {
-          const celebration = getNewNumberOneCelebration(tmdbId, media, nextList);
-          if (celebration) setSuccessToast(celebration);
-        } catch (err) {
-          console.error("Celebration check failed", err);
-        }
       })
       .catch(() => {
         setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
