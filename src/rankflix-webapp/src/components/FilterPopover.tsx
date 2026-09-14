@@ -14,6 +14,7 @@ export function FilterPopover({ label, active, title, children }: FilterPopoverP
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
@@ -32,9 +33,16 @@ export function FilterPopover({ label, active, title, children }: FilterPopoverP
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;
+    const margin = 8;
     const updatePos = () => {
       const rect = triggerRef.current!.getBoundingClientRect();
-      setPos({ top: rect.bottom + 6, left: rect.left });
+      // Clamp the panel's left edge so it can't spill past the right (or left) edge
+      // of the viewport - important on mobile where the trigger can sit close to the
+      // screen edge (e.g. the Filters icon in the consolidated toolbar).
+      const panelWidth = panelRef.current?.offsetWidth ?? 220;
+      const maxLeft = window.innerWidth - panelWidth - margin;
+      const left = Math.max(margin, Math.min(rect.left, maxLeft));
+      setPos({ top: rect.bottom + 6, left });
     };
     updatePos();
     window.addEventListener("resize", updatePos);
@@ -59,7 +67,11 @@ export function FilterPopover({ label, active, title, children }: FilterPopoverP
       </button>
       {open &&
         createPortal(
-          <div className="filter-popover-panel filter-popover-portal" style={{ top: pos.top, left: pos.left }}>
+          <div
+            className="filter-popover-panel filter-popover-portal"
+            ref={panelRef}
+            style={{ top: pos.top, left: pos.left }}
+          >
             {children(() => setOpen(false))}
           </div>,
           document.body

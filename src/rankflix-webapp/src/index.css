@@ -2559,6 +2559,20 @@ button.secondary:hover {
   color: #fff;
 }
 
+/* RankingMemberSelect's trigger button lives inside a .view-toggle wrapper too, but
+   it isn't one of the plain segmented-control buttons above - without this, the
+   ".view-toggle button" rule's higher specificity stripped its own background/border,
+   leaving it looking unfilled next to the other toolbar icon buttons. */
+.view-toggle .ranking-member-trigger {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+}
+
+.view-toggle .ranking-member-trigger:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .ranking-member-dropdown {
   position: relative;
   margin-left: 8px;
