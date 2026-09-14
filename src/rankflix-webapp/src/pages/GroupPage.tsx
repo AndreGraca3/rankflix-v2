@@ -115,12 +115,37 @@ export function GroupPage() {
     api.get<GroupStats>(`/api/groups/${groupId}/stats`).then(setGroupStats).catch(() => {});
   };
 
-  // Used by mutation success handlers and SSE events below to resync everything - this resets
-  // the media list back to its first page under the current filters (rather than trying to
-  // preserve however many pages were scrolled into), which keeps the refresh logic simple.
+  // Used when the group's membership/media-set changes in a way the client can't patch locally
+  // (import overwrite, member add/remove, new media) - resets the media list back to its first
+  // page under the current filters, rather than trying to preserve however many pages were
+  // scrolled into, which keeps that refresh logic simple.
   const load = () => {
     loadGroupAndStats();
     loadMedia(0, MEDIA_PAGE_SIZE);
+  };
+
+  // Refetches just one media item and swaps it into the current list in place (no reordering,
+  // no pagination reset) - used for watcher/rating/voting-duration changes, which only affect a
+  // single already-loaded row and don't need the whole (possibly multi-page) list refetched.
+  // If the item's gone (e.g. removed by someone else in the same instant), it's dropped locally.
+  const patchMediaItem = (tmdbId: number) => {
+    if (!groupId) return;
+    api
+      .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
+      .then((updated) => {
+        setMedia((cur) => cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
+      })
+      .catch(() => {
+        setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
+      });
+  };
+
+  // Drops one item from the local list without a network round-trip (used for removals, which
+  // don't need any fresh data - the item is just gone).
+  const removeMediaItemLocally = (tmdbId: number) => {
+    setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
+    setMediaTotalCount((c) => Math.max(0, c - 1));
+    setTotalMediaInGroup((c) => Math.max(0, c - 1));
   };
 
   useEffect(() => {
@@ -137,7 +162,10 @@ export function GroupPage() {
   }, [groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
 
   // Any group/media/voting/rating mutation from anyone (including this same user in
-  // another tab) re-fetches this group's data so everything stays live.
+  // another tab) keeps this group's data live. Additions and membership/import-driven
+  // changes still do a full resync (new sort position / filter membership isn't safely
+  // computable client-side); removals and per-item updates patch the local list in place
+  // so the rest of the loaded pages and scroll position aren't disturbed.
   useServerEvent<{ groupId?: number; tmdbId?: number }>("group-updated", (payload) => {
     if (String(payload?.groupId) === String(groupId)) load();
   });
@@ -145,16 +173,16 @@ export function GroupPage() {
     if (String(payload?.groupId) === String(groupId)) load();
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("media-removed", (payload) => {
-    if (String(payload?.groupId) === String(groupId)) load();
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) removeMediaItemLocally(payload.tmdbId);
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("watcher-changed", (payload) => {
-    if (String(payload?.groupId) === String(groupId)) load();
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("rating-changed", (payload) => {
-    if (String(payload?.groupId) === String(groupId)) load();
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("voting-duration-changed", (payload) => {
-    if (String(payload?.groupId) === String(groupId)) load();
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
   });
 
   useEffect(() => {
@@ -301,7 +329,7 @@ export function GroupPage() {
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch/${userId}?watched=${watched}`);
       setSuccessToast(watched ? "Marked as watched" : "Removed watched status");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
       setError(e instanceof Error ? e.message : "Failed to update watch status");
@@ -323,7 +351,7 @@ export function GroupPage() {
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/watch-pending/${discordId}?watched=${watched}`);
       setSuccessToast(watched ? "Marked as watched" : "Removed watched status");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
       setError(e instanceof Error ? e.message : "Failed to update watch status");
@@ -349,7 +377,7 @@ export function GroupPage() {
         comment: comment || undefined,
       });
       setSuccessToast("Rating saved");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
       setError(e instanceof Error ? e.message : "Failed to submit rating");
@@ -369,7 +397,7 @@ export function GroupPage() {
     try {
       await api.delete(`/api/groups/${groupId}/media/${tmdbId}/reviews/${userId}`);
       setSuccessToast("Rating removed");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
       setError(e instanceof Error ? e.message : "Failed to remove review");
@@ -534,7 +562,7 @@ export function GroupPage() {
     try {
       await api.patch(`/api/groups/${groupId}/media/${tmdbId}/voting-duration`, { votingDurationHours: hours });
       setSuccessToast("Voting duration updated");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
       setError(e instanceof Error ? e.message : "Failed to update voting duration");
@@ -543,14 +571,20 @@ export function GroupPage() {
 
   const removeMedia = async (tmdbId: number) => {
     const prevMedia = media;
+    const prevTotalCount = mediaTotalCount;
+    const prevTotalInGroup = totalMediaInGroup;
     setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
+    setMediaTotalCount((c) => Math.max(0, c - 1));
+    setTotalMediaInGroup((c) => Math.max(0, c - 1));
     setSelectedTmdbId(null);
     try {
       await api.delete(`/api/groups/${groupId}/media/${tmdbId}`);
       setSuccessToast("Media removed");
-      load();
+      loadGroupAndStats();
     } catch (e) {
       setMedia(prevMedia);
+      setMediaTotalCount(prevTotalCount);
+      setTotalMediaInGroup(prevTotalInGroup);
       setError(e instanceof Error ? e.message : "Failed to remove media");
     }
   };

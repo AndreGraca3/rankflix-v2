@@ -10,6 +10,7 @@ public interface IMediaService
 {
     Task<GroupMediaResponse> AddMediaToGroupAsync(int groupId, int addedByUserId, AddMediaRequest request);
     Task<PagedGroupMediaResponse> GetGroupMediaAsync(int groupId, GetGroupMediaQuery query);
+    Task<GroupMediaResponse> GetMediaItemAsync(int groupId, int tmdbId);
     Task<GroupMediaResponse> UpdateVotingDurationAsync(int groupId, int tmdbId, int votingDurationHours);
     Task SetWatchedAsync(int groupId, int tmdbId, int userId, bool watched, bool isSiteAdmin);
     Task SetWatchedPendingAsync(int groupId, int tmdbId, string discordId, bool watched, bool isSiteAdmin);
@@ -275,6 +276,11 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             TotalMediaInGroup = allResponses.Count
         };
     }
+
+    // Fetches just one media item's current state - used by the frontend to patch a single row
+    // in-place after a watcher/rating/voting-duration SSE event instead of refetching the whole
+    // (possibly filtered/paginated) list.
+    public async Task<GroupMediaResponse> GetMediaItemAsync(int groupId, int tmdbId) => await BuildResponseAsync(groupId, tmdbId);
 
     public async Task<GroupMediaResponse> UpdateVotingDurationAsync(int groupId, int tmdbId, int votingDurationHours)
     {

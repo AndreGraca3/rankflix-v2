@@ -25,6 +25,20 @@ public class MediaController(IMediaService mediaService, IGroupService groupServ
         }
     }
 
+    [HttpGet("{tmdbId:int}")]
+    public async Task<ActionResult<GroupMediaResponse>> GetMediaItem(int groupId, int tmdbId)
+    {
+        try
+        {
+            await EnsureAccessAsync(groupId);
+            return await mediaService.GetMediaItemAsync(groupId, tmdbId);
+        }
+        catch (AppException ex)
+        {
+            return Problem(ex.Message, statusCode: ex.StatusCode);
+        }
+    }
+
     [HttpPost]
     public async Task<ActionResult<GroupMediaResponse>> AddMedia(int groupId, [FromBody] AddMediaRequest request)
     {
