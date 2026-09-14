@@ -16,15 +16,33 @@ export class EventStream {
   private abortController: AbortController | null = null;
   private stopped = false;
   private retryDelayMs = 1000;
+  private handleWake = () => {
+    if (this.stopped) return;
+    // Mobile/backgrounded browsers often silently pause (not error) a long-lived fetch
+    // stream instead of closing it, so the connectLoop's read() never rejects and we'd
+    // otherwise sit "connected" but not actually receiving anything until the page is
+    // reloaded. Force a fresh connection whenever the tab regains focus/network so any
+    // zombie connection gets replaced instead of relying on that ever timing out.
+    if (document.visibilityState === "visible" || navigator.onLine) {
+      this.retryDelayMs = 1000;
+      this.abortController?.abort();
+    }
+  };
 
   start() {
     this.stopped = false;
     void this.connectLoop();
+    document.addEventListener("visibilitychange", this.handleWake);
+    window.addEventListener("online", this.handleWake);
+    window.addEventListener("focus", this.handleWake);
   }
 
   stop() {
     this.stopped = true;
     this.abortController?.abort();
+    document.removeEventListener("visibilitychange", this.handleWake);
+    window.removeEventListener("online", this.handleWake);
+    window.removeEventListener("focus", this.handleWake);
   }
 
   on(eventName: string, handler: ServerEventHandler) {
