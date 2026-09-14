@@ -9,8 +9,8 @@ import type { UserStats } from "../api/types";
 
 export function ProfilePage() {
   const { user, updateProfile, changePassword } = useAuth();
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [editingUsername, setEditingUsername] = useState(false);
+  const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -36,9 +36,9 @@ export function ProfilePage() {
     setSuccess(null);
     setSubmitting(true);
     try {
-      await updateProfile({ username });
+      await updateProfile({ displayName });
       setSuccess("Profile updated");
-      setEditingUsername(false);
+      setEditingDisplayName(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
@@ -97,21 +97,21 @@ export function ProfilePage() {
                 disabled={avatarSaving}
                 title="Change avatar"
               >
-                <Avatar username={user.username} avatarUrl={user.avatarUrl} size={64} />
+                <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size={64} />
                 <span className="avatar-edit-overlay">{avatarSaving ? "…" : "✎"}</span>
               </button>
             )}
           />
           <div className="profile-header-info">
-            {editingUsername ? (
+            {editingDisplayName ? (
               <form className="username-edit-form" onSubmit={handleSubmit}>
                 <input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   autoFocus
                   required
-                  minLength={3}
-                  maxLength={32}
+                  minLength={1}
+                  maxLength={60}
                 />
                 <button type="submit" disabled={submitting}>
                   {submitting ? "Saving…" : "Save"}
@@ -120,8 +120,8 @@ export function ProfilePage() {
                   type="button"
                   className="secondary"
                   onClick={() => {
-                    setUsername(user.username);
-                    setEditingUsername(false);
+                    setDisplayName(user.displayName);
+                    setEditingDisplayName(false);
                     setError(null);
                   }}
                 >
@@ -130,12 +130,12 @@ export function ProfilePage() {
               </form>
             ) : (
               <h1>
-                {user.username}
+                {user.displayName}
                 <button
                   type="button"
                   className="username-edit-btn"
-                  title="Change username"
-                  onClick={() => setEditingUsername(true)}
+                  title="Change display name"
+                  onClick={() => setEditingDisplayName(true)}
                 >
                   ✎
                 </button>

@@ -46,9 +46,9 @@ export function MediaDetailModal({
   const [pendingRemoveWatcher, setPendingRemoveWatcher] = useState<{
     userId: number | null;
     discordId: string | null;
-    username: string;
+    displayName: string;
   } | null>(null);
-  const [pendingRemoveReview, setPendingRemoveReview] = useState<{ userId: number; username: string } | null>(null);
+  const [pendingRemoveReview, setPendingRemoveReview] = useState<{ userId: number; displayName: string } | null>(null);
   const [addWatcherOpen, setAddWatcherOpen] = useState(false);
   const addWatcherRef = useRef<HTMLDivElement>(null);
   const addWatcherTriggerRef = useRef<HTMLButtonElement>(null);
@@ -201,8 +201,8 @@ export function MediaDetailModal({
                                 setAddWatcherOpen(false);
                               }}
                             >
-                              <Avatar username={w.username} avatarUrl={w.avatarUrl} size={22} />
-                              <span>{w.username}</span>
+                              <Avatar name={w.displayName} avatarUrl={w.avatarUrl} size={22} />
+                              <span>{w.displayName}</span>
                               {w.isPending && <span className="member-pending-badge">Pending</span>}
                             </li>
                           ))}
@@ -228,7 +228,7 @@ export function MediaDetailModal({
                       (w.userId !== null || w.discordId) &&
                       (media.votingOpen || isSiteAdmin);
                     const removeWatcher = () => {
-                      setPendingRemoveWatcher({ userId: w.userId, discordId: w.discordId ?? null, username: w.username });
+                      setPendingRemoveWatcher({ userId: w.userId, discordId: w.discordId ?? null, displayName: w.displayName });
                     };
                     return (
                       <button
@@ -238,8 +238,8 @@ export function MediaDetailModal({
                         title={canRate ? (w.rating !== null ? "Edit your rating" : "Rate this") : undefined}
                         onClick={() => (canRate ? setShowRatingModal(true) : setWatcherModalKey(key))}
                       >
-                        <Avatar username={w.username} avatarUrl={w.avatarUrl} size={26} />
-                        <span className="watcher-chip-name">{w.username}</span>
+                        <Avatar name={w.displayName} avatarUrl={w.avatarUrl} size={26} />
+                        <span className="watcher-chip-name">{w.displayName}</span>
                         {isMe && <span className="watcher-chip-you">You</span>}
                         {w.rating !== null ? (
                           <span className="watcher-chip-rating">{w.rating}</span>
@@ -354,8 +354,8 @@ export function MediaDetailModal({
                 ×
               </button>
               <p className="comment-modal-author">
-                <Avatar username={watcherModalFor.username} avatarUrl={watcherModalFor.avatarUrl} size={28} />
-                {watcherModalFor.username}
+                <Avatar name={watcherModalFor.displayName} avatarUrl={watcherModalFor.avatarUrl} size={28} />
+                {watcherModalFor.displayName}
                 {watcherModalFor.isPending && <span className="member-pending-badge">Pending</span>}
               </p>
 
@@ -369,7 +369,7 @@ export function MediaDetailModal({
                         className="media-modal-remove-review"
                         title="Remove this rating"
                         onClick={() => {
-                          setPendingRemoveReview({ userId: watcherModalFor.userId!, username: watcherModalFor.username });
+                          setPendingRemoveReview({ userId: watcherModalFor.userId!, displayName: watcherModalFor.displayName });
                           setWatcherModalKey(null);
                         }}
                       >
@@ -409,7 +409,7 @@ export function MediaDetailModal({
                       setPendingRemoveWatcher({
                         userId: watcherModalFor.userId,
                         discordId: watcherModalFor.discordId ?? null,
-                        username: watcherModalFor.username,
+                        displayName: watcherModalFor.displayName,
                       });
                       setWatcherModalKey(null);
                       return;
@@ -439,7 +439,7 @@ export function MediaDetailModal({
                 ×
               </button>
               <p>
-                Remove <strong>{pendingRemoveWatcher.username}</strong> as a watcher?
+                Remove <strong>{pendingRemoveWatcher.displayName}</strong> as a watcher?
                 {pendingRemoveWatcher.userId !== null || pendingRemoveWatcher.discordId ? (
                   <span className="muted"> Their rating and comment for this title will also be deleted.</span>
                 ) : null}
@@ -476,7 +476,7 @@ export function MediaDetailModal({
                 ×
               </button>
               <p>
-                Remove <strong>{pendingRemoveReview.username}</strong>&apos;s rating for this title?
+                Remove <strong>{pendingRemoveReview.displayName}</strong>&apos;s rating for this title?
               </p>
               <div className="media-modal-confirm-delete confirm-modal-actions">
                 <button

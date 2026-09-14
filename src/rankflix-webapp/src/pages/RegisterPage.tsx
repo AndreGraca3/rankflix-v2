@@ -6,6 +6,7 @@ export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -15,7 +16,7 @@ export function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(username, password);
+      await register(username, password, displayName.trim() || undefined);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -43,6 +44,18 @@ export function RegisterPage() {
               required
               minLength={3}
               maxLength={32}
+            />
+          </label>
+          <label>
+            Display name
+            <input
+              type="text"
+              name="display-name"
+              autoComplete="nickname"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={username || "Shown to your friends (defaults to username)"}
+              maxLength={60}
             />
           </label>
           <label>

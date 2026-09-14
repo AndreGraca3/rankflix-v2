@@ -14,6 +14,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [toast, setToast] = useState<{ variant: "success" | "error"; title: string } | null>(null);
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState("");
   const [editDiscordId, setEditDiscordId] = useState("");
   const [editRole, setEditRole] = useState("member");
   const [newPassword, setNewPassword] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export function UsersPage() {
 
   const openEdit = (u: UserListItem) => {
     setEditingUser(u);
+    setEditDisplayName(u.displayName);
     setEditDiscordId(u.discordId ?? "");
     setEditRole(u.role);
     setNewPassword(null);
@@ -50,6 +52,7 @@ export function UsersPage() {
   const saveEdit = () => {
     if (!editingUser) return;
     const patch: Record<string, string> = {};
+    if (editDisplayName !== editingUser.displayName) patch.displayName = editDisplayName;
     if (editDiscordId !== (editingUser.discordId ?? "")) patch.discordId = editDiscordId;
     if (editRole !== editingUser.role) patch.role = editRole;
 
@@ -111,7 +114,7 @@ export function UsersPage() {
               <thead>
                 <tr>
                   <th></th>
-                  <th>Username</th>
+                  <th>Display Name</th>
                   <th>Discord Id</th>
                   <th>Role</th>
                 </tr>
@@ -120,9 +123,9 @@ export function UsersPage() {
                 {visibleUsers.map((u) => (
                   <tr key={u.id} className="users-row" onClick={() => openEdit(u)}>
                     <td>
-                      <Avatar username={u.username} avatarUrl={u.avatarUrl} size={28} online={isOnline(u.id)} />
+                      <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={28} online={isOnline(u.id)} />
                     </td>
-                    <td>{u.username}</td>
+                    <td>{u.displayName}</td>
                     <td>{u.discordId || <span className="muted">—</span>}</td>
                     <td>{u.role}</td>
                   </tr>
@@ -142,9 +145,19 @@ export function UsersPage() {
                 ×
               </button>
               <div className="user-edit-modal-header">
-                <Avatar username={editingUser.username} avatarUrl={editingUser.avatarUrl} size={40} />
-                <h2>{editingUser.username}</h2>
+                <Avatar name={editingUser.displayName} avatarUrl={editingUser.avatarUrl} size={40} />
+                <h2>{editingUser.displayName}</h2>
               </div>
+
+              <label className="user-edit-field">
+                <span className="muted">Display Name</span>
+                <input
+                  value={editDisplayName}
+                  onChange={(e) => setEditDisplayName(e.target.value)}
+                  placeholder="Display name"
+                  maxLength={60}
+                />
+              </label>
 
               <label className="user-edit-field">
                 <span className="muted">Discord ID</span>

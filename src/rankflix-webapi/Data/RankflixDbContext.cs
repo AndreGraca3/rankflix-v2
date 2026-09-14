@@ -26,6 +26,7 @@ public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : Db
             e.HasKey(u => u.Id);
             e.Property(u => u.Username).HasMaxLength(100);
             e.HasIndex(u => u.Username).IsUnique();
+            e.Property(u => u.DisplayName).HasMaxLength(60);
             e.Property(u => u.PasswordHash).HasMaxLength(255);
             e.Property(u => u.DiscordId).HasMaxLength(32);
             e.Property(u => u.Role).HasMaxLength(20).HasDefaultValue("member");

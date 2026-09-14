@@ -169,7 +169,7 @@ export function GroupPage() {
   }, [groupStats]);
 
   type SidebarMember =
-    | { kind: "real"; key: string; userId: number; username: string; avatarUrl: string | null; discordId: string | null; isOwner: boolean; averageRatingGiven: number | null; watchedCount: number }
+    | { kind: "real"; key: string; userId: number; displayName: string; avatarUrl: string | null; discordId: string | null; isOwner: boolean; averageRatingGiven: number | null; watchedCount: number }
     | { kind: "pending"; key: string; discordId: string; displayName: string | null; averageRatingGiven: number | null; watchedCount: number };
 
   const sortedMembers = useMemo((): SidebarMember[] => {
@@ -180,7 +180,7 @@ export function GroupPage() {
         kind: "real",
         key: `u${m.userId}`,
         userId: m.userId,
-        username: m.username,
+        displayName: m.displayName,
         avatarUrl: m.avatarUrl,
         discordId: m.discordId,
         isOwner: m.isOwner,
@@ -200,7 +200,7 @@ export function GroupPage() {
       };
     });
     const list = [...real, ...pending];
-    const nameOf = (m: SidebarMember) => (m.kind === "real" ? m.username : m.displayName || m.discordId).toLowerCase();
+    const nameOf = (m: SidebarMember) => (m.displayName || (m.kind === "pending" ? m.discordId : "")).toLowerCase();
     if (memberSortMode === "watched") {
       return list.sort((a, b) => b.watchedCount - a.watchedCount);
     }
@@ -332,7 +332,7 @@ export function GroupPage() {
         ...group,
         members: [
           ...group.members,
-          { userId, username: userInfo.username, avatarUrl: userInfo.avatarUrl, discordId: null, isOwner: false },
+          { userId, displayName: userInfo.displayName, avatarUrl: userInfo.avatarUrl, discordId: null, isOwner: false },
         ],
       });
     }
@@ -414,7 +414,7 @@ export function GroupPage() {
       watchers: [
         ...group.members.map((m) => ({
           userId: m.userId,
-          username: m.username,
+          displayName: m.displayName,
           avatarUrl: m.avatarUrl,
           hasWatched: watchedByUserIds.includes(m.userId),
           rating: null,
@@ -424,7 +424,7 @@ export function GroupPage() {
         })),
         ...group.pendingMembers.map((p) => ({
           userId: null,
-          username: p.displayName || p.discordId,
+          displayName: p.displayName || p.discordId,
           avatarUrl: null,
           hasWatched: watchedByDiscordIds.includes(p.discordId),
           rating: null,
@@ -703,7 +703,7 @@ export function GroupPage() {
                               }
                             >
                               {checked && "✓ "}
-                              {m.username}
+                              {m.displayName}
                             </button>
                           );
                         })}
@@ -963,10 +963,10 @@ export function GroupPage() {
                       className="member-sidebar-row member-sidebar-row-clickable"
                       onClick={() => setMemberModal(m)}
                     >
-                      <Avatar username={m.username} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />
+                      <Avatar name={m.displayName} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />
                       <div className="member-sidebar-info">
                         <span className="member-sidebar-name">
-                          {m.username}
+                          {m.displayName}
                           {m.isOwner && <span className="member-owner-badge" title="Owner">👑</span>}
                         </span>
                         {stats && (
@@ -982,7 +982,7 @@ export function GroupPage() {
                           title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setPendingRemove({ kind: "member", userId: m.userId, label: m.username });
+                            setPendingRemove({ kind: "member", userId: m.userId, label: m.displayName });
                           }}
                         >
                           ×
@@ -1017,7 +1017,7 @@ export function GroupPage() {
       {memberModal && (
         <MemberDetailModal
           kind={memberModal.kind}
-          name={memberModal.kind === "real" ? memberModal.username : memberModal.displayName || memberModal.discordId}
+          name={memberModal.kind === "real" ? memberModal.displayName : memberModal.displayName || memberModal.discordId}
           avatarUrl={memberModal.kind === "real" ? memberModal.avatarUrl : null}
           isOwner={memberModal.kind === "real" ? memberModal.isOwner : false}
           online={memberModal.kind === "real" ? isOnline(memberModal.userId) : undefined}

@@ -243,7 +243,7 @@ public class GroupService(RankflixDbContext db, ISseService sse) : IGroupService
             where m.GroupId == groupId
             select new MemberResponse
             {
-                UserId = u.Id, Username = u.Username, AvatarUrl = u.AvatarUrl, DiscordId = u.DiscordId,
+                UserId = u.Id, DisplayName = u.DisplayName, AvatarUrl = u.AvatarUrl, DiscordId = u.DiscordId,
                 IsOwner = m.IsOwner
             }
         ).ToListAsync();

@@ -36,8 +36,8 @@ export function AddMemberDropdown({ users, onAdd }: AddMemberDropdownProps) {
                 setOpen(false);
               }}
             >
-              <Avatar username={u.username} avatarUrl={u.avatarUrl} size={26} />
-              <span>{u.username}</span>
+              <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={26} />
+              <span>{u.displayName}</span>
             </li>
           ))}
         </ul>

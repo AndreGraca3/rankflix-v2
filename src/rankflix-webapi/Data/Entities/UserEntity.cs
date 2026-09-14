@@ -9,6 +9,11 @@ public class UserEntity
 
     [Column("username")] public required string Username { get; set; }
 
+    // Friendly name shown everywhere in the UI (leaderboards, watcher lists, reviews, admin
+    // panels). Kept separate from Username so friends can rename themselves freely without
+    // touching their private login credential.
+    [Column("display_name")] public required string DisplayName { get; set; }
+
     [Column("avatar_url")] public string? AvatarUrl { get; set; }
 
     [Column("password_hash")] public required string PasswordHash { get; set; }

@@ -49,8 +49,8 @@ export function UserMenu() {
 
   return (
     <div className="user-menu" ref={ref}>
-      <button type="button" className="avatar-btn" title={user.username} onClick={() => setOpen((o) => !o)}>
-        <Avatar username={user.username} avatarUrl={user.avatarUrl} size={34} online={user.status === "online"} />
+      <button type="button" className="avatar-btn" title={user.displayName} onClick={() => setOpen((o) => !o)}>
+        <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size={34} online={user.status === "online"} />
       </button>
       {open && (
         <ul className="user-menu-list">

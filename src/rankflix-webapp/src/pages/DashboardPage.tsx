@@ -72,7 +72,7 @@ export function DashboardPage() {
       name: trimmedName,
       ownerId: user.id,
       imageUrl: trimmedImageUrl,
-      members: [{ userId: user.id, username: user.username, avatarUrl: user.avatarUrl, discordId: user.discordId, isOwner: true }],
+      members: [{ userId: user.id, displayName: user.displayName, avatarUrl: user.avatarUrl, discordId: user.discordId, isOwner: true }],
       pendingMembers: [],
     };
 

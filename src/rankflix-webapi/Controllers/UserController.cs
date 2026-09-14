@@ -23,7 +23,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
-            Username = user.Username,
+            DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
             Role = user.Role,
@@ -37,22 +37,16 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         var user = await userRepository.GetByIdAsync(GetUserId());
         if (user is null) return NotFound();
 
-        if (request.Username is not null && request.Username != user.Username)
+        if (request.DisplayName is not null)
         {
-            string trimmedUsername;
             try
             {
-                trimmedUsername = UsernameValidator.ValidateAndTrim(request.Username);
+                user.DisplayName = DisplayNameValidator.ValidateAndTrim(request.DisplayName);
             }
             catch (AppException ex)
             {
                 return Problem(ex.Message, statusCode: ex.StatusCode);
             }
-
-            var existing = await userRepository.GetByUsernameAsync(trimmedUsername);
-            if (existing is not null && existing.Id != user.Id)
-                return Problem("Username already in use", statusCode: StatusCodes.Status409Conflict);
-            user.Username = trimmedUsername;
         }
 
         if (request.AvatarUrl is not null) user.AvatarUrl = request.AvatarUrl;
@@ -62,7 +56,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
-            Username = user.Username,
+            DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
             Role = user.Role,
@@ -88,7 +82,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
-            Username = user.Username,
+            DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
             Role = user.Role,
@@ -122,7 +116,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return users.Select(u => new UserListItemResponse
         {
             Id = u.Id,
-            Username = u.Username,
+            DisplayName = u.DisplayName,
             AvatarUrl = u.AvatarUrl,
             DiscordId = u.DiscordId,
             Role = u.Role
@@ -138,7 +132,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return users.Select(u => new UserDirectoryItemResponse
         {
             Id = u.Id,
-            Username = u.Username,
+            DisplayName = u.DisplayName,
             AvatarUrl = u.AvatarUrl
         }).ToList();
     }
@@ -155,11 +149,11 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         var user = await userRepository.GetByIdAsync(userId);
         if (user is null) return NotFound();
 
-        if (request.Username is not null)
+        if (request.DisplayName is not null)
         {
             try
             {
-                user.Username = UsernameValidator.ValidateAndTrim(request.Username);
+                user.DisplayName = DisplayNameValidator.ValidateAndTrim(request.DisplayName);
             }
             catch (AppException ex)
             {
@@ -191,7 +185,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserListItemResponse
         {
             Id = user.Id,
-            Username = user.Username,
+            DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
             Role = user.Role

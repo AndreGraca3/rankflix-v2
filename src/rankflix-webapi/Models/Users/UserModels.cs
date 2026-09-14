@@ -2,7 +2,9 @@ namespace Rankflix.Models.Users;
 
 public class AdminUpdateUserRequest
 {
-    public string? Username { get; set; }
+    // Friendly name shown in the UI. Doesn't need to be unique, and is independent of the
+    // login-only Username.
+    public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
 
     // Admin can reassign this when a friend changes/loses their Discord account,
@@ -14,7 +16,7 @@ public class AdminUpdateUserRequest
 
 public class UpdateOwnProfileRequest
 {
-    public string? Username { get; set; }
+    public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
 }
 
@@ -37,7 +39,7 @@ public class ResetPasswordResponse
 public class UserListItemResponse
 {
     public required int Id { get; init; }
-    public required string Username { get; init; }
+    public required string DisplayName { get; init; }
     public string? AvatarUrl { get; init; }
     public string? DiscordId { get; init; }
     public required string Role { get; init; }
@@ -46,7 +48,7 @@ public class UserListItemResponse
 public class UserDirectoryItemResponse
 {
     public required int Id { get; init; }
-    public required string Username { get; init; }
+    public required string DisplayName { get; init; }
     public string? AvatarUrl { get; init; }
 }
 

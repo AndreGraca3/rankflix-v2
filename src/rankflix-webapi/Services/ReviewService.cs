@@ -72,7 +72,7 @@ public class ReviewService(RankflixDbContext db, ISseService sse) : IReviewServi
             await db.SaveChangesAsync();
         }
 
-        var username = await db.Users.Where(u => u.Id == userId).Select(u => u.Username).FirstAsync();
+        var displayName = await db.Users.Where(u => u.Id == userId).Select(u => u.DisplayName).FirstAsync();
 
         await PublishGroupUpdatedAsync(groupId, tmdbId, "rating-changed");
 
@@ -80,7 +80,7 @@ public class ReviewService(RankflixDbContext db, ISseService sse) : IReviewServi
         {
             Id = review.Id,
             UserId = userId,
-            Username = username,
+            DisplayName = displayName,
             Rating = review.Rating,
             Comment = review.Comment,
             CreatedAt = review.CreatedAt
@@ -97,7 +97,7 @@ public class ReviewService(RankflixDbContext db, ISseService sse) : IReviewServi
             {
                 Id = r.Id,
                 UserId = u.Id,
-                Username = u.Username,
+                DisplayName = u.DisplayName,
                 Rating = r.Rating,
                 Comment = r.Comment,
                 CreatedAt = r.CreatedAt

@@ -68,7 +68,7 @@ public class GroupStatsService(RankflixDbContext db, IMediaMetadataService media
             return new MemberStatsResponse
             {
                 UserId = user.Id,
-                Username = user.Username,
+                DisplayName = user.DisplayName,
                 AvatarUrl = user.AvatarUrl,
                 DiscordId = user.DiscordId,
                 MoviesWatched = watchedMedia.Count(m => m.Type == "movie"),

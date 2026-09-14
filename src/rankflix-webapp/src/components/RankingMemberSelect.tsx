@@ -48,7 +48,7 @@ export function RankingMemberSelect({ members, pendingMembers, value, onChange }
     value === "average"
       ? "Group average"
       : typeof value === "number"
-        ? `${members.find((m) => m.userId === value)?.username ?? "?"}'s ratings`
+        ? `${members.find((m) => m.userId === value)?.displayName ?? "?"}'s ratings`
         : `${pendingMembers.find((p) => p.discordId === value)?.displayName ?? value}'s ratings`;
 
   return (
@@ -78,7 +78,7 @@ export function RankingMemberSelect({ members, pendingMembers, value, onChange }
                   setOpen(false);
                 }}
               >
-                {m.username}'s ratings
+                {m.displayName}'s ratings
               </li>
             ))}
             {pendingMembers.map((p) => (

@@ -76,7 +76,7 @@ export function MemberDetailModal({
 
         <div className="member-modal-header">
           {kind === "real" ? (
-            <Avatar username={name} avatarUrl={avatarUrl ?? null} size={64} online={online} />
+            <Avatar name={name} avatarUrl={avatarUrl ?? null} size={64} online={online} />
           ) : (
             <div className="avatar avatar-pending" style={{ width: 64, height: 64, fontSize: 24 }}>
               {name.charAt(0).toUpperCase()}

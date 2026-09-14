@@ -5,7 +5,7 @@ export interface LoginResponse {
 
 export interface UserProfile {
   id: number;
-  username: string;
+  displayName: string;
   avatarUrl: string | null;
   discordId: string | null;
   role: "admin" | "member";
@@ -16,13 +16,13 @@ export type UserListItem = UserProfile;
 
 export interface UserDirectoryItem {
   id: number;
-  username: string;
+  displayName: string;
   avatarUrl: string | null;
 }
 
 export interface GroupMember {
   userId: number;
-  username: string;
+  displayName: string;
   avatarUrl: string | null;
   discordId: string | null;
   isOwner: boolean;
@@ -44,7 +44,7 @@ export interface Group {
 
 export interface Watcher {
   userId: number | null;
-  username: string;
+  displayName: string;
   avatarUrl?: string | null;
   hasWatched: boolean;
   rating: number | null;
@@ -104,7 +104,7 @@ export interface UserStats {
 
 export interface MemberStats {
   userId: number;
-  username: string;
+  displayName: string;
   avatarUrl: string | null;
   discordId: string | null;
   moviesWatched: number;

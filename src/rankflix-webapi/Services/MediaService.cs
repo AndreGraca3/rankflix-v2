@@ -155,7 +155,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             from m in db.RankGroupMembers
             join u in db.Users on m.UserId equals u.Id
             where m.GroupId == groupId
-            select new MemberInfo(u.Id, u.Username, u.AvatarUrl)
+            select new MemberInfo(u.Id, u.DisplayName, u.AvatarUrl)
         ).ToListAsync();
 
         var watchStatusesByMedia = (await db.RankGroupWatchStatuses
@@ -325,7 +325,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             from m in db.RankGroupMembers
             join u in db.Users on m.UserId equals u.Id
             where m.GroupId == groupId
-            select new MemberInfo(u.Id, u.Username, u.AvatarUrl)
+            select new MemberInfo(u.Id, u.DisplayName, u.AvatarUrl)
         ).ToListAsync();
 
         var watchStatuses = await db.RankGroupWatchStatuses
@@ -346,7 +346,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
         return BuildResponse(groupMedia, media, members, watchStatuses, reviews, pendingDisplayNames);
     }
 
-    private record MemberInfo(int Id, string Username, string? AvatarUrl);
+    private record MemberInfo(int Id, string DisplayName, string? AvatarUrl);
 
     private static GroupMediaResponse BuildResponse(
         RankGroupMediaEntity groupMedia,
@@ -364,7 +364,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             return new WatcherStatusResponse
             {
                 UserId = member.Id,
-                Username = member.Username,
+                DisplayName = member.DisplayName,
                 AvatarUrl = member.AvatarUrl,
                 HasWatched = watched,
                 Rating = review?.Rating,
@@ -381,7 +381,7 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             watchers.Add(new WatcherStatusResponse
             {
                 UserId = null,
-                Username = pendingDisplayNames.TryGetValue(discordId, out var name) && !string.IsNullOrWhiteSpace(name)
+                DisplayName = pendingDisplayNames.TryGetValue(discordId, out var name) && !string.IsNullOrWhiteSpace(name)
                     ? name!
                     : discordId,
                 HasWatched = watched,

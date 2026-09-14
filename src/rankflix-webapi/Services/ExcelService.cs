@@ -50,7 +50,7 @@ public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetad
             .ToListAsync();
 
         var columns = members
-            .Select(u => new ExportColumn(u.DiscordId ?? "", u.Username, u.Id, null))
+            .Select(u => new ExportColumn(u.DiscordId ?? "", u.DisplayName, u.Id, null))
             .Concat(pendingMembers.Select(p =>
                 new ExportColumn(p.DiscordId, p.DisplayName ?? p.DiscordId, null, p.DiscordId)))
             .ToList();
