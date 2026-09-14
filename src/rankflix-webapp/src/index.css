@@ -3533,11 +3533,19 @@ button.secondary:hover {
   margin: 0;
 }
 
-.toast-detail {
+.toast-detail-list {
   margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.toast-detail {
   font-size: 13px;
   color: var(--text-dim);
   word-break: break-word;
+}
+
+.toast-detail + .toast-detail {
+  margin-top: 4px;
 }
 
 .toast-close {

@@ -1409,9 +1409,10 @@ export function GroupPage() {
       )}
       {importToast && (
         <Toast
-          variant={importToast.unmatchedDiscordIds.length ? "warning" : "success"}
-          title={`Imported ${importToast.mediaImported} media, ${importToast.reviewsImported} reviews, ${importToast.watchStatusesImported} watch statuses`}
+          variant="success"
+          title="Import complete"
           details={[
+            `Imported ${importToast.mediaImported} media, ${importToast.reviewsImported} reviews, ${importToast.watchStatusesImported} watch statuses.`,
             ...(importToast.mediaRemoved
               ? [`Removed ${importToast.mediaRemoved} media that wasn't in the spreadsheet.`]
               : []),

@@ -27,11 +27,15 @@ export function Toast({
       <div className="toast-icon">{variant === "success" ? "✓" : variant === "warning" ? "i" : "!"}</div>
       <div className="toast-body">
         <p className="toast-title">{title}</p>
-        {details?.map((line, i) => (
-          <p key={i} className="toast-detail">
-            {line}
-          </p>
-        ))}
+        {details && details.length > 0 && (
+          <ul className="toast-detail-list">
+            {details.map((line, i) => (
+              <li key={i} className="toast-detail">
+                {line}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
       <button type="button" className="toast-close" onClick={onClose} aria-label="Dismiss">
         ×
