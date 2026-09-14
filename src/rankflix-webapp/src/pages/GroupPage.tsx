@@ -1100,14 +1100,16 @@ export function GroupPage() {
               )}
 
               <ul className="member-sidebar-list">
-                {visibleMembers.map((m) => {
+                {visibleMembers.map((m, mi) => {
+                  const rowStyle = { animationDelay: `${Math.min(mi, 15) * 25}ms` };
                   if (m.kind === "pending") {
                     const stats = pendingStatsByDiscordId.get(m.discordId);
                     const label = m.displayName || m.discordId;
                     return (
                       <li
                         key={m.key}
-                        className="member-sidebar-row member-sidebar-row-pending member-sidebar-row-clickable"
+                        className="member-sidebar-row member-sidebar-row-pending member-sidebar-row-clickable member-row-enter"
+                        style={rowStyle}
                         onClick={() => setMemberModal(m)}
                       >
                         <div className="avatar avatar-pending" style={{ width: 40, height: 40 }} title={`Discord id: ${m.discordId}`}>
@@ -1145,7 +1147,8 @@ export function GroupPage() {
                   return (
                     <li
                       key={m.key}
-                      className="member-sidebar-row member-sidebar-row-clickable"
+                      className="member-sidebar-row member-sidebar-row-clickable member-row-enter"
+                      style={rowStyle}
                       onClick={() => setMemberModal(m)}
                     >
                       <Avatar name={m.displayName} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />

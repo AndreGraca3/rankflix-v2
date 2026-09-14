@@ -268,6 +268,7 @@ a:hover {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   z-index: 20;
+  animation: dropdown-pop-in 0.16s ease both;
 }
 
 .user-menu-list li {
@@ -336,6 +337,7 @@ a:hover {
 .user-menu-status-item:focus-within .user-menu-status-flyout,
 .user-menu-status-flyout.open {
   display: block;
+  animation: dropdown-pop-in-up 0.16s ease both;
 }
 
 .user-menu-status-flyout button {
@@ -2714,6 +2716,7 @@ button.secondary:hover {
 .ranking-member-list-portal {
   position: fixed;
   z-index: 2000;
+  animation: dropdown-pop-in 0.16s ease both;
 }
 
 .ranking-member-list li {
@@ -2788,6 +2791,28 @@ button.secondary:hover {
   display: none;
 }
 
+@keyframes dropdown-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dropdown-pop-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .filter-popover-panel {
   position: fixed;
   z-index: 2000;
@@ -2799,6 +2824,7 @@ button.secondary:hover {
   overflow-y: auto;
   box-shadow: var(--shadow);
   padding: 6px;
+  animation: dropdown-pop-in 0.16s ease both;
 }
 
 .filter-popover-list {
@@ -2918,8 +2944,20 @@ button.secondary:hover {
   animation: media-row-slide-in 0.35s ease both;
 }
 
+.member-row-enter {
+  animation: media-row-slide-in 0.3s ease both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .media-row-enter {
+  .media-row-enter,
+  .member-row-enter,
+  .ranking-member-list-portal,
+  .filter-popover-panel,
+  .user-menu-list,
+  .user-menu-status-flyout,
+  .add-member-list,
+  .member-sidebar-body.expanded,
+  .member-sidebar.expanded {
     animation: none;
   }
 }
@@ -3326,6 +3364,7 @@ button.secondary:hover {
   overflow-y: auto;
   box-shadow: var(--shadow);
   padding: 4px;
+  animation: dropdown-pop-in-up 0.16s ease both;
 }
 
 .add-member-list li {
@@ -3530,6 +3569,7 @@ button.secondary:hover {
   .member-sidebar-body.expanded {
     display: block;
     margin-top: 12px;
+    animation: dropdown-pop-in 0.2s ease both;
   }
 }
 
@@ -3616,6 +3656,7 @@ button.secondary:hover {
 
   .member-sidebar.expanded {
     display: block;
+    animation: dropdown-pop-in 0.2s ease both;
   }
 
   .ranking-member-trigger {
