@@ -4,12 +4,13 @@ import { createPortal } from "react-dom";
 interface FilterPopoverProps {
   label: string;
   active: boolean;
+  title?: string;
   children: (close: () => void) => ReactNode;
 }
 
 // Generic trigger-button + portal-rendered panel, used for the media list's genre/rating
 // filter dropdowns (mirrors RankingMemberSelect's popover mechanics).
-export function FilterPopover({ label, active, children }: FilterPopoverProps) {
+export function FilterPopover({ label, active, title, children }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -51,6 +52,7 @@ export function FilterPopover({ label, active, children }: FilterPopoverProps) {
         ref={triggerRef}
         className={`filter-popover-trigger${active ? " active" : ""}`}
         onClick={() => setOpen((o) => !o)}
+        title={title}
       >
         <span className="filter-popover-trigger-label">{label}</span>
         <span className="filter-popover-chevron">▾</span>

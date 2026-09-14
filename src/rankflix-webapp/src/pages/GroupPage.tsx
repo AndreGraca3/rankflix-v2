@@ -618,6 +618,85 @@ export function GroupPage() {
 
   if (!group) return <Spinner full />;
 
+  const votingStatusFilterAny = votingFilter !== "all";
+  const anyMediaFilterActive =
+    votingStatusFilterAny || selectedGenres.length > 0 || ratingFilter !== null || pendingVotesOnly;
+
+  // Shared between the always-visible desktop filter row and the single consolidated
+  // "Filters" popover shown on mobile, so the two layouts never drift apart.
+  const renderVotingStatusToggle = () => (
+    <div className="voting-filter-toggle" role="tablist" aria-label="Filter by voting status">
+      <button type="button" className={votingFilter === "all" ? "active" : ""} onClick={() => setVotingFilter("all")}>
+        All
+      </button>
+      <button type="button" className={votingFilter === "open" ? "active" : ""} onClick={() => setVotingFilter("open")}>
+        Open
+      </button>
+      <button type="button" className={votingFilter === "closed" ? "active" : ""} onClick={() => setVotingFilter("closed")}>
+        Closed
+      </button>
+    </div>
+  );
+
+  const renderGenreChecklist = () => (
+    <div className="filter-popover-checklist">
+      {availableGenres.map((g) => (
+        <label key={g} className="filter-popover-checkbox-row">
+          <input
+            type="checkbox"
+            checked={selectedGenres.includes(g)}
+            onChange={() => setSelectedGenres((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]))}
+          />
+          {g}
+        </label>
+      ))}
+      {selectedGenres.length > 0 && (
+        <button type="button" className="filter-popover-clear-btn" onClick={() => setSelectedGenres([])}>
+          Clear
+        </button>
+      )}
+    </div>
+  );
+
+  const ratingOptions: { value: number | "unrated" | null; label: string }[] = [
+    { value: null, label: "Any rating" },
+    { value: 9, label: "9+" },
+    { value: 8, label: "8+" },
+    { value: 7, label: "7+" },
+    { value: 6, label: "6+" },
+    { value: 5, label: "5+" },
+    { value: "unrated", label: "Unrated only" },
+  ];
+
+  const renderRatingList = (close: () => void) => (
+    <div className="filter-popover-list">
+      {ratingOptions.map((opt) => (
+        <button
+          type="button"
+          key={String(opt.value)}
+          className={ratingFilter === opt.value ? "active" : ""}
+          onClick={() => {
+            setRatingFilter(opt.value);
+            close();
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderPendingVotesToggle = () => (
+    <button
+      type="button"
+      className={`filter-toggle-pill${pendingVotesOnly ? " active" : ""}`}
+      title="Only show media where someone who watched hasn't voted yet"
+      onClick={() => setPendingVotesOnly((v) => !v)}
+    >
+      Pending votes
+    </button>
+  );
+
   return (
     <div>
       <NavBar />
@@ -844,92 +923,58 @@ export function GroupPage() {
                   )}
                 </div>
 
-                <div className="voting-filter-toggle" role="tablist" aria-label="Filter by voting status">
-                  <button type="button" className={votingFilter === "all" ? "active" : ""} onClick={() => setVotingFilter("all")}>
-                    All
-                  </button>
-                  <button type="button" className={votingFilter === "open" ? "active" : ""} onClick={() => setVotingFilter("open")}>
-                    Open
-                  </button>
-                  <button type="button" className={votingFilter === "closed" ? "active" : ""} onClick={() => setVotingFilter("closed")}>
-                    Closed
-                  </button>
+                {/* Desktop: each filter shown inline. Hidden on mobile in favour of the
+                    single consolidated "Filters" popover below, so mobile doesn't get a
+                    tall stack of wrapped rows before the media list even starts. */}
+                <div className="media-filters-inline">
+                  {renderVotingStatusToggle()}
+                  {availableGenres.length > 0 && (
+                    <FilterPopover
+                      label={selectedGenres.length > 0 ? `Genre (${selectedGenres.length})` : "Genre"}
+                      active={selectedGenres.length > 0}
+                    >
+                      {() => renderGenreChecklist()}
+                    </FilterPopover>
+                  )}
+                  <FilterPopover
+                    label={ratingFilter === null ? "Rating" : ratingFilter === "unrated" ? "Unrated" : `${ratingFilter}+`}
+                    active={ratingFilter !== null}
+                  >
+                    {(close) => renderRatingList(close)}
+                  </FilterPopover>
+                  {renderPendingVotesToggle()}
                 </div>
 
-                {availableGenres.length > 0 && (
-                  <FilterPopover
-                    label={selectedGenres.length > 0 ? `Genre (${selectedGenres.length})` : "Genre"}
-                    active={selectedGenres.length > 0}
-                  >
-                    {() => (
-                      <div className="filter-popover-checklist">
-                        {availableGenres.map((g) => (
-                          <label key={g} className="filter-popover-checkbox-row">
-                            <input
-                              type="checkbox"
-                              checked={selectedGenres.includes(g)}
-                              onChange={() =>
-                                setSelectedGenres((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]))
-                              }
-                            />
-                            {g}
-                          </label>
-                        ))}
-                        {selectedGenres.length > 0 && (
-                          <button type="button" className="filter-popover-clear-btn" onClick={() => setSelectedGenres([])}>
-                            Clear
-                          </button>
+                {/* Mobile: one icon trigger bundling voting status/genre/rating/pending-votes,
+                    plus a members-sidebar shortcut - hidden on desktop (see .media-filters-mobile
+                    / .media-toolbar-members-btn CSS). */}
+                <div className="media-filters-mobile">
+                  <FilterPopover label="⚙" active={anyMediaFilterActive} title="Filters">
+                    {(close) => (
+                      <div className="media-filters-mobile-panel">
+                        <span className="filter-popover-section-label">Voting status</span>
+                        {renderVotingStatusToggle()}
+                        {availableGenres.length > 0 && (
+                          <>
+                            <span className="filter-popover-section-label">Genre</span>
+                            {renderGenreChecklist()}
+                          </>
                         )}
+                        <span className="filter-popover-section-label">Rating</span>
+                        {renderRatingList(close)}
+                        {renderPendingVotesToggle()}
                       </div>
                     )}
                   </FilterPopover>
-                )}
-
-                <FilterPopover
-                  label={
-                    ratingFilter === null
-                      ? "Rating"
-                      : ratingFilter === "unrated"
-                        ? "Unrated"
-                        : `${ratingFilter}+`
-                  }
-                  active={ratingFilter !== null}
-                >
-                  {(close) => (
-                    <div className="filter-popover-list">
-                      {[
-                        { value: null, label: "Any rating" },
-                        { value: 9, label: "9+" },
-                        { value: 8, label: "8+" },
-                        { value: 7, label: "7+" },
-                        { value: 6, label: "6+" },
-                        { value: 5, label: "5+" },
-                        { value: "unrated" as const, label: "Unrated only" },
-                      ].map((opt) => (
-                        <button
-                          type="button"
-                          key={String(opt.value)}
-                          className={ratingFilter === opt.value ? "active" : ""}
-                          onClick={() => {
-                            setRatingFilter(opt.value);
-                            close();
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </FilterPopover>
-
-                <button
-                  type="button"
-                  className={`filter-toggle-pill${pendingVotesOnly ? " active" : ""}`}
-                  title="Only show media where someone who watched hasn't voted yet"
-                  onClick={() => setPendingVotesOnly((v) => !v)}
-                >
-                  Pending votes
-                </button>
+                  <button
+                    type="button"
+                    className="media-toolbar-icon-btn media-toolbar-members-btn"
+                    title={membersExpanded ? "Hide members" : "Show members"}
+                    onClick={() => setMembersExpanded((v) => !v)}
+                  >
+                    👥
+                  </button>
+                </div>
               </div>
 
               {isGroupOwner && !showAddMedia && (

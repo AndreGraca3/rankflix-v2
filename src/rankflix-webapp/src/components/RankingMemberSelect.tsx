@@ -54,6 +54,7 @@ export function RankingMemberSelect({ members, pendingMembers, value, onChange }
   return (
     <div className="ranking-member-dropdown" ref={ref}>
       <button type="button" ref={triggerRef} className="ranking-member-trigger" onClick={() => setOpen((o) => !o)}>
+        <span className="ranking-member-trigger-icon" aria-hidden="true">⇅</span>
         <span className="ranking-member-trigger-label">{label}</span>
         <span className="ranking-member-trigger-chevron">▾</span>
       </button>
