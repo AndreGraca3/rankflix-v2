@@ -1262,21 +1262,15 @@ section ul li {
 }
 
 .media-modal-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
 }
 
 .media-modal-title-text {
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
-.media-modal-title-row .media-modal-type-badge {
-  flex-shrink: 0;
+.media-modal-type-badge-mobile {
+  display: none;
 }
 
 .media-modal-year {
@@ -3491,6 +3485,27 @@ button.secondary:hover {
     font-size: 17px;
     margin-bottom: 4px;
     overflow-wrap: break-word;
+  }
+
+  .media-modal-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .media-modal-title-text {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .media-modal-type-badge-mobile {
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .media-modal-type-badge-desktop {
+    display: none;
   }
 
   .media-modal-meta {
