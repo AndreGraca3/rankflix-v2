@@ -81,6 +81,9 @@ public class GroupStatsResponse
     // Sum of each distinct watched media's runtime counted once, regardless of how many
     // members watched it - an estimate of the group's total combined watch time.
     public required int TotalWatchTimeMinutes { get; init; }
+    // Every rating anyone in the group has ever given, across all media - not per-member.
+    public required int TotalRatingsCount { get; init; }
+    public double? OverallAverageRating { get; init; }
 }
 
 public class TopMediaInGroupResponse

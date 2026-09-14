@@ -235,13 +235,22 @@ export function GroupPage() {
     if (String(payload?.groupId) === String(groupId)) load();
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("media-removed", (payload) => {
-    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) removeMediaItemLocally(payload.tmdbId);
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) {
+      removeMediaItemLocally(payload.tmdbId);
+      loadGroupAndStats();
+    }
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("watcher-changed", (payload) => {
-    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) {
+      patchMediaItem(payload.tmdbId);
+      loadGroupAndStats();
+    }
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("rating-changed", (payload) => {
-    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
+    if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) {
+      patchMediaItem(payload.tmdbId);
+      loadGroupAndStats();
+    }
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("voting-duration-changed", (payload) => {
     if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) patchMediaItem(payload.tmdbId);
@@ -837,9 +846,10 @@ export function GroupPage() {
           </div>
         </div>
 
-        {groupStats && groupStats.totalWatchTimeMinutes > 0 && (
+        {groupStats && groupStats.totalRatingsCount > 0 && (
           <p className="group-watch-time-summary muted">
-            ⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)} watched together so far
+            ★ {groupStats.overallAverageRating?.toFixed(1)} average · {groupStats.totalRatingsCount} rating
+            {groupStats.totalRatingsCount === 1 ? "" : "s"}
           </p>
         )}
 

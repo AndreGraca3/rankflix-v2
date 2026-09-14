@@ -151,4 +151,6 @@ export interface GroupStats {
   pendingMembers: PendingMemberStats[];
   topMedia: TopMediaInGroup | null;
   totalWatchTimeMinutes: number;
+  totalRatingsCount: number;
+  overallAverageRating: number | null;
 }

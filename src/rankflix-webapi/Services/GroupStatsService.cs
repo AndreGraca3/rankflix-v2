@@ -149,7 +149,9 @@ public class GroupStatsService(RankflixDbContext db, IMediaMetadataService media
             Members = memberStats,
             PendingMembers = pendingMemberStats,
             TopMedia = topMedia,
-            TotalWatchTimeMinutes = totalWatchTimeMinutes
+            TotalWatchTimeMinutes = totalWatchTimeMinutes,
+            TotalRatingsCount = reviews.Count,
+            OverallAverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : null
         };
     }
 }
