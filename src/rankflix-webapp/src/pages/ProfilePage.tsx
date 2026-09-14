@@ -101,71 +101,93 @@ export function ProfilePage() {
     <div>
       <NavBar />
       <main className="page page-narrow">
-        <div className="profile-header">
-          <ImageUploadButton
-            aspect={1}
-            round
-            onImage={handleAvatarChange}
-            renderTrigger={(open) => (
-              <button
-                type="button"
-                className="avatar-edit-trigger"
-                onClick={open}
-                disabled={avatarSaving}
-                title="Change avatar"
-              >
-                <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size={64} />
-                <span className="avatar-edit-overlay">{avatarSaving ? "…" : "✎"}</span>
-              </button>
-            )}
-          />
-          <div className="profile-header-info">
-            {editingDisplayName ? (
-              <form className="username-edit-form" onSubmit={handleSubmit}>
-                <input
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  autoFocus
-                  required
-                  minLength={1}
-                  maxLength={60}
-                />
-                <button type="submit" disabled={submitting}>
-                  {submitting ? "Saving…" : "Save"}
-                </button>
+        <div className="profile-sections">
+        <div className="card account-card">
+          <h2>Account</h2>
+          <div className="account-identity-row">
+            <ImageUploadButton
+              aspect={1}
+              round
+              onImage={handleAvatarChange}
+              renderTrigger={(open) => (
                 <button
                   type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setDisplayName(user.displayName);
-                    setEditingDisplayName(false);
-                    setError(null);
-                  }}
+                  className="avatar-edit-trigger"
+                  onClick={open}
+                  disabled={avatarSaving}
+                  title="Change avatar"
                 >
-                  Cancel
+                  <Avatar name={user.displayName} avatarUrl={user.avatarUrl} size={64} />
+                  <span className="avatar-edit-overlay">{avatarSaving ? "…" : "✎"}</span>
                 </button>
-              </form>
-            ) : (
-              <h1>
-                {user.displayName}
-                <button
-                  type="button"
-                  className="username-edit-btn"
-                  title="Change display name"
-                  onClick={() => setEditingDisplayName(true)}
-                >
-                  ✎
-                </button>
-              </h1>
-            )}
-            <div className="badge-row">
-              <span className="badge">{user.role}</span>
-              {user.discordId && <span className="badge badge-outline">Discord: {user.discordId}</span>}
+              )}
+            />
+            <div className="account-identity-info">
+              {editingDisplayName ? (
+                <form className="username-edit-form" onSubmit={handleSubmit}>
+                  <input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    autoFocus
+                    required
+                    minLength={1}
+                    maxLength={60}
+                  />
+                  <button type="submit" disabled={submitting}>
+                    {submitting ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setDisplayName(user.displayName);
+                      setEditingDisplayName(false);
+                      setError(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <h1>
+                  {user.displayName}
+                  <button
+                    type="button"
+                    className="username-edit-btn"
+                    title="Change display name"
+                    onClick={() => setEditingDisplayName(true)}
+                  >
+                    ✎
+                  </button>
+                </h1>
+              )}
+              <div className="badge-row">
+                <span className="badge">{user.role}</span>
+                {user.discordId && <span className="badge badge-outline">Discord: {user.discordId}</span>}
+              </div>
             </div>
           </div>
+
+          <form className="account-username-form" onSubmit={handleUsernameSubmit}>
+            <label>
+              Username
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                minLength={3}
+                maxLength={32}
+                autoComplete="username"
+              />
+            </label>
+            <p className="muted account-username-hint">Private — used only to sign in, never shown to other users.</p>
+            <button type="submit" disabled={usernameSubmitting || username === user.username}>
+              {usernameSubmitting ? "Saving…" : "Save username"}
+            </button>
+          </form>
         </div>
 
-        <div className="profile-sections">
+          <div className="profile-cards-row">
           {stats && (
           <div className="card stats-card">
             <h2>Your stats</h2>
@@ -208,28 +230,6 @@ export function ProfilePage() {
             )}
           </div>
           )}
-
-          <div className="profile-cards-row">
-        <div className="card">
-          <h2>Account</h2>
-          <form onSubmit={handleUsernameSubmit}>
-            <label>
-              Username
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                minLength={3}
-                maxLength={32}
-                autoComplete="username"
-              />
-            </label>
-            <p className="muted account-username-hint">Private — used only to sign in, never shown to other users.</p>
-            <button type="submit" disabled={usernameSubmitting || username === user.username}>
-              {usernameSubmitting ? "Saving…" : "Save username"}
-            </button>
-          </form>
-        </div>
 
         <div className="card">
           <h2>Change password</h2>

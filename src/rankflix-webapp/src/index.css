@@ -2119,26 +2119,31 @@ section {
   color: var(--text-dim);
 }
 
-/* Profile header */
-.profile-header {
+/* Account card identity row (avatar + display name + badges) */
+.account-identity-row {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.profile-header-info {
+.account-identity-info {
   min-width: 0;
   flex: 1;
 }
 
-.profile-header h1 {
+.account-identity-info h1 {
   margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
   flex-wrap: wrap;
+}
+
+.account-username-form {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
 }
 
 .username-edit-btn {
