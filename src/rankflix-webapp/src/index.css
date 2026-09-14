@@ -2976,7 +2976,7 @@ button.secondary:hover {
 .media-ranking-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
