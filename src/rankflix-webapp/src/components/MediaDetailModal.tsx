@@ -131,10 +131,10 @@ export function MediaDetailModal({
           <div className="media-modal-info">
             <h2>
               {media.title}
-              {media.year ? <span className="media-modal-year"> ({media.year})</span> : null}
+              {media.year ? <span className="media-modal-year"> ({media.year})</span> : null}{" "}
+              <span className="media-modal-type-badge">{media.type}</span>
             </h2>
             <p className="muted media-modal-meta">
-              <span className="media-modal-type-badge">{media.type}</span>
               {media.genre ? <span>{media.genre}</span> : null}
               {media.runtimeMinutes ? <span>{formatWatchTime(media.runtimeMinutes)}</span> : null}
               <span>Added {new Date(media.addedAt).toLocaleDateString()}</span>
