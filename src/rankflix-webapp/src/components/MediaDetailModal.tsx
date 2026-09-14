@@ -136,8 +136,8 @@ export function MediaDetailModal({
             <p className="muted media-modal-meta">
               <span className="media-modal-type-badge">{media.type}</span>
               {media.genre ? <span>{media.genre}</span> : null}
-              <span>{new Date(media.addedAt).toLocaleDateString()}</span>
               {media.runtimeMinutes ? <span>{formatWatchTime(media.runtimeMinutes)}</span> : null}
+              <span>Added {new Date(media.addedAt).toLocaleDateString()}</span>
             </p>
 
             {media.averageRating !== null && (
