@@ -137,9 +137,6 @@ export function MediaDetailModal({
               <span className="media-modal-type-badge">{media.type}</span>
               {media.genre ? <span>{media.genre}</span> : null}
               <span>{new Date(media.addedAt).toLocaleDateString()}</span>
-              <span>
-                {watchedCount}/{media.watchers.length} watched
-              </span>
               {media.runtimeMinutes ? <span>{formatWatchTime(media.runtimeMinutes)}</span> : null}
             </p>
 
@@ -170,7 +167,9 @@ export function MediaDetailModal({
 
             <div className="media-modal-section">
               <div className="media-modal-section-header">
-                <h3 className="media-modal-section-title">Watchers</h3>
+                <h3 className="media-modal-section-title">
+                  Watchers <span className="muted media-modal-section-count">{watchedCount}/{media.watchers.length} watched</span>
+                </h3>
                 {canManage && media.votingOpen && (
                   <div className="watcher-add-dropdown" ref={addWatcherRef}>
                     <button

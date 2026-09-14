@@ -1355,6 +1355,14 @@ section ul li {
   margin: 0;
 }
 
+.media-modal-section-count {
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: normal;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
 .watcher-add-dropdown {
   position: relative;
   margin-bottom: 8px;
