@@ -2157,6 +2157,11 @@ section {
   flex: 1 1 120px;
 }
 
+.account-username-hint {
+  margin-top: -6px;
+  font-size: 12px;
+}
+
 .avatar-edit-trigger {
   position: relative;
   width: 64px;
