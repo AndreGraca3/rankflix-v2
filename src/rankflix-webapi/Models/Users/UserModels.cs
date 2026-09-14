@@ -16,6 +16,7 @@ public class AdminUpdateUserRequest
 
 public class UpdateOwnProfileRequest
 {
+    public string? Username { get; set; }
     public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
 }

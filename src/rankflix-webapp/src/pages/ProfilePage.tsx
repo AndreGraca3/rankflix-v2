@@ -9,6 +9,9 @@ import type { UserStats } from "../api/types";
 
 export function ProfilePage() {
   const { user, updateProfile, changePassword } = useAuth();
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameSubmitting, setUsernameSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +46,22 @@ export function ProfilePage() {
       setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setUsernameSubmitting(true);
+    try {
+      await updateProfile({ username });
+      setSuccess("Username updated");
+      setEditingUsername(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setUsernameSubmitting(false);
     }
   };
 
@@ -190,6 +209,49 @@ export function ProfilePage() {
             )}
           </div>
         )}
+
+        <div className="card">
+          <h2>Account</h2>
+          <p className="muted">Your username is private — only used to sign in. It's never shown to other users.</p>
+          {editingUsername ? (
+            <form className="username-edit-form" onSubmit={handleUsernameSubmit}>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoFocus
+                required
+                minLength={3}
+                maxLength={32}
+              />
+              <button type="submit" disabled={usernameSubmitting}>
+                {usernameSubmitting ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setUsername(user.username);
+                  setEditingUsername(false);
+                  setError(null);
+                }}
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <p className="row" style={{ alignItems: "center", gap: 8 }}>
+              <span>{user.username}</span>
+              <button
+                type="button"
+                className="username-edit-btn"
+                title="Change username"
+                onClick={() => setEditingUsername(true)}
+              >
+                ✎
+              </button>
+            </p>
+          )}
+        </div>
 
         <div className="card">
           <h2>Change password</h2>

@@ -10,7 +10,7 @@ interface AuthContextValue {
   register: (username: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  updateProfile: (fields: { displayName?: string; avatarUrl?: string }) => Promise<void>;
+  updateProfile: (fields: { username?: string; displayName?: string; avatarUrl?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   setStatus: (status: "online" | "invisible") => Promise<void>;
 }
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const updateProfile = async (fields: { displayName?: string; avatarUrl?: string }) => {
+  const updateProfile = async (fields: { username?: string; displayName?: string; avatarUrl?: string }) => {
     const profile = await api.patch<UserProfile>("/api/users/me", fields);
     setUser(profile);
   };

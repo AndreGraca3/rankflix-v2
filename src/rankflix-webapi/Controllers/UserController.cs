@@ -23,6 +23,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
+            Username = user.Username,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
@@ -36,6 +37,26 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
     {
         var user = await userRepository.GetByIdAsync(GetUserId());
         if (user is null) return NotFound();
+
+        if (request.Username is not null)
+        {
+            try
+            {
+                var newUsername = UsernameValidator.ValidateAndTrim(request.Username);
+                if (newUsername != user.Username)
+                {
+                    var existing = await userRepository.GetByUsernameAsync(newUsername);
+                    if (existing is not null && existing.Id != user.Id)
+                        return Problem("Username already in use", statusCode: StatusCodes.Status409Conflict);
+
+                    user.Username = newUsername;
+                }
+            }
+            catch (AppException ex)
+            {
+                return Problem(ex.Message, statusCode: ex.StatusCode);
+            }
+        }
 
         if (request.DisplayName is not null)
         {
@@ -56,6 +77,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
+            Username = user.Username,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,
@@ -82,6 +104,7 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         return new UserProfileResponse
         {
             Id = user.Id,
+            Username = user.Username,
             DisplayName = user.DisplayName,
             AvatarUrl = user.AvatarUrl,
             DiscordId = user.DiscordId,

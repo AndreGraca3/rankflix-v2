@@ -5,6 +5,7 @@ export interface LoginResponse {
 
 export interface UserProfile {
   id: number;
+  username: string;
   displayName: string;
   avatarUrl: string | null;
   discordId: string | null;
@@ -12,7 +13,13 @@ export interface UserProfile {
   status: "online" | "invisible";
 }
 
-export type UserListItem = UserProfile;
+export type UserListItem = {
+  id: number;
+  displayName: string;
+  avatarUrl: string | null;
+  discordId: string | null;
+  role: "admin" | "member";
+};
 
 export interface UserDirectoryItem {
   id: number;
