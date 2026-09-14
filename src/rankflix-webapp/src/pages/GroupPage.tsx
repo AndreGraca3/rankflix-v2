@@ -792,6 +792,38 @@ export function GroupPage() {
   const anyMediaFilterActive =
     votingStatusFilterAny || selectedGenres.length > 0 || ratingFilter !== null || pendingVotesOnly;
 
+  // Removable chips summarising every active filter/search (search included, since it also
+  // narrows the list even though it has its own visible input) - gives a clear, glanceable
+  // "something is hiding items right now" signal instead of relying on small active-state
+  // styling on individual toggle buttons that's easy to miss, especially on mobile where most
+  // filters live behind the "⚙" popover.
+  const activeFilterChips: { key: string; label: string; onClear: () => void }[] = [];
+  if (mediaSearch) activeFilterChips.push({ key: "search", label: `"${mediaSearch}"`, onClear: () => setMediaSearchInput("") });
+  if (votingStatusFilterAny)
+    activeFilterChips.push({
+      key: "voting",
+      label: votingFilter === "open" ? "Voting open" : "Voting closed",
+      onClear: () => setVotingFilter("all"),
+    });
+  selectedGenres.forEach((g) =>
+    activeFilterChips.push({ key: `genre-${g}`, label: g, onClear: () => setSelectedGenres((cur) => cur.filter((x) => x !== g)) })
+  );
+  if (ratingFilter !== null)
+    activeFilterChips.push({
+      key: "rating",
+      label: ratingFilter === "unrated" ? "Unrated only" : `${ratingFilter}+ rating`,
+      onClear: () => setRatingFilter(null),
+    });
+  if (pendingVotesOnly) activeFilterChips.push({ key: "pending", label: "Pending votes", onClear: () => setPendingVotesOnly(false) });
+
+  const clearAllFilters = () => {
+    setMediaSearchInput("");
+    setVotingFilter("all");
+    setSelectedGenres([]);
+    setRatingFilter(null);
+    setPendingVotesOnly(false);
+  };
+
   // Shared between the always-visible desktop filter row and the single consolidated
   // "Filters" popover shown on mobile, so the two layouts never drift apart.
   const renderVotingStatusToggle = () => (
@@ -1163,6 +1195,21 @@ export function GroupPage() {
                 </button>
               )}
             </div>
+
+            {activeFilterChips.length > 0 && (
+              <div className="active-filters-bar" role="status">
+                <span className="active-filters-label">Filtered</span>
+                {activeFilterChips.map((chip) => (
+                  <button type="button" key={chip.key} className="active-filter-chip" onClick={chip.onClear} title="Remove this filter">
+                    {chip.label}
+                    <span className="active-filter-chip-x" aria-hidden="true">×</span>
+                  </button>
+                ))}
+                <button type="button" className="active-filters-clear-all" onClick={clearAllFilters}>
+                  Clear all
+                </button>
+              </div>
+            )}
 
             {!mediaLoading && totalMediaInGroup > 0 && (
               <p className="muted list-count-text">
