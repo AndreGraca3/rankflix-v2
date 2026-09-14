@@ -2139,8 +2139,8 @@ section {
 
 .avatar-edit-trigger {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 96px;
+  height: 96px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -2158,7 +2158,7 @@ section {
   border-radius: 50%;
   background: rgba(11, 11, 13, 0.55);
   color: #fff;
-  font-size: 20px;
+  font-size: 26px;
   opacity: 0;
   transition: opacity 0.15s ease;
 }
