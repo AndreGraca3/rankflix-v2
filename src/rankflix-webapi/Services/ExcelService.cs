@@ -236,7 +236,7 @@ public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetad
         var tmdbIdsNeedingMetadata = mediaRows
             .Select(r => (r.TmdbId, r.MediaType))
             .Where(r => !existingMedia.TryGetValue(r.TmdbId, out var m) ||
-                        string.IsNullOrWhiteSpace(m.PosterUrl) || m.RuntimeMinutes is null)
+                        string.IsNullOrWhiteSpace(m.PosterUrl) || m.RuntimeMinutes is null || m.Genre is null || m.Year is null)
             .DistinctBy(r => r.TmdbId)
             .ToList();
 
@@ -286,6 +286,18 @@ public class ExcelService(RankflixDbContext db, IMediaMetadataService mediaMetad
                 metadataByTmdbId.TryGetValue(tmdbId, out var runtimeMetadata) && runtimeMetadata?.RuntimeMinutes is not null)
             {
                 media.RuntimeMinutes = runtimeMetadata.RuntimeMinutes;
+            }
+
+            if (media.Genre is null &&
+                metadataByTmdbId.TryGetValue(tmdbId, out var genreMetadata) && genreMetadata?.Genre is not null)
+            {
+                media.Genre = genreMetadata.Genre;
+            }
+
+            if (media.Year is null &&
+                metadataByTmdbId.TryGetValue(tmdbId, out var yearMetadata) && yearMetadata?.Year is not null)
+            {
+                media.Year = yearMetadata.Year;
             }
 
             var groupMedia = existingGroupMediaByTmdbId.GetValueOrDefault(tmdbId);

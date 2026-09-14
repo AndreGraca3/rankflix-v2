@@ -66,6 +66,8 @@ export interface GroupMedia {
   averageRating: number | null;
   watchers: Watcher[];
   runtimeMinutes?: number | null;
+  genre?: string | null;
+  year?: number | null;
 }
 
 export interface ExcelImportResult {

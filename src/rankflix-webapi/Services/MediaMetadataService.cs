@@ -3,7 +3,7 @@ using TMDbLib.Client;
 
 namespace Rankflix.Services;
 
-public record MediaMetadata(string? PosterUrl, int? RuntimeMinutes);
+public record MediaMetadata(string? PosterUrl, int? RuntimeMinutes, string? Genre, int? Year);
 
 public interface IMediaMetadataService
 {
@@ -45,14 +45,19 @@ public class MediaMetadataService(TMDbClient client) : IMediaMetadataService
                     ? (int)Math.Round(episodeRuntime.Average() * tv.NumberOfEpisodes)
                     : null;
 
-                return new MediaMetadata(posterUrl, runtimeMinutes);
+                var genre = FormatGenres(tv.Genres?.Select(g => g.Name));
+                var year = tv.FirstAirDate?.Year;
+
+                return new MediaMetadata(posterUrl, runtimeMinutes, genre, year);
             }
 
             var movie = await client.GetMovieAsync(tmdbId);
             if (movie is null) return null;
 
             var moviePosterUrl = movie.PosterPath is not null ? $"{PosterBaseUrl}{movie.PosterPath}" : null;
-            return new MediaMetadata(moviePosterUrl, movie.Runtime);
+            var movieGenre = FormatGenres(movie.Genres?.Select(g => g.Name));
+            var movieYear = movie.ReleaseDate?.Year;
+            return new MediaMetadata(moviePosterUrl, movie.Runtime, movieGenre, movieYear);
         }
         catch
         {
@@ -60,6 +65,12 @@ public class MediaMetadataService(TMDbClient client) : IMediaMetadataService
             // metadata shouldn't fail whatever the caller is doing.
             return null;
         }
+    }
+
+    private static string? FormatGenres(IEnumerable<string?>? names)
+    {
+        var joined = string.Join(", ", (names ?? []).Where(n => !string.IsNullOrWhiteSpace(n)).Take(3));
+        return string.IsNullOrEmpty(joined) ? null : joined;
     }
 
     public async Task<Dictionary<int, MediaMetadata?>> FetchManyAsync(List<(int TmdbId, string MediaType)> items)

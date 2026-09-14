@@ -15,6 +15,7 @@ import { Toast } from "../components/Toast";
 import { GroupEditForm } from "../components/GroupEditor";
 import { InfiniteScrollLoader } from "../components/InfiniteScrollLoader";
 import { EmptyState } from "../components/EmptyState";
+import { MediaRowSkeleton } from "../components/MediaRowSkeleton";
 import { Modal } from "../components/Modal";
 import { useAuth } from "../auth/AuthContext";
 import { usePresence } from "../presence/PresenceContext";
@@ -31,6 +32,7 @@ export function GroupPage() {
   const isAdmin = user?.role === "admin";
   const [group, setGroup] = useState<Group | null>(null);
   const [media, setMedia] = useState<GroupMedia[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(true);
   const [allUsers, setAllUsers] = useState<UserDirectoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedTmdbId, setSelectedTmdbId] = useState<number | null>(null);
@@ -67,7 +69,8 @@ export function GroupPage() {
     api
       .get<GroupMedia[]>(`/api/groups/${groupId}/media`)
       .then(setMedia)
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load media"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load media"))
+      .finally(() => setMediaLoading(false));
     api.get<GroupStats>(`/api/groups/${groupId}/stats`).then(setGroupStats).catch(() => {});
   };
 
@@ -808,13 +811,22 @@ export function GroupPage() {
               )}
             </div>
 
-            {media.length === 0 && (
+            {!mediaLoading && media.length === 0 && (
               <EmptyState
                 icon="🍿"
                 title="No media in this group"
                 subtitle="Add a movie or show above to start ranking and voting."
               />
             )}
+            {mediaLoading ? (
+              <ol className="media-ranking-list">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i}>
+                    <MediaRowSkeleton />
+                  </li>
+                ))}
+              </ol>
+            ) : (
             <ol className="media-ranking-list">
                 {media.length > 0 && rankedMedia.length === 0 && mediaSearch && (
                   <p className="muted">No media matches "{mediaSearchInput}".</p>
@@ -862,6 +874,7 @@ export function GroupPage() {
                   );
                 })}
               </ol>
+            )}
               {hasMoreMedia && <InfiniteScrollLoader sentinelRef={mediaSentinelRef} />}
           </div>
 

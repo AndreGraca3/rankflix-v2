@@ -42,4 +42,6 @@ public class GroupMediaResponse
     public required double? AverageRating { get; init; }
     public required List<WatcherStatusResponse> Watchers { get; init; }
     public int? RuntimeMinutes { get; init; }
+    public string? Genre { get; init; }
+    public int? Year { get; init; }
 }

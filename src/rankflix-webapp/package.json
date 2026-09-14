@@ -13,6 +13,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-easy-crop": "^6.2.3",
+    "react-infinite-scroll-component": "^7.2.1",
+    "react-loading-skeleton": "^3.5.0",
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {

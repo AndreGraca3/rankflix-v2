@@ -1260,6 +1260,11 @@ section ul li {
   padding-bottom: 0;
 }
 
+.media-modal-year {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
 .media-modal-meta {
   display: flex;
   align-items: center;
@@ -3327,6 +3332,12 @@ button.secondary:hover {
   .media-search-input {
     width: 100%;
     box-sizing: border-box;
+  }
+
+  /* A little extra breathing room around the media list's outer edge on mobile, since
+     .page's padding alone left the cards feeling flush against the screen edges. */
+  .media-panel {
+    padding: 0 4px;
   }
 
   .voting-filter-toggle {

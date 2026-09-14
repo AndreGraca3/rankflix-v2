@@ -129,9 +129,13 @@ export function MediaDetailModal({
           </div>
 
           <div className="media-modal-info">
-            <h2>{media.title}</h2>
+            <h2>
+              {media.title}
+              {media.year ? <span className="media-modal-year"> ({media.year})</span> : null}
+            </h2>
             <p className="muted media-modal-meta">
               <span className="media-modal-type-badge">{media.type}</span>
+              {media.genre ? <span>{media.genre}</span> : null}
               <span>{new Date(media.addedAt).toLocaleDateString()}</span>
               <span>
                 {watchedCount}/{media.watchers.length} watched

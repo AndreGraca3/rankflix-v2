@@ -38,12 +38,17 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             if (!string.IsNullOrWhiteSpace(request.PosterUrl)) media.PosterUrl = request.PosterUrl;
         }
 
-        // Search results don't carry runtime, so fetch it once here for the watch-time stats
-        // (best-effort - a TMDB hiccup shouldn't block adding the media).
-        if (media.RuntimeMinutes is null)
+        // Search results don't carry runtime/genre/year, so fetch them once here for the watch-time
+        // stats and detail display (best-effort - a TMDB hiccup shouldn't block adding the media).
+        if (media.RuntimeMinutes is null || media.Genre is null || media.Year is null)
         {
             var metadata = await mediaMetadataService.FetchAsync(request.TmdbId, request.Type);
-            if (metadata?.RuntimeMinutes is not null) media.RuntimeMinutes = metadata.RuntimeMinutes;
+            if (metadata is not null)
+            {
+                if (metadata.RuntimeMinutes is not null) media.RuntimeMinutes = metadata.RuntimeMinutes;
+                if (metadata.Genre is not null) media.Genre = metadata.Genre;
+                if (metadata.Year is not null) media.Year = metadata.Year;
+            }
         }
 
         var alreadyInGroup = await db.RankGroupMedia
@@ -124,19 +129,23 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             .Where(m => tmdbIds.Contains(m.TmdbId))
             .ToDictionaryAsync(m => m.TmdbId);
 
-        // Older media rows (added before we tracked runtime) won't have it yet - fetch it from
-        // TMDB on demand and persist it so this only happens once per title (see also
+        // Older media rows (added before we tracked runtime/genre/year) won't have them yet - fetch
+        // from TMDB on demand and persist so this only happens once per title (see also
         // GroupStatsService, which does the same lazy backfill for the stats endpoint).
-        var mediaMissingRuntime = mediaById.Values.Where(m => m.RuntimeMinutes is null).ToList();
-        if (mediaMissingRuntime.Count > 0)
+        var mediaMissingMetadata = mediaById.Values
+            .Where(m => m.RuntimeMinutes is null || m.Genre is null || m.Year is null)
+            .ToList();
+        if (mediaMissingMetadata.Count > 0)
         {
             var metadataByTmdbId = await mediaMetadataService.FetchManyAsync(
-                mediaMissingRuntime.Select(m => (m.TmdbId, m.Type)).ToList());
+                mediaMissingMetadata.Select(m => (m.TmdbId, m.Type)).ToList());
 
-            foreach (var media in mediaMissingRuntime)
+            foreach (var media in mediaMissingMetadata)
             {
-                if (metadataByTmdbId.TryGetValue(media.TmdbId, out var metadata) && metadata?.RuntimeMinutes is not null)
-                    media.RuntimeMinutes = metadata.RuntimeMinutes;
+                if (!metadataByTmdbId.TryGetValue(media.TmdbId, out var metadata) || metadata is null) continue;
+                if (metadata.RuntimeMinutes is not null) media.RuntimeMinutes = metadata.RuntimeMinutes;
+                if (metadata.Genre is not null) media.Genre = metadata.Genre;
+                if (metadata.Year is not null) media.Year = metadata.Year;
             }
 
             await db.SaveChangesAsync();
@@ -398,7 +407,9 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             VotingOpen = DateTime.UtcNow < votingClosesAt,
             AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : groupMedia.ImportedAverageRating,
             Watchers = watchers,
-            RuntimeMinutes = media.RuntimeMinutes
+            RuntimeMinutes = media.RuntimeMinutes,
+            Genre = media.Genre,
+            Year = media.Year
         };
     }
 }
