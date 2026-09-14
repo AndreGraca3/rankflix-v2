@@ -2686,12 +2686,12 @@ button.secondary:hover {
 .media-ranking-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 16px;
+  padding: 14px 20px;
   cursor: pointer;
   text-align: left;
   color: inherit;
@@ -2707,8 +2707,8 @@ button.secondary:hover {
 
 .media-ranking-number {
   flex-shrink: 0;
-  width: 36px;
-  font-size: 18px;
+  width: 42px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-dim);
   text-align: center;
@@ -2720,12 +2720,12 @@ button.secondary:hover {
 
 .media-ranking-poster-wrap {
   flex-shrink: 0;
-  width: 44px;
+  width: 56px;
 }
 
 .media-ranking-poster {
-  width: 44px;
-  height: 66px;
+  width: 56px;
+  height: 84px;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--text-dim);
@@ -2744,6 +2744,7 @@ button.secondary:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 16px;
 }
 
 .media-ranking-info .media-card-title .media-modal-type-badge {
@@ -2776,12 +2777,12 @@ button.secondary:hover {
 
 .media-ranking-score {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 17px;
   color: var(--accent);
 }
 
 .media-ranking-rated-count {
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
 }
 
