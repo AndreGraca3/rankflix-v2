@@ -204,12 +204,22 @@ export function GroupPage() {
     api
       .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
       .then((updated) => {
+        // The celebration check (and confetti as its side effect) must never be able to
+        // abort this update - a state updater function throwing would silently drop the
+        // whole setMedia call, leaving every viewer's list stuck showing stale data/order
+        // with no error surfaced anywhere. Compute the new list first and always apply it,
+        // then treat the celebration as a best-effort extra on top.
+        let nextList: GroupMedia[] = [];
         setMedia((cur) => {
-          const nextList = sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
-          const celebration = getNewNumberOneCelebration(tmdbId, cur, nextList);
-          if (celebration) setSuccessToast(celebration);
+          nextList = sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
           return nextList;
         });
+        try {
+          const celebration = getNewNumberOneCelebration(tmdbId, media, nextList);
+          if (celebration) setSuccessToast(celebration);
+        } catch (err) {
+          console.error("Celebration check failed", err);
+        }
       })
       .catch(() => {
         setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
@@ -460,8 +470,16 @@ export function GroupPage() {
         return { ...m, watchers, averageRating: computeAverage(ratings) };
       })
     );
-    const celebration = getNewNumberOneCelebration(tmdbId, prevMedia, nextMedia);
+    // Apply the reordered list first - the celebration/confetti check is a best-effort extra
+    // and must never be able to throw *before* setMedia runs, which would otherwise silently
+    // skip the reorder entirely along with the celebration.
     setMedia(nextMedia);
+    let celebration: string | null = null;
+    try {
+      celebration = getNewNumberOneCelebration(tmdbId, prevMedia, nextMedia);
+    } catch (err) {
+      console.error("Celebration check failed", err);
+    }
     try {
       await api.post(`/api/groups/${groupId}/media/${tmdbId}/reviews`, {
         rating,
