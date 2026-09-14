@@ -196,9 +196,11 @@ export function GroupPage() {
 
   // Refetches just one media item and swaps it into the current list in place (re-sorted by the
   // current ranking so its rank position stays accurate) - used for watcher/rating/voting-duration
-  // changes, which only affect a single already-loaded row and don't need the whole (possibly
-  // multi-page) list refetched. If the item's gone (e.g. removed by someone else at the same
-  // instant), it's dropped locally.
+  // changes, which only affect a single already-loaded row. If the item isn't currently loaded
+  // (e.g. a brand-new, still-unrated item that sorted past the first page and was never scrolled
+  // into), it's appended instead of silently dropped - otherwise every vote on a fresh media item
+  // would look like nothing happened for anyone who hasn't scrolled that far yet. If the item's
+  // gone entirely (e.g. removed by someone else at the same instant), it's dropped locally.
   const patchMediaItem = (tmdbId: number) => {
     if (!groupId) return;
     api
@@ -211,7 +213,10 @@ export function GroupPage() {
         // then treat the celebration as a best-effort extra on top.
         let nextList: GroupMedia[] = [];
         setMedia((cur) => {
-          nextList = sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
+          const alreadyLoaded = cur.some((m) => m.tmdbId === tmdbId);
+          nextList = sortMediaByRanking(
+            alreadyLoaded ? cur.map((m) => (m.tmdbId === tmdbId ? updated : m)) : [...cur, updated]
+          );
           return nextList;
         });
         try {
