@@ -201,13 +201,9 @@ export function GroupPage() {
   // instant), it's dropped locally.
   const patchMediaItem = (tmdbId: number) => {
     if (!groupId) return;
-    // eslint-disable-next-line no-console
-    console.debug("[patchMediaItem] fetching", tmdbId);
     api
       .get<GroupMedia>(`/api/groups/${groupId}/media/${tmdbId}`)
       .then((updated) => {
-        // eslint-disable-next-line no-console
-        console.debug("[patchMediaItem] got", tmdbId, "averageRating=", updated.averageRating);
         // The celebration check (and confetti as its side effect) must never be able to
         // abort this update - a state updater function throwing would silently drop the
         // whole setMedia call, leaving every viewer's list stuck showing stale data/order
@@ -215,9 +211,6 @@ export function GroupPage() {
         // then treat the celebration as a best-effort extra on top.
         let nextList: GroupMedia[] = [];
         setMedia((cur) => {
-          const found = cur.some((m) => m.tmdbId === tmdbId);
-          // eslint-disable-next-line no-console
-          console.debug("[patchMediaItem] applying, found in cur list?", found, "cur length=", cur.length);
           nextList = sortMediaByRanking(cur.map((m) => (m.tmdbId === tmdbId ? updated : m)));
           return nextList;
         });
@@ -228,9 +221,7 @@ export function GroupPage() {
           console.error("Celebration check failed", err);
         }
       })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.debug("[patchMediaItem] fetch failed, dropping item locally", tmdbId, err);
+      .catch(() => {
         setMedia((cur) => cur.filter((m) => m.tmdbId !== tmdbId));
       });
   };
@@ -280,8 +271,6 @@ export function GroupPage() {
     }
   });
   useServerEvent<{ groupId?: number; tmdbId?: number }>("rating-changed", (payload) => {
-    // eslint-disable-next-line no-console
-    console.debug("[sse rating-changed]", payload, "current groupId=", groupId);
     if (String(payload?.groupId) === String(groupId) && payload?.tmdbId !== undefined) {
       patchMediaItem(payload.tmdbId);
       loadGroupAndStats();
