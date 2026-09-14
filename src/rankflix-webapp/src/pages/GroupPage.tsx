@@ -246,14 +246,13 @@ export function GroupPage() {
     return list.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   }, [group, memberSortMode, memberStatsByUserId, pendingStatsByDiscordId]);
 
+  const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`;
+
   const {
     visibleItems: visibleRankedMedia,
     sentinelRef: mediaSentinelRef,
     hasMore: hasMoreMedia,
-  } = useInfiniteList(
-    rankedMedia,
-    `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`
-  );
+  } = useInfiniteList(rankedMedia, mediaFilterSignature);
 
   const {
     visibleItems: visibleMembers,
@@ -955,7 +954,11 @@ export function GroupPage() {
                         ? m.watchers.find((w) => w.userId === rankingMemberId)?.rating ?? null
                         : m.watchers.find((w) => w.discordId === rankingMemberId)?.rating ?? null;
                   return (
-                    <li key={m.tmdbId}>
+                    <li
+                      key={`${m.tmdbId}:${mediaFilterSignature}`}
+                      className="media-row-enter"
+                      style={{ animationDelay: `${Math.min(i, 15) * 35}ms` }}
+                    >
                       <button type="button" className="media-ranking-row" onClick={() => setSelectedTmdbId(m.tmdbId)}>
                         <span className="media-ranking-number">#{i + 1}</span>
                         <div className="media-ranking-poster-wrap">
