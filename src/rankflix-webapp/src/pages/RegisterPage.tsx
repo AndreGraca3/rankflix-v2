@@ -16,7 +16,7 @@ export function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(username, password, displayName.trim() || undefined);
+      await register(username, password, displayName);
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -54,7 +54,8 @@ export function RegisterPage() {
               autoComplete="nickname"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={username || "Shown to your friends (defaults to username)"}
+              required
+              minLength={1}
               maxLength={60}
             />
           </label>

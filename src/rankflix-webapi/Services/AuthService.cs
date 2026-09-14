@@ -10,7 +10,7 @@ public record LoginResult(string AccessToken, int ExpireMinutes, Guid RefreshTok
 
 public interface IAuthService
 {
-    Task<LoginResult> RegisterAsync(string username, string password, string? displayName);
+    Task<LoginResult> RegisterAsync(string username, string password, string displayName);
     Task<LoginResult> LoginAsync(string username, string password);
     Task<LoginResult> RefreshTokensAsync(Guid refreshToken);
     Task RevokeRefreshTokenAsync(int userId);
@@ -25,15 +25,14 @@ public class AuthService(
 {
     private readonly RefreshTokenOptions _refreshTokenOptions = refreshTokenOptions.Value;
 
-    public async Task<LoginResult> RegisterAsync(string username, string password, string? displayName)
+    public async Task<LoginResult> RegisterAsync(string username, string password, string displayName)
     {
         username = UsernameValidator.ValidateAndTrim(username);
 
         if (await userRepository.GetByUsernameAsync(username) is not null)
             throw new AppException("Username already in use", StatusCodes.Status409Conflict);
 
-        var resolvedDisplayName = DisplayNameValidator.ValidateAndTrim(
-            string.IsNullOrWhiteSpace(displayName) ? username : displayName);
+        var resolvedDisplayName = DisplayNameValidator.ValidateAndTrim(displayName);
 
         // The very first account ever created becomes admin automatically, so there is
         // no manual DB step needed to bootstrap the first admin on a fresh deployment.

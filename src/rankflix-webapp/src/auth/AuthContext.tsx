@@ -7,7 +7,7 @@ interface AuthContextValue {
   user: UserProfile | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, displayName?: string) => Promise<void>;
+  register: (username: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   updateProfile: (fields: { displayName?: string; avatarUrl?: string }) => Promise<void>;
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshProfile();
   };
 
-  const register = async (username: string, password: string, displayName?: string) => {
+  const register = async (username: string, password: string, displayName: string) => {
     const data = await api.post<LoginResponse>("/api/auth/register", { username, password, displayName });
     setAccessToken(data.accessToken);
     await refreshProfile();
