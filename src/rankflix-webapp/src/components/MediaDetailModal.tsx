@@ -129,9 +129,11 @@ export function MediaDetailModal({
           </div>
 
           <div className="media-modal-info">
-            <h2>
-              {media.title}
-              {media.year ? <span className="media-modal-year"> ({media.year})</span> : null}{" "}
+            <h2 className="media-modal-title-row">
+              <span className="media-modal-title-text">
+                {media.title}
+                {media.year ? <span className="media-modal-year"> ({media.year})</span> : null}
+              </span>
               <span className="media-modal-type-badge">{media.type}</span>
             </h2>
             <p className="muted media-modal-meta">

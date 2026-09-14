@@ -1261,8 +1261,22 @@ section ul li {
   padding-bottom: 0;
 }
 
-.media-modal-info h2 .media-modal-type-badge {
-  vertical-align: middle;
+.media-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.media-modal-title-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.media-modal-title-row .media-modal-type-badge {
+  flex-shrink: 0;
 }
 
 .media-modal-year {
