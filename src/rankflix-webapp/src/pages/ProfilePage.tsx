@@ -113,7 +113,7 @@ export function ProfilePage() {
               </div>
             </div>
 
-            <label>
+            <label className="account-username-label">
               Username
               <input
                 value={username}

@@ -2239,12 +2239,16 @@ section {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .account-identity-info {
   min-width: 0;
   flex: 1;
+}
+
+.account-username-label {
+  margin-top: -6px;
 }
 
 .account-username-hint {
