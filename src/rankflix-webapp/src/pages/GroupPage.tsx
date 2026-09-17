@@ -832,15 +832,38 @@ export function GroupPage() {
 
   const votingStatusFilterAny = votingFilter !== "all";
   const anyMediaFilterActive =
-    votingStatusFilterAny || selectedGenres.length > 0 || ratingFilter !== null || pendingVotesOnly;
+    votingStatusFilterAny || selectedGenres.length > 0 || ratingFilter !== null || pendingVotesOnly || mediaSortBy !== "rating";
 
-  // Removable chips summarising every active filter/search (search included, since it also
-  // narrows the list even though it has its own visible input) - gives a clear, glanceable
-  // "something is hiding items right now" signal instead of relying on small active-state
-  // styling on individual toggle buttons that's easy to miss, especially on mobile where most
-  // filters live behind the "⚙" popover.
+  const sortByOptions: { value: typeof mediaSortBy; label: string }[] = [
+    { value: "rating", label: "Highest rated" },
+    { value: "title", label: "Title (A-Z)" },
+    { value: "added", label: "Recently added" },
+  ];
+
+  // Same "whose ratings" lookup RankingMemberSelect uses internally for its own label, reused
+  // here so the active-filters chip bar can show it too.
+  const rankingMemberLabel =
+    rankingMemberId === "average"
+      ? null
+      : typeof rankingMemberId === "number"
+        ? `${group.members.find((m) => m.userId === rankingMemberId)?.displayName ?? "?"}'s ratings`
+        : `${group.pendingMembers.find((p) => p.discordId === rankingMemberId)?.displayName ?? rankingMemberId}'s ratings`;
+
+  // Removable chips summarising every active filter/search/sort/ranking-perspective (search
+  // included, since it also narrows the list even though it has its own visible input) - gives a
+  // clear, glanceable "something is changing what you see right now" signal instead of relying on
+  // small active-state styling on individual toggle buttons that's easy to miss, especially on
+  // mobile where most of these live behind the "⚙" popover.
   const activeFilterChips: { key: string; label: string; onClear: () => void }[] = [];
   if (mediaSearch) activeFilterChips.push({ key: "search", label: `"${mediaSearch}"`, onClear: () => setMediaSearchInput("") });
+  if (rankingMemberLabel)
+    activeFilterChips.push({ key: "ranking-member", label: rankingMemberLabel, onClear: () => setRankingMemberId("average") });
+  if (mediaSortBy !== "rating")
+    activeFilterChips.push({
+      key: "sort",
+      label: `Sort: ${sortByOptions.find((o) => o.value === mediaSortBy)?.label ?? mediaSortBy}`,
+      onClear: () => setMediaSortBy("rating"),
+    });
   if (votingStatusFilterAny)
     activeFilterChips.push({
       key: "voting",
@@ -860,6 +883,8 @@ export function GroupPage() {
 
   const clearAllFilters = () => {
     setMediaSearchInput("");
+    setRankingMemberId("average");
+    setMediaSortBy("rating");
     setVotingFilter("all");
     setSelectedGenres([]);
     setRatingFilter(null);
@@ -950,12 +975,6 @@ export function GroupPage() {
       ))}
     </div>
   );
-
-  const sortByOptions: { value: typeof mediaSortBy; label: string }[] = [
-    { value: "rating", label: "Highest rated" },
-    { value: "title", label: "Title (A-Z)" },
-    { value: "added", label: "Recently added" },
-  ];
 
   const renderSortByList = (close: () => void) => (
     <div className="filter-popover-list">
