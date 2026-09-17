@@ -3245,7 +3245,7 @@ button.secondary:hover {
 .media-ranking-number {
   flex-shrink: 0;
   width: 42px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-dim);
   text-align: center;
@@ -3280,12 +3280,12 @@ button.secondary:hover {
 
 .media-ranking-poster-wrap {
   flex-shrink: 0;
-  width: 56px;
+  width: 62px;
 }
 
 .media-ranking-poster {
-  width: 56px;
-  height: 84px;
+  width: 62px;
+  height: 93px;
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--text-dim);
@@ -3304,7 +3304,7 @@ button.secondary:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .media-ranking-info .media-card-title .media-modal-type-badge {
@@ -3337,12 +3337,12 @@ button.secondary:hover {
 
 .media-ranking-score {
   font-weight: 700;
-  font-size: 17px;
+  font-size: 19px;
   color: var(--accent);
 }
 
 .media-ranking-rated-count {
-  font-size: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
