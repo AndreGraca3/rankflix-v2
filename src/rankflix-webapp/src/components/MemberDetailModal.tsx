@@ -140,7 +140,7 @@ export function MemberDetailModal({
           </div>
           <div className="member-modal-stat" aria-label={`Ratings given: ${stats?.totalRatingsGiven ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.totalRatingsGiven ?? 0}</span>
-            <span className="member-modal-stat-label" title="Ratings given" aria-hidden="true">📝</span>
+            <span className="member-modal-stat-label" title="Ratings given" aria-hidden="true">✅</span>
           </div>
           <div
             className="member-modal-stat"
