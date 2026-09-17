@@ -31,8 +31,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html,
-body {
+html, body {
   overflow-x: hidden;
 }
 
@@ -46,9 +45,7 @@ body {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3 {
+h1, h2, h3 {
   font-weight: 600;
   color: var(--text-h);
   margin: 0 0 8px;
@@ -83,8 +80,10 @@ a {
   text-decoration: none;
 }
 
+@media (hover: hover) {
 a:hover {
   color: var(--accent-hover);
+}
 }
 
 /* Layout */
@@ -118,9 +117,11 @@ a:hover {
   transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
 .navbar .brand:hover {
   transform: scale(1.06);
   color: var(--text-h);
+}
 }
 
 .navbar .brand img {
@@ -129,8 +130,10 @@ a:hover {
   transition: transform 0.2s ease;
 }
 
+@media (hover: hover) {
 .navbar .brand:hover img {
   transform: scale(1.15) rotate(-6deg);
+}
 }
 
 .avatar-btn {
@@ -143,9 +146,11 @@ a:hover {
   cursor: pointer;
 }
 
+@media (hover: hover) {
 .avatar-btn:hover {
   transform: scale(1.08);
   background: none;
+}
 }
 
 .avatar {
@@ -241,9 +246,11 @@ a:hover {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .nav-link:hover {
   color: var(--text-h);
   background: var(--surface-hover);
+}
 }
 
 .nav-link.active {
@@ -275,8 +282,7 @@ a:hover {
   padding: 0;
 }
 
-.user-menu-list a,
-.user-menu-list button {
+.user-menu-list a, .user-menu-list button {
   display: block;
   width: 100%;
   text-align: left;
@@ -288,9 +294,10 @@ a:hover {
   font-size: 14px;
 }
 
-.user-menu-list a:hover,
-.user-menu-list button:hover {
+@media (hover: hover) {
+.user-menu-list a:hover, .user-menu-list button:hover {
   background: var(--surface-hover);
+}
 }
 
 .user-menu-signout {
@@ -369,11 +376,16 @@ a:hover {
   z-index: 20;
 }
 
-.user-menu-status-item:hover .user-menu-status-flyout,
-.user-menu-status-item:focus-within .user-menu-status-flyout,
-.user-menu-status-flyout.open {
+.user-menu-status-item:focus-within .user-menu-status-flyout, .user-menu-status-flyout.open {
   display: block;
   animation: dropdown-pop-in-up 0.16s ease both;
+}
+
+@media (hover: hover) {
+.user-menu-status-item:hover .user-menu-status-flyout {
+  display: block;
+  animation: dropdown-pop-in-up 0.16s ease both;
+}
 }
 
 .user-menu-status-flyout button {
@@ -459,8 +471,7 @@ a:hover {
   color: var(--text-dim);
 }
 
-.auth-page p.error,
-.auth-page p.success {
+.auth-page p.error, .auth-page p.success {
   margin-top: 0;
   color: var(--danger);
 }
@@ -480,14 +491,20 @@ a:hover {
   cursor: pointer;
 }
 
-.link-btn:hover,
-.link-btn:focus,
-.link-btn:focus-visible,
-.link-btn:active {
+.link-btn:focus, .link-btn:focus-visible, .link-btn:active {
   background: none;
   outline: none;
   transform: none;
   color: var(--text);
+}
+
+@media (hover: hover) {
+.link-btn:hover {
+  background: none;
+  outline: none;
+  transform: none;
+  color: var(--text);
+}
 }
 
 .reset-password-result {
@@ -515,9 +532,7 @@ a:hover {
 }
 
 /* Form controls */
-input,
-select,
-textarea {
+input, select, textarea {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text);
@@ -528,9 +543,7 @@ textarea {
   transition: border-color 0.15s ease;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -552,8 +565,10 @@ button {
   font-family: inherit;
 }
 
+@media (hover: hover) {
 button:hover {
   background: var(--accent-hover);
+}
 }
 
 button:active {
@@ -573,9 +588,11 @@ button.link {
   text-decoration: underline;
 }
 
+@media (hover: hover) {
 button.link:hover {
   background: none;
   color: var(--accent-hover);
+}
 }
 
 /* Lists */
@@ -649,8 +666,10 @@ button.link:hover {
   transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
 .group-card-link:hover {
   transform: scale(1.03);
+}
 }
 
 .group-poster-wrap {
@@ -702,13 +721,17 @@ button.link:hover {
   transition: opacity 0.15s ease, background 0.15s ease;
 }
 
+@media (hover: hover) {
 .group-poster-wrap:hover .group-edit-btn {
   opacity: 1;
 }
+}
 
+@media (hover: hover) {
 .group-edit-btn:hover {
   background: var(--accent);
   color: var(--accent-text);
+}
 }
 
 .group-delete-overlay-btn {
@@ -730,25 +753,24 @@ button.link:hover {
   transition: opacity 0.15s ease, background 0.15s ease;
 }
 
+@media (hover: hover) {
 .group-poster-wrap:hover .group-delete-overlay-btn {
   opacity: 1;
 }
+}
 
+@media (hover: hover) {
 .group-delete-overlay-btn:hover {
   background: var(--danger);
   color: #fff;
+}
 }
 
 /* Touch devices have no real hover state, so opacity:0-until-hover would leave these
    overlay/reveal-on-hover controls permanently invisible/untappable across the app.
    Always show them (slightly dimmed) on coarse-pointer/no-hover devices instead. */
 @media (hover: none), (pointer: coarse) {
-  .group-edit-btn,
-  .group-delete-overlay-btn,
-  .group-poster-edit-overlay,
-  .group-poster-remove-overlay,
-  .avatar-edit-overlay,
-  .member-sidebar-row .member-remove {
+  .group-edit-btn, .group-delete-overlay-btn, .group-poster-edit-overlay, .group-poster-remove-overlay, .avatar-edit-overlay, .member-sidebar-row .member-remove {
     opacity: 0.85;
   }
 
@@ -901,9 +923,11 @@ button.link:hover {
   opacity: 1;
 }
 
+@media (hover: hover) {
 .group-header-edit-btn:hover {
   background: var(--accent);
   color: var(--accent-text);
+}
 }
 
 .group-header-poster {
@@ -928,8 +952,7 @@ button.link:hover {
   gap: 16px;
 }
 
-.group-edit-poster-row .group-poster,
-.group-edit-poster-row .group-poster-fallback {
+.group-edit-poster-row .group-poster, .group-edit-poster-row .group-poster-fallback {
   width: 150px;
   aspect-ratio: 2 / 3;
   flex-shrink: 0;
@@ -945,8 +968,7 @@ button.link:hover {
   flex-shrink: 0;
 }
 
-.group-poster-edit-wrap .group-poster,
-.group-poster-edit-wrap .group-poster-fallback {
+.group-poster-edit-wrap .group-poster, .group-poster-edit-wrap .group-poster-fallback {
   width: 100%;
   height: 100%;
   border-radius: var(--radius);
@@ -973,8 +995,10 @@ button.link:hover {
   transition: opacity 0.15s ease;
 }
 
+@media (hover: hover) {
 .group-poster-edit-wrap:hover .group-poster-edit-overlay {
   opacity: 1;
+}
 }
 
 .group-poster-remove-overlay {
@@ -997,13 +1021,17 @@ button.link:hover {
   transition: opacity 0.15s ease, background 0.15s ease;
 }
 
+@media (hover: hover) {
 .group-poster-edit-wrap:hover .group-poster-remove-overlay {
   opacity: 1;
 }
+}
 
+@media (hover: hover) {
 .group-poster-remove-overlay:hover {
   background: #c0392b;
   border-color: #c0392b;
+}
 }
 
 .image-upload {
@@ -1253,10 +1281,12 @@ section ul li {
   z-index: 2;
 }
 
+@media (hover: hover) {
 .media-modal-close:hover {
   background: var(--danger);
   color: #fff;
   transform: scale(1.08);
+}
 }
 
 .confirm-modal {
@@ -1373,9 +1403,11 @@ section ul li {
   transition: transform 0.12s ease, background 0.12s ease;
 }
 
+@media (hover: hover) {
 .media-modal-vote-cta:hover {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   transform: scale(1.01);
+}
 }
 
 .media-modal-vote-cta-edit {
@@ -1436,9 +1468,11 @@ section ul li {
   cursor: pointer;
 }
 
+@media (hover: hover) {
 .watcher-add-trigger:hover {
   background: var(--accent);
   color: #fff;
+}
 }
 
 .watcher-add-list {
@@ -1476,16 +1510,20 @@ section ul li {
   font-size: 13px;
 }
 
+@media (hover: hover) {
 .watcher-add-list li:hover {
   background: var(--surface-hover);
+}
 }
 
 .watcher-add-empty {
   cursor: default;
 }
 
+@media (hover: hover) {
 .watcher-add-empty:hover {
   background: none;
+}
 }
 
 .media-modal-watcher-chips {
@@ -1518,8 +1556,10 @@ section ul li {
   background: rgba(var(--accent-rgb, 108, 92, 231), 0.12);
 }
 
+@media (hover: hover) {
 .watcher-chip:hover {
   border-color: var(--accent);
+}
 }
 
 .watcher-chip-avatar {
@@ -1589,9 +1629,11 @@ section ul li {
   cursor: pointer;
 }
 
+@media (hover: hover) {
 .watcher-chip-remove:hover {
   background: #e5484d;
   color: #fff;
+}
 }
 
 .media-modal-remove-review {
@@ -1610,10 +1652,12 @@ section ul li {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .media-modal-remove-review:hover {
   background: var(--danger);
   border-color: var(--danger);
   color: #fff;
+}
 }
 
 .media-modal-watcher-action {
@@ -1635,16 +1679,20 @@ section ul li {
   color: var(--danger);
 }
 
+@media (hover: hover) {
 .media-modal-watcher-action.add:hover {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
 }
+}
 
+@media (hover: hover) {
 .media-modal-watcher-action.remove:hover {
   background: var(--danger);
   border-color: var(--danger);
   color: #fff;
+}
 }
 
 .comment-modal-rating-row {
@@ -1748,8 +1796,10 @@ section ul li {
   justify-content: center;
 }
 
+@media (hover: hover) {
 .voting-hours-stepper button:hover {
   background: var(--surface-hover);
+}
 }
 
 .voting-hours-value {
@@ -1786,9 +1836,11 @@ button.danger {
   color: var(--danger);
 }
 
+@media (hover: hover) {
 button.danger:hover {
   background: var(--danger);
   color: #fff;
+}
 }
 
 .media-modal-confirm-delete {
@@ -1937,9 +1989,11 @@ button.danger:hover {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .rating-modal-comment-clear:hover {
   background: var(--danger);
   color: #fff;
+}
 }
 
 .rating-modal .row {
@@ -2021,8 +2075,7 @@ table {
   overflow: hidden;
 }
 
-th,
-td {
+th, td {
   padding: 10px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-soft);
@@ -2042,12 +2095,13 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+@media (hover: hover) {
 tbody tr:hover {
   background: var(--surface-hover);
 }
+}
 
-td input,
-td select {
+td input, td select {
   padding: 6px 8px;
   font-size: 13px;
 }
@@ -2218,9 +2272,14 @@ section {
   transition: opacity 0.15s ease;
 }
 
-.avatar-edit-trigger:hover .avatar-edit-overlay,
 .avatar-edit-trigger:disabled .avatar-edit-overlay {
   opacity: 1;
+}
+
+@media (hover: hover) {
+.avatar-edit-trigger:hover .avatar-edit-overlay {
+  opacity: 1;
+}
 }
 
 /* Badges */
@@ -2258,9 +2317,11 @@ section {
   color: var(--text);
 }
 
+@media (hover: hover) {
 .btn-secondary:hover {
   background: var(--surface-hover);
   border-color: var(--text-dim);
+}
 }
 
 /* Member list */
@@ -2297,9 +2358,11 @@ section {
   justify-content: center;
 }
 
+@media (hover: hover) {
 .member-remove:hover {
   background: var(--danger);
   color: #fff;
+}
 }
 
 /* Media autocomplete */
@@ -2352,9 +2415,11 @@ section {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .add-media-watched-chip:hover {
   border-color: var(--accent);
   color: var(--text);
+}
 }
 
 .add-media-watched-chip.active {
@@ -2398,12 +2463,13 @@ section {
   border-bottom: none;
 }
 
+@media (hover: hover) {
 .autocomplete-dropdown li:hover {
   background: var(--surface-hover);
 }
+}
 
-.autocomplete-dropdown img,
-.autocomplete-poster-placeholder {
+.autocomplete-dropdown img, .autocomplete-poster-placeholder {
   width: 32px;
   height: 46px;
   border-radius: 4px;
@@ -2448,8 +2514,10 @@ section {
   transition: background 0.15s ease;
 }
 
+@media (hover: hover) {
 .file-input-label:hover {
   background: var(--accent-hover);
+}
 }
 
 .excel-btn {
@@ -2459,8 +2527,10 @@ section {
   transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
 .excel-btn:hover {
   transform: scale(1.05);
+}
 }
 
 .file-input-label input[type="file"] {
@@ -2471,8 +2541,7 @@ section {
   width: 100%;
 }
 
-.file-input-label input[type="file"]::file-selector-button,
-.file-input-label input[type="file"]::-webkit-file-upload-button {
+.file-input-label input[type="file"]::file-selector-button, .file-input-label input[type="file"]::-webkit-file-upload-button {
   cursor: pointer;
 }
 
@@ -2482,9 +2551,11 @@ button.secondary {
   color: var(--text);
 }
 
+@media (hover: hover) {
 button.secondary:hover {
   background: var(--surface-hover);
   border-color: var(--text-dim);
+}
 }
 
 .group-layout {
@@ -2566,9 +2637,11 @@ button.secondary:hover {
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .active-filter-chip:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
 }
 
 .active-filter-chip-x {
@@ -2595,9 +2668,11 @@ button.secondary:hover {
   white-space: nowrap;
 }
 
+@media (hover: hover) {
 .active-filters-clear-all:hover {
   color: var(--accent);
   text-decoration: underline;
+}
 }
 
 .media-toolbar-left {
@@ -2640,8 +2715,10 @@ button.secondary:hover {
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .media-toolbar-icon-btn:hover {
   border-color: var(--accent);
+}
 }
 
 .media-filters-mobile-panel {
@@ -2665,8 +2742,10 @@ button.secondary:hover {
   transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
 .media-toolbar-add-btn:hover {
   transform: scale(1.06);
+}
 }
 
 .view-toggle {
@@ -2693,9 +2772,11 @@ button.secondary:hover {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .view-toggle button:hover {
   background: var(--surface-hover);
   color: var(--text);
+}
 }
 
 .view-toggle button.active {
@@ -2712,9 +2793,11 @@ button.secondary:hover {
   border: 1px solid var(--border);
 }
 
+@media (hover: hover) {
 .view-toggle .ranking-member-trigger:hover {
   background: var(--surface-hover);
   color: var(--text);
+}
 }
 
 .ranking-member-dropdown {
@@ -2761,9 +2844,11 @@ button.secondary:hover {
   justify-content: center;
 }
 
+@media (hover: hover) {
 .media-search-clear:hover {
   background: var(--accent);
   color: #fff;
+}
 }
 
 .voting-filter-toggle {
@@ -2791,9 +2876,11 @@ button.secondary:hover {
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .voting-filter-toggle button:hover {
   background: var(--surface-hover);
   color: var(--text);
+}
 }
 
 .voting-filter-toggle button.active {
@@ -2829,8 +2916,10 @@ button.secondary:hover {
   font-size: 15px;
 }
 
+@media (hover: hover) {
 .ranking-member-trigger:hover {
   border-color: var(--accent);
+}
 }
 
 .ranking-member-trigger-chevron {
@@ -2873,8 +2962,10 @@ button.secondary:hover {
   gap: 6px;
 }
 
+@media (hover: hover) {
 .ranking-member-list li:hover {
   background: var(--surface-hover);
+}
 }
 
 .ranking-member-list li.active {
@@ -2902,8 +2993,10 @@ button.secondary:hover {
   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .filter-popover-trigger:hover {
   border-color: var(--accent);
+}
 }
 
 .filter-popover-trigger.active {
@@ -2987,8 +3080,10 @@ button.secondary:hover {
   white-space: nowrap;
 }
 
+@media (hover: hover) {
 .filter-popover-list button:hover {
   background: var(--surface-hover);
+}
 }
 
 .filter-popover-list button.active {
@@ -3014,8 +3109,10 @@ button.secondary:hover {
   white-space: nowrap;
 }
 
+@media (hover: hover) {
 .filter-popover-checkbox-row:hover {
   background: var(--surface-hover);
+}
 }
 
 .filter-popover-checkbox-row input {
@@ -3035,8 +3132,10 @@ button.secondary:hover {
   color: var(--text-dim);
 }
 
+@media (hover: hover) {
 .filter-popover-clear-btn:hover {
   color: var(--accent);
+}
 }
 
 .filter-toggle-pill {
@@ -3052,8 +3151,10 @@ button.secondary:hover {
   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
+@media (hover: hover) {
 .filter-toggle-pill:hover {
   border-color: var(--accent);
+}
 }
 
 .filter-toggle-pill.active {
@@ -3091,15 +3192,7 @@ button.secondary:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .media-row-enter,
-  .member-row-enter,
-  .ranking-member-list-portal,
-  .filter-popover-panel,
-  .user-menu-list,
-  .user-menu-status-flyout,
-  .add-member-list,
-  .member-sidebar-body.expanded,
-  .member-sidebar.expanded {
+  .media-row-enter, .member-row-enter, .ranking-member-list-portal, .filter-popover-panel, .user-menu-list, .user-menu-status-flyout, .add-member-list, .member-sidebar-body.expanded, .member-sidebar.expanded {
     animation: none;
   }
 }
@@ -3120,10 +3213,12 @@ button.secondary:hover {
   transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .media-ranking-row:hover {
   transform: scale(1.01);
   border-color: var(--text-dim);
   background: var(--surface);
+}
 }
 
 .media-ranking-number {
@@ -3260,10 +3355,12 @@ button.secondary:hover {
   color: var(--text-dim);
 }
 
+@media (hover: hover) {
 .member-sort-toggle:hover {
   color: var(--text);
   border-color: var(--text-dim);
   background: var(--surface-hover);
+}
 }
 
 .member-sidebar-list {
@@ -3286,13 +3383,17 @@ button.secondary:hover {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .member-sidebar-row:hover {
   background: var(--surface-hover);
   border-color: var(--border);
 }
+}
 
+@media (hover: hover) {
 .member-sidebar-row:hover .member-remove {
   opacity: 1;
+}
 }
 
 .member-sidebar-info {
@@ -3374,8 +3475,10 @@ button.secondary:hover {
   cursor: pointer;
 }
 
+@media (hover: hover) {
 .member-sidebar-row-clickable:hover {
   border-color: var(--accent);
+}
 }
 
 .member-modal {
@@ -3426,10 +3529,12 @@ button.secondary:hover {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+@media (hover: hover) {
 .member-modal-copy-btn:hover {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
+}
 }
 
 .member-modal-ownership-btn {
@@ -3487,10 +3592,12 @@ button.secondary:hover {
   font-weight: 500;
 }
 
+@media (hover: hover) {
 .add-member-trigger:hover {
   background: var(--surface-hover);
   color: var(--text);
   border-color: var(--accent);
+}
 }
 
 .add-member-list {
@@ -3520,16 +3627,20 @@ button.secondary:hover {
   font-size: 14px;
 }
 
+@media (hover: hover) {
 .add-member-list li:hover {
   background: var(--surface-hover);
+}
 }
 
 .add-member-empty {
   cursor: default;
 }
 
+@media (hover: hover) {
 .add-member-empty:hover {
   background: none;
+}
 }
 
 .scroll-top-btn {
@@ -3549,16 +3660,20 @@ button.secondary:hover {
   transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
 .scroll-top-btn:hover {
   transform: scale(1.1);
+}
 }
 
 .users-row {
   cursor: pointer;
 }
 
+@media (hover: hover) {
 .users-row:hover {
   background: var(--surface-hover);
+}
 }
 
 .user-edit-modal {
@@ -3583,8 +3698,7 @@ button.secondary:hover {
   margin-bottom: 16px;
 }
 
-.user-edit-field input,
-.user-edit-field select {
+.user-edit-field input, .user-edit-field select {
   width: 100%;
   box-sizing: border-box;
 }
@@ -3694,8 +3808,10 @@ button.secondary:hover {
   flex-shrink: 0;
 }
 
+@media (hover: hover) {
 .toast-close:hover {
   color: var(--text);
+}
 }
 
 @media (max-width: 820px) {
@@ -3727,9 +3843,7 @@ button.secondary:hover {
 @media (max-width: 680px) {
   /* iOS Safari auto-zooms the whole page when focusing an input smaller than 16px -
      bump it up on mobile only, to avoid changing the desktop form-control look. */
-  input,
-  select,
-  textarea {
+  input, select, textarea {
     font-size: 16px;
   }
 
@@ -3789,8 +3903,7 @@ button.secondary:hover {
     margin: 0;
   }
 
-  .page-header-row .row button,
-  .page-header-row .row label {
+  .page-header-row .row button, .page-header-row .row label {
     flex: 1 1 auto;
     justify-content: center;
     text-align: center;
@@ -3870,8 +3983,7 @@ button.secondary:hover {
     display: inline;
   }
 
-  .ranking-member-trigger-label,
-  .ranking-member-trigger-chevron {
+  .ranking-member-trigger-label, .ranking-member-trigger-chevron {
     display: none;
   }
 
@@ -3916,9 +4028,7 @@ button.secondary:hover {
     width: 100%;
   }
 
-  .add-media-modal,
-  .user-edit-modal,
-  .confirm-modal {
+  .add-media-modal, .user-edit-modal, .confirm-modal {
     max-width: 100%;
   }
 
@@ -4098,8 +4208,7 @@ button.secondary:hover {
     flex-wrap: wrap;
   }
 
-  .comment-modal,
-  .crop-modal {
+  .comment-modal, .crop-modal {
     padding: 16px;
     width: calc(100% - 20px);
   }
@@ -4118,8 +4227,7 @@ button.secondary:hover {
     font-size: 13px;
   }
 
-  th,
-  td {
+  th, td {
     padding: 8px 10px;
   }
 
