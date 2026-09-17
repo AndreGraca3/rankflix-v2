@@ -47,6 +47,12 @@ export function GroupPage() {
   const [mediaTotalCount, setMediaTotalCount] = useState(0);
   const [mediaHasMore, setMediaHasMore] = useState(false);
   const [totalMediaInGroup, setTotalMediaInGroup] = useState(0);
+  // Maps tmdbId -> its rank (1-based) in the *unfiltered* ranking (same ranking-member
+  // perspective, but ignoring search/genre/rating/voting-status/pending-votes filters) - so a
+  // filtered/narrowed view can still show "this item is normally #N overall" next to its
+  // filtered-list position. Rebuilt whenever the underlying media/ratings change, independent of
+  // which display filters are currently active.
+  const [originalRanks, setOriginalRanks] = useState<Record<number, number>>({});
   const [availableGenres, setAvailableGenres] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<UserDirectoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +140,7 @@ export function GroupPage() {
   const load = () => {
     loadGroupAndStats();
     loadMedia(0, MEDIA_PAGE_SIZE);
+    loadOriginalRanks();
   };
 
   // "Fully rated" = every watcher who's marked as having watched it has also rated it - i.e.
@@ -174,6 +181,27 @@ export function GroupPage() {
     return top && isFullyRated(top) ? top : null;
   };
 
+  // Fetches the same filter-independent (only `rankingMemberId` applied) full ranking used above
+  // and turns it into a tmdbId -> 1-based-rank lookup, so the visible (possibly filtered) list can
+  // show each item's true overall position alongside its position within the current filtered view.
+  const loadOriginalRanks = async () => {
+    if (!groupId) return;
+    const params = new URLSearchParams();
+    params.set("skip", "0");
+    params.set("take", "1000");
+    if (rankingMemberId !== "average") params.set("rankingMember", String(rankingMemberId));
+    try {
+      const res = await api.get<PagedGroupMedia>(`/api/groups/${groupId}/media?${params.toString()}`);
+      const map: Record<number, number> = {};
+      res.items.forEach((item, idx) => {
+        map[item.tmdbId] = idx + 1;
+      });
+      setOriginalRanks(map);
+    } catch {
+      // Non-critical - the "original rank" hint just won't show if this fails.
+    }
+  };
+
   // Silently (re)establishes the true-#1 baseline whenever the group or ranking perspective
   // changes, so the very first live update afterwards has something correct to compare against
   // instead of possibly celebrating (or failing to celebrate) based on a stale/absent baseline.
@@ -184,6 +212,7 @@ export function GroupPage() {
         trueTopIdRef.current = top?.tmdbId ?? null;
       })
       .catch(() => {});
+    loadOriginalRanks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, rankingMemberId]);
 
@@ -242,6 +271,7 @@ export function GroupPage() {
         setMediaHasMore(res.hasMore);
         setAvailableGenres(res.availableGenres);
         setTotalMediaInGroup(res.totalMediaInGroup);
+        loadOriginalRanks();
         const celebrated = options?.tmdbId !== undefined ? await checkCelebration(options.tmdbId) : false;
         if (!celebrated && options?.fallbackToast) setSuccessToast(options.fallbackToast);
       })
@@ -430,6 +460,15 @@ export function GroupPage() {
   }, [group, memberSortMode, memberStatsByUserId, pendingStatsByDiscordId]);
 
   const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`;
+  // `rankingMemberId` is a ranking axis, not a narrowing filter (see comments above), so it's
+  // excluded here - only filters that can shrink/reorder-within the visible list should trigger
+  // showing each item's "original" (unfiltered) overall rank as a hint.
+  const mediaFiltersActive =
+    votingFilter !== "all" ||
+    mediaSearch !== "" ||
+    selectedGenres.length > 0 ||
+    ratingFilter !== null ||
+    pendingVotesOnly;
 
   // Purely decorative now - the actual next-page trigger is the scroll-position check effect
   // above, not this element entering the viewport.
@@ -1304,7 +1343,12 @@ export function GroupPage() {
                       style={{ animationDelay: `${Math.min(posInPage, 15) * 25}ms` }}
                     >
                       <button type="button" className="media-ranking-row" onClick={() => setSelectedTmdbId(m.tmdbId)}>
-                        <span className="media-ranking-number">#{i + 1}</span>
+                        <div className="media-ranking-number-wrap">
+                          <span className="media-ranking-number">#{i + 1}</span>
+                          {mediaFiltersActive && originalRanks[m.tmdbId] !== undefined && originalRanks[m.tmdbId] !== i + 1 && (
+                            <span className="media-ranking-original-rank">orig. #{originalRanks[m.tmdbId]}</span>
+                          )}
+                        </div>
                         <div className="media-ranking-poster-wrap">
                           {m.posterUrl ? (
                             <img className="media-ranking-poster" src={m.posterUrl} alt={m.title} />
@@ -1533,15 +1577,15 @@ export function GroupPage() {
         </Modal>
       )}
 
-      {showScrollTop && (
-        <button
-          className="scroll-top-btn"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          title="Scroll to top"
-        >
-          ↑
-        </button>
-      )}
+      <button
+        className={`scroll-top-btn${showScrollTop ? " visible" : ""}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        title="Scroll to top"
+        aria-hidden={!showScrollTop}
+        tabIndex={showScrollTop ? 0 : -1}
+      >
+        ↑
+      </button>
 
       {pendingImportFile && (
         <Modal modalClassName="media-modal confirm-modal" onClose={cancelImport}>

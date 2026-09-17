@@ -253,11 +253,15 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
             filtered = filtered.Where(m => m.Watchers.Any(w => w.HasWatched && w.Rating is null));
 
         // Highest-rated first (from whichever ranking-member perspective was requested), unrated
-        // items last, original order preserved within each of those two groups.
+        // items last. Ties (equal rating, e.g. two items both averaging exactly 8.0) are broken
+        // alphabetically by title then by tmdbId, so the order is stable and reproducible instead
+        // of depending on whatever incidental order the database happened to return rows in.
         var sorted = filtered
             .Select(m => (Media: m, Rating: RatingOf(m)))
             .OrderByDescending(x => x.Rating is not null)
             .ThenByDescending(x => x.Rating ?? 0)
+            .ThenBy(x => x.Media.Title, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => x.Media.TmdbId)
             .Select(x => x.Media)
             .ToList();
 

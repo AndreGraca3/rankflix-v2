@@ -3251,6 +3251,22 @@ button.secondary:hover {
   text-align: center;
 }
 
+.media-ranking-number-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  gap: 2px;
+}
+
+.media-ranking-original-rank {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 .media-ranking-list li:first-child .media-ranking-number {
   color: var(--accent);
 }
@@ -3676,8 +3692,8 @@ button.secondary:hover {
 
 .scroll-top-btn {
   position: fixed;
-  right: 48px;
-  bottom: 56px;
+  right: 56px;
+  bottom: 72px;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -3688,11 +3704,20 @@ button.secondary:hover {
   justify-content: center;
   box-shadow: var(--shadow);
   z-index: 50;
-  transition: transform 0.15s ease;
+  opacity: 0;
+  transform: scale(0.6) translateY(14px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.scroll-top-btn.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
 }
 
 @media (hover: hover) {
-.scroll-top-btn:hover {
+.scroll-top-btn.visible:hover {
   transform: scale(1.1);
 }
 }
@@ -4084,6 +4109,14 @@ button.secondary:hover {
     font-size: 14px;
   }
 
+  .media-ranking-number-wrap {
+    width: 20px;
+  }
+
+  .media-ranking-original-rank {
+    font-size: 8px;
+  }
+
   .media-ranking-poster-wrap {
     width: 48px;
   }
@@ -4263,8 +4296,8 @@ button.secondary:hover {
   }
 
   .scroll-top-btn {
-    right: 16px;
-    bottom: 16px;
+    right: 24px;
+    bottom: 92px;
     width: 40px;
     height: 40px;
   }
