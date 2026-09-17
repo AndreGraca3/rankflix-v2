@@ -1771,6 +1771,12 @@ section ul li {
   margin-top: 16px;
 }
 
+.add-media-hours-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .voting-hours-stepper {
   display: flex;
   align-items: center;

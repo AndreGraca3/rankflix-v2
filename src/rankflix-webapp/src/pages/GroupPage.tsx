@@ -1044,10 +1044,6 @@ export function GroupPage() {
                 <h2>Add media</h2>
                 <div className="add-media-form">
                   <div className="add-media-search-row">
-                    <select value={newMedia.type} onChange={(e) => setNewMedia({ ...newMedia, type: e.target.value })}>
-                      <option value="movie">movie</option>
-                      <option value="tv">tv</option>
-                    </select>
                     <MediaAutocomplete onSelect={handleMediaSelected} />
                   </div>
                   {(group.members.length > 0 || group.pendingMembers.length > 0) && (
@@ -1099,14 +1095,37 @@ export function GroupPage() {
                       </div>
                     </div>
                   )}
+                  <div className="row add-media-hours-row">
+                    <span className="muted">Voting hours</span>
+                    <div className="voting-hours-stepper">
+                      <button
+                        type="button"
+                        aria-label="Decrease voting hours"
+                        onClick={() =>
+                          setNewMedia((prev) => ({
+                            ...prev,
+                            votingDurationHours: String(Math.max(1, Number(prev.votingDurationHours || 24) - 1)),
+                          }))
+                        }
+                      >
+                        −
+                      </button>
+                      <span className="voting-hours-value">{newMedia.votingDurationHours || 24}</span>
+                      <button
+                        type="button"
+                        aria-label="Increase voting hours"
+                        onClick={() =>
+                          setNewMedia((prev) => ({
+                            ...prev,
+                            votingDurationHours: String(Number(prev.votingDurationHours || 24) + 1),
+                          }))
+                        }
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                   <div className="row">
-                    <input
-                      type="number"
-                      min={1}
-                      placeholder="Voting hours (default 24)"
-                      value={newMedia.votingDurationHours}
-                      onChange={(e) => setNewMedia({ ...newMedia, votingDurationHours: e.target.value })}
-                    />
                     <button
                       onClick={async () => {
                         await addMedia();
