@@ -67,7 +67,7 @@ export function UserMenu() {
                 onClick={() => setAdminViewEnabled(!adminViewEnabled)}
                 title={adminViewEnabled ? "Switch to User view (hides admin-only options)" : "Switch back to Admin view"}
               >
-                <span>{adminViewEnabled ? "Admin view" : "User view"}</span>
+                <span>Admin view</span>
                 <span className={`admin-view-switch${adminViewEnabled ? " on" : ""}`} aria-hidden="true">
                   <span className="admin-view-switch-knob" />
                 </span>
