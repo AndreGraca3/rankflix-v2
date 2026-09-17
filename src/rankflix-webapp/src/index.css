@@ -3589,11 +3589,10 @@ button.secondary:hover {
 }
 
 .member-modal-stat-label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
   text-align: center;
+  line-height: 1;
 }
 
 .member-sidebar-add {

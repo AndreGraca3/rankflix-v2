@@ -126,33 +126,39 @@ export function MemberDetailModal({
         )}
 
         <div className="member-modal-stats">
-          <div className="member-modal-stat">
+          <div className="member-modal-stat" aria-label={`Watched: ${stats ? stats.moviesWatched + stats.tvWatched : 0}`}>
             <span className="member-modal-stat-value">{stats ? stats.moviesWatched + stats.tvWatched : 0}</span>
-            <span className="member-modal-stat-label">Watched</span>
+            <span className="member-modal-stat-label" title="Watched" aria-hidden="true">🍿</span>
           </div>
-          <div className="member-modal-stat">
+          <div className="member-modal-stat" aria-label={`Movies: ${stats?.moviesWatched ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.moviesWatched ?? 0}</span>
-            <span className="member-modal-stat-label">Movies</span>
+            <span className="member-modal-stat-label" title="Movies" aria-hidden="true">🎬</span>
           </div>
-          <div className="member-modal-stat">
+          <div className="member-modal-stat" aria-label={`TV shows: ${stats?.tvWatched ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.tvWatched ?? 0}</span>
-            <span className="member-modal-stat-label">Shows</span>
+            <span className="member-modal-stat-label" title="TV shows" aria-hidden="true">📺</span>
           </div>
-          <div className="member-modal-stat">
+          <div className="member-modal-stat" aria-label={`Ratings given: ${stats?.totalRatingsGiven ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.totalRatingsGiven ?? 0}</span>
-            <span className="member-modal-stat-label">Ratings given</span>
+            <span className="member-modal-stat-label" title="Ratings given" aria-hidden="true">📝</span>
           </div>
-          <div className="member-modal-stat">
+          <div
+            className="member-modal-stat"
+            aria-label={`Average rating: ${stats?.averageRatingGiven != null ? stats.averageRatingGiven.toFixed(1) : "none"}`}
+          >
             <span className="member-modal-stat-value">
               {stats?.averageRatingGiven != null ? `★ ${stats.averageRatingGiven.toFixed(1)}` : "—"}
             </span>
-            <span className="member-modal-stat-label">Avg rating</span>
+            <span className="member-modal-stat-label" title="Average rating" aria-hidden="true">⭐</span>
           </div>
-          <div className="member-modal-stat">
+          <div
+            className="member-modal-stat"
+            aria-label={`Watch time: ${stats && stats.watchTimeMinutes > 0 ? formatWatchTime(stats.watchTimeMinutes) : "none"}`}
+          >
             <span className="member-modal-stat-value">
               {stats && stats.watchTimeMinutes > 0 ? formatWatchTime(stats.watchTimeMinutes) : "—"}
             </span>
-            <span className="member-modal-stat-label">Watch time</span>
+            <span className="member-modal-stat-label" title="Watch time" aria-hidden="true">⏱</span>
           </div>
         </div>
       </div>
