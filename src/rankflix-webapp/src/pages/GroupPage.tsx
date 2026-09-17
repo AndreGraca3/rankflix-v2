@@ -183,15 +183,15 @@ export function GroupPage() {
     return top && isFullyRated(top) ? top : null;
   };
 
-  // Fetches the same filter-independent (only `rankingMemberId` applied) full ranking used above
-  // and turns it into a tmdbId -> 1-based-rank lookup, so the visible (possibly filtered) list can
-  // show each item's true overall position alongside its position within the current filtered view.
+  // Fetches the canonical group-average / highest-rated-first ranking (no filters, no ranking-
+  // member perspective, no custom sort) and turns it into a tmdbId -> 1-based-rank lookup, so the
+  // visible (possibly filtered, re-sorted, or viewed-as-a-specific-member's) list can show each
+  // item's true overall position for comparison.
   const loadOriginalRanks = async () => {
     if (!groupId) return;
     const params = new URLSearchParams();
     params.set("skip", "0");
     params.set("take", "1000");
-    if (rankingMemberId !== "average") params.set("rankingMember", String(rankingMemberId));
     try {
       const res = await api.get<PagedGroupMedia>(`/api/groups/${groupId}/media?${params.toString()}`);
       const map: Record<number, number> = {};
@@ -461,17 +461,18 @@ export function GroupPage() {
   }, [group, memberSortMode, memberStatsByUserId, pendingStatsByDiscordId]);
 
   const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}|${mediaSortBy}`;
-  // `rankingMemberId` is a ranking axis, not a narrowing filter (see comments above), so it's
-  // excluded here - only filters that can shrink/reorder-within the visible list should trigger
-  // showing each item's "original" (unfiltered, rating-ranked) overall rank as a hint. A non-default
-  // sort (title/added) is included since it also makes the visible order diverge from the rating rank.
+  // Now that `originalRanks` always holds the canonical group-average ranking (see
+  // loadOriginalRanks), any of the narrowing filters, a non-default sort, *or* viewing a specific
+  // member's perspective can make the visible order diverge from it - all of them should surface
+  // the "original overall rank" hint.
   const mediaFiltersActive =
     votingFilter !== "all" ||
     mediaSearch !== "" ||
     selectedGenres.length > 0 ||
     ratingFilter !== null ||
     pendingVotesOnly ||
-    mediaSortBy !== "rating";
+    mediaSortBy !== "rating" ||
+    rankingMemberId !== "average";
 
   // Purely decorative now - the actual next-page trigger is the scroll-position check effect
   // above, not this element entering the viewport.
@@ -1408,7 +1409,7 @@ export function GroupPage() {
                         <div className="media-ranking-number-wrap">
                           <span className="media-ranking-number">#{i + 1}</span>
                           {mediaFiltersActive && originalRanks[m.tmdbId] !== undefined && originalRanks[m.tmdbId] !== i + 1 && (
-                            <span className="media-ranking-original-rank" title="Overall rank (unfiltered)">
+                            <span className="media-ranking-original-rank" title="Overall rank (group average, unfiltered)">
                               <span aria-hidden="true">🌐</span>
                               {originalRanks[m.tmdbId]}
                             </span>
