@@ -1346,7 +1346,10 @@ export function GroupPage() {
                         <div className="media-ranking-number-wrap">
                           <span className="media-ranking-number">#{i + 1}</span>
                           {mediaFiltersActive && originalRanks[m.tmdbId] !== undefined && originalRanks[m.tmdbId] !== i + 1 && (
-                            <span className="media-ranking-original-rank">orig. #{originalRanks[m.tmdbId]}</span>
+                            <span className="media-ranking-original-rank" title="Overall rank (unfiltered)">
+                              <span aria-hidden="true">🌐</span>
+                              {originalRanks[m.tmdbId]}
+                            </span>
                           )}
                         </div>
                         <div className="media-ranking-poster-wrap">
