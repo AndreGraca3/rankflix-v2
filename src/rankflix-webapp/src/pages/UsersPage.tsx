@@ -142,7 +142,7 @@ export function UsersPage() {
       </main>
 
       {editingUser && (
-        <Modal modalClassName="media-modal user-edit-modal" overlayClassName="media-modal-overlay user-edit-overlay" onClose={closeEdit}>
+        <Modal modalClassName="media-modal user-edit-modal" onClose={closeEdit}>
           {(requestClose) => (
             <>
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
