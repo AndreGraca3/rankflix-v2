@@ -252,14 +252,20 @@ public class MediaService(RankflixDbContext db, ISseService sse, IMediaMetadataS
         if (query.PendingVotesOnly)
             filtered = filtered.Where(m => m.Watchers.Any(w => w.HasWatched && w.Rating is null));
 
-        // Highest-rated first (from whichever ranking-member perspective was requested), unrated
-        // items last. Ties (equal rating, e.g. two items both averaging exactly 8.0) are broken
+        // Default ("rating"): highest-rated first (from whichever ranking-member perspective was
+        // requested), unrated items last. "title"/"added" let the client sort by name or recency
+        // instead, independent of ranking perspective. Ties within any of these are broken
         // alphabetically by title then by tmdbId, so the order is stable and reproducible instead
         // of depending on whatever incidental order the database happened to return rows in.
-        var sorted = filtered
-            .Select(m => (Media: m, Rating: RatingOf(m)))
-            .OrderByDescending(x => x.Rating is not null)
-            .ThenByDescending(x => x.Rating ?? 0)
+        var withRating = filtered.Select(m => (Media: m, Rating: RatingOf(m)));
+        var sorted = (query.SortBy switch
+        {
+            "title" => withRating.OrderBy(x => x.Media.Title, StringComparer.OrdinalIgnoreCase),
+            "added" => withRating.OrderByDescending(x => x.Media.AddedAt),
+            _ => withRating
+                .OrderByDescending(x => x.Rating is not null)
+                .ThenByDescending(x => x.Rating ?? 0)
+        })
             .ThenBy(x => x.Media.Title, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.Media.TmdbId)
             .Select(x => x.Media)

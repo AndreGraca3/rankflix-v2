@@ -53,8 +53,14 @@ export function RankingMemberSelect({ members, pendingMembers, value, onChange }
 
   return (
     <div className="ranking-member-dropdown" ref={ref}>
-      <button type="button" ref={triggerRef} className="ranking-member-trigger" onClick={() => setOpen((o) => !o)}>
-        <span className="ranking-member-trigger-icon" aria-hidden="true">⇅</span>
+      <button
+        type="button"
+        ref={triggerRef}
+        className={`ranking-member-trigger${open ? " open" : ""}`}
+        onClick={() => setOpen((o) => !o)}
+        title={`Ranking perspective: ${label}`}
+      >
+        <span className="ranking-member-trigger-icon" aria-hidden="true">🧭</span>
         <span className="ranking-member-trigger-label">{label}</span>
         <span className="ranking-member-trigger-chevron">▾</span>
       </button>

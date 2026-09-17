@@ -63,6 +63,11 @@ public class GetGroupMediaQuery
     // Discord id - determines both what rating each item is ranked/sorted by and, for a specific
     // member, that only media they've watched is included (matches the old client-side behavior).
     public string RankingMember { get; set; } = "average";
+
+    // "rating" (default, highest-first with unrated last), "title" (A-Z), or "added" (most
+    // recently added first). Independent of RankingMember - "rating" still sorts by whichever
+    // ranking perspective RankingMember selects.
+    public string SortBy { get; set; } = "rating";
 }
 
 public class PagedGroupMediaResponse

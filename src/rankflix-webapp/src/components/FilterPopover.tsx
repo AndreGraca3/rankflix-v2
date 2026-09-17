@@ -58,7 +58,7 @@ export function FilterPopover({ label, active, title, children }: FilterPopoverP
       <button
         type="button"
         ref={triggerRef}
-        className={`filter-popover-trigger${active ? " active" : ""}`}
+        className={`filter-popover-trigger${active ? " active" : ""}${open ? " open" : ""}`}
         onClick={() => setOpen((o) => !o)}
         title={title}
       >

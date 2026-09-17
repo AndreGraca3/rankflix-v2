@@ -63,6 +63,7 @@ export function GroupPage() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [rankingMemberId, setRankingMemberId] = useState<number | string | "average">("average");
+  const [mediaSortBy, setMediaSortBy] = useState<"rating" | "title" | "added">("rating");
   const [votingFilter, setVotingFilter] = useState<"all" | "open" | "closed">("all");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [ratingFilter, setRatingFilter] = useState<number | "unrated" | null>(null);
@@ -98,6 +99,7 @@ export function GroupPage() {
     if (votingFilter !== "all") params.set("votingStatus", votingFilter);
     if (pendingVotesOnly) params.set("pendingVotesOnly", "true");
     if (rankingMemberId !== "average") params.set("rankingMember", String(rankingMemberId));
+    if (mediaSortBy !== "rating") params.set("sortBy", mediaSortBy);
     return params.toString();
   };
 
@@ -311,8 +313,7 @@ export function GroupPage() {
     if (!groupId) return;
     loadMedia(0, MEDIA_PAGE_SIZE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
-
+  }, [groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch, mediaSortBy]);
   // Any group/media/voting/rating mutation from anyone (including this same user in
   // another tab) keeps this group's data live. Additions and membership/import-driven
   // changes still do a full resync (new sort position / filter membership isn't safely
@@ -391,7 +392,7 @@ export function GroupPage() {
     window.addEventListener("scroll", checkForLoadMore, { passive: true });
     return () => window.removeEventListener("scroll", checkForLoadMore);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mediaHasMore, media.length, groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch]);
+  }, [mediaHasMore, media.length, groupId, votingFilter, selectedGenres, ratingFilter, pendingVotesOnly, rankingMemberId, mediaSearch, mediaSortBy]);
 
   useEffect(() => {
     const t = setTimeout(() => setMediaSearch(mediaSearchInput.trim().toLowerCase()), 300);
@@ -459,16 +460,18 @@ export function GroupPage() {
     return list.sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   }, [group, memberSortMode, memberStatsByUserId, pendingStatsByDiscordId]);
 
-  const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}`;
+  const mediaFilterSignature = `${votingFilter}|${mediaSearch}|${rankingMemberId}|${selectedGenres.join(",")}|${ratingFilter}|${pendingVotesOnly}|${mediaSortBy}`;
   // `rankingMemberId` is a ranking axis, not a narrowing filter (see comments above), so it's
   // excluded here - only filters that can shrink/reorder-within the visible list should trigger
-  // showing each item's "original" (unfiltered) overall rank as a hint.
+  // showing each item's "original" (unfiltered, rating-ranked) overall rank as a hint. A non-default
+  // sort (title/added) is included since it also makes the visible order diverge from the rating rank.
   const mediaFiltersActive =
     votingFilter !== "all" ||
     mediaSearch !== "" ||
     selectedGenres.length > 0 ||
     ratingFilter !== null ||
-    pendingVotesOnly;
+    pendingVotesOnly ||
+    mediaSortBy !== "rating";
 
   // Purely decorative now - the actual next-page trigger is the scroll-position check effect
   // above, not this element entering the viewport.
@@ -948,6 +951,30 @@ export function GroupPage() {
     </div>
   );
 
+  const sortByOptions: { value: typeof mediaSortBy; label: string }[] = [
+    { value: "rating", label: "Highest rated" },
+    { value: "title", label: "Title (A-Z)" },
+    { value: "added", label: "Recently added" },
+  ];
+
+  const renderSortByList = (close: () => void) => (
+    <div className="filter-popover-list">
+      {sortByOptions.map((opt) => (
+        <button
+          type="button"
+          key={opt.value}
+          className={mediaSortBy === opt.value ? "active" : ""}
+          onClick={() => {
+            setMediaSortBy(opt.value);
+            close();
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const statsSummary =
     groupStats && (groupStats.totalWatchTimeMinutes > 0 || groupStats.totalRatingsCount > 0) ? (
       <>
@@ -1197,6 +1224,18 @@ export function GroupPage() {
                   />
                 </div>
 
+                {/* Actual sort-order control - distinct from the ranking-perspective (⇅) picker
+                    above, which changes *whose* ratings the list is ranked by, not *how* it's
+                    ordered. Desktop-only; mirrored inside the mobile Filters popover below. */}
+                <div className="media-sort-desktop">
+                  <FilterPopover
+                    label={`Sort: ${sortByOptions.find((o) => o.value === mediaSortBy)?.label ?? "Highest rated"}`}
+                    active={mediaSortBy !== "rating"}
+                  >
+                    {(close) => renderSortByList(close)}
+                  </FilterPopover>
+                </div>
+
                 <div className="media-search-wrap">
                   <input
                     type="text"
@@ -1246,6 +1285,10 @@ export function GroupPage() {
                   <FilterPopover label="⚙" active={anyMediaFilterActive} title="Filters">
                     {(close) => (
                       <div className="media-filters-mobile-panel">
+                        <div className="filter-popover-mobile-section">
+                          <span className="filter-popover-section-label">Sort by</span>
+                          {renderSortByList(close)}
+                        </div>
                         <div className="filter-popover-mobile-section">
                           <span className="filter-popover-section-label">Voting status</span>
                           {renderVotingStatusToggle(close)}

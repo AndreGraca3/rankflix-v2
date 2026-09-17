@@ -2701,6 +2701,11 @@ button.secondary:hover {
   gap: 12px 16px;
 }
 
+.media-sort-desktop {
+  display: flex;
+  align-items: center;
+}
+
 /* Mobile-only consolidated "Filters" trigger + members shortcut - see .media-filters-inline
    / .media-filters-mobile swap in the 680px query below. */
 .media-filters-mobile {
@@ -3041,6 +3046,15 @@ button.secondary:hover {
   justify-content: center;
   gap: 0;
   font-size: 16px;
+}
+
+.media-filters-mobile .filter-popover-trigger-label {
+  display: inline-block;
+  transition: transform 0.25s ease;
+}
+
+.media-filters-mobile .filter-popover-trigger.open .filter-popover-trigger-label {
+  transform: rotate(180deg);
 }
 
 .media-filters-mobile .filter-popover-chevron {
@@ -4000,6 +4014,10 @@ button.secondary:hover {
     display: none;
   }
 
+  .media-sort-desktop {
+    display: none;
+  }
+
   .media-filters-mobile {
     display: flex;
     flex-shrink: 0;
@@ -4043,7 +4061,12 @@ button.secondary:hover {
   }
 
   .ranking-member-trigger-icon {
-    display: inline;
+    display: inline-block;
+    transition: transform 0.25s ease;
+  }
+
+  .ranking-member-trigger.open .ranking-member-trigger-icon {
+    transform: rotate(180deg);
   }
 
   .ranking-member-trigger-label, .ranking-member-trigger-chevron {
