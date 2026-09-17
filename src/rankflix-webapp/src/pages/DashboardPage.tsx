@@ -14,7 +14,7 @@ import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, adminViewEnabled } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [groups, setGroups] = useState<Group[]>([]);
@@ -40,6 +40,12 @@ export function DashboardPage() {
   };
 
   useEffect(() => load(viewFilter), [viewFilter]);
+
+  // If the admin switches to "User view" mid-session while on the admin-only "system" tab,
+  // fall back to "all" so the (now hidden) tab's data isn't left showing.
+  useEffect(() => {
+    if (viewFilter === "system" && !(user?.role === "admin" && adminViewEnabled)) setViewFilter("all");
+  }, [adminViewEnabled, user?.role, viewFilter]);
 
   // A group was created/renamed for us, or our discord id got attached to new group
   // history - refetch the list so it shows up without a manual page reload.
@@ -101,7 +107,7 @@ export function DashboardPage() {
     })();
   };
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" && adminViewEnabled;
   const isGroupOwner = (g: Group) => isAdmin || g.members.some((m) => m.userId === user?.id && m.isOwner);
   const displayedGroups = viewFilter === "owner" ? groups.filter(isGroupOwner) : groups;
   const editingGroup = editingId != null ? groups.find((g) => g.id === editingId) ?? null : null;

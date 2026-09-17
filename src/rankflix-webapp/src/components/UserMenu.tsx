@@ -4,7 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./Avatar";
 
 export function UserMenu() {
-  const { user, logout, setStatus } = useAuth();
+  const { user, logout, setStatus, adminViewEnabled, setAdminViewEnabled } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -59,6 +59,21 @@ export function UserMenu() {
               Profile
             </Link>
           </li>
+          {user.role === "admin" && (
+            <li className="user-menu-admin-view-item">
+              <button
+                type="button"
+                className="user-menu-admin-view-row"
+                onClick={() => setAdminViewEnabled(!adminViewEnabled)}
+                title={adminViewEnabled ? "Switch to User view (hides admin-only options)" : "Switch back to Admin view"}
+              >
+                <span>{adminViewEnabled ? "Admin view" : "User view"}</span>
+                <span className={`admin-view-switch${adminViewEnabled ? " on" : ""}`} aria-hidden="true">
+                  <span className="admin-view-switch-knob" />
+                </span>
+              </button>
+            </li>
+          )}
           <li className="user-menu-status-item">
             <button
               type="button"

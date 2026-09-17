@@ -13,13 +13,30 @@ interface AuthContextValue {
   updateProfile: (fields: { username?: string; displayName?: string; avatarUrl?: string }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   setStatus: (status: "online" | "invisible") => Promise<void>;
+  adminViewEnabled: boolean;
+  setAdminViewEnabled: (enabled: boolean) => void;
 }
+
+const ADMIN_VIEW_STORAGE_KEY = "rankflix.adminViewEnabled";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Admins-only "Admin view" / "User view" switch: lets an admin temporarily hide all
+  // admin-only affordances (Users nav link, group owner-level controls on groups they don't
+  // own, "All groups (system)" filter, etc.) to see the app as a regular member would.
+  // Defaults to showing admin options (true), and persists across reloads/tabs.
+  const [adminViewEnabled, setAdminViewEnabledState] = useState(() => {
+    const stored = localStorage.getItem(ADMIN_VIEW_STORAGE_KEY);
+    return stored === null ? true : stored === "1";
+  });
+
+  const setAdminViewEnabled = (enabled: boolean) => {
+    setAdminViewEnabledState(enabled);
+    localStorage.setItem(ADMIN_VIEW_STORAGE_KEY, enabled ? "1" : "0");
+  };
 
   const refreshProfile = async () => {
     const profile = await api.get<UserProfile>("/api/users/me");
@@ -85,7 +102,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshProfile, updateProfile, changePassword, setStatus }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refreshProfile, updateProfile, changePassword, setStatus, adminViewEnabled, setAdminViewEnabled }}
+    >
       {children}
     </AuthContext.Provider>
   );

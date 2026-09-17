@@ -31,9 +31,9 @@ export function GroupPage() {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, adminViewEnabled } = useAuth();
   const { isOnline } = usePresence();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" && adminViewEnabled;
   const [group, setGroup] = useState<Group | null>(null);
   const [media, setMedia] = useState<GroupMedia[]>([]);
   // Kept in sync with `media` via effect below so async callbacks (SSE patches, post-save

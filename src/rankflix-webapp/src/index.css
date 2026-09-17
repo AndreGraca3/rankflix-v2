@@ -297,6 +297,42 @@ a:hover {
   color: var(--danger) !important;
 }
 
+.user-menu-admin-view-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-view-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background-color 0.15s ease;
+}
+
+.admin-view-switch.on {
+  background: var(--accent);
+}
+
+.admin-view-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.admin-view-switch.on .admin-view-switch-knob {
+  transform: translateX(14px);
+}
+
 .user-menu-status-item {
   position: relative;
 }

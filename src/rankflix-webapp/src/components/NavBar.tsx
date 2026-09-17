@@ -3,7 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 import { UserMenu } from "./UserMenu";
 
 export function NavBar() {
-  const { user } = useAuth();
+  const { user, adminViewEnabled } = useAuth();
 
   return (
     <nav className="navbar">
@@ -16,7 +16,7 @@ export function NavBar() {
           <NavLink to="/" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")} end>
             Groups
           </NavLink>
-          {user?.role === "admin" && (
+          {user?.role === "admin" && adminViewEnabled && (
             <NavLink to="/users" className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
               Users
             </NavLink>
