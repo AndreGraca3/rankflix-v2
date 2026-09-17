@@ -136,7 +136,7 @@ export function DashboardPage() {
   return (
     <div>
       <NavBar />
-      <main className="page">
+      <main className="page groups-page">
         <div className="page-header-row">
           <h1>Groups</h1>
           {!showCreateForm && (
