@@ -826,15 +826,36 @@ export function GroupPage() {
 
   // Shared between the always-visible desktop filter row and the single consolidated
   // "Filters" popover shown on mobile, so the two layouts never drift apart.
-  const renderVotingStatusToggle = () => (
+  const renderVotingStatusToggle = (close?: () => void) => (
     <div className="voting-filter-toggle" role="tablist" aria-label="Filter by voting status">
-      <button type="button" className={votingFilter === "all" ? "active" : ""} onClick={() => setVotingFilter("all")}>
+      <button
+        type="button"
+        className={votingFilter === "all" ? "active" : ""}
+        onClick={() => {
+          setVotingFilter("all");
+          close?.();
+        }}
+      >
         All
       </button>
-      <button type="button" className={votingFilter === "open" ? "active" : ""} onClick={() => setVotingFilter("open")}>
+      <button
+        type="button"
+        className={votingFilter === "open" ? "active" : ""}
+        onClick={() => {
+          setVotingFilter("open");
+          close?.();
+        }}
+      >
         Open
       </button>
-      <button type="button" className={votingFilter === "closed" ? "active" : ""} onClick={() => setVotingFilter("closed")}>
+      <button
+        type="button"
+        className={votingFilter === "closed" ? "active" : ""}
+        onClick={() => {
+          setVotingFilter("closed");
+          close?.();
+        }}
+      >
         Closed
       </button>
     </div>
@@ -902,12 +923,15 @@ export function GroupPage() {
       </>
     ) : null;
 
-  const renderPendingVotesToggle = () => (
+  const renderPendingVotesToggle = (close?: () => void) => (
     <button
       type="button"
       className={`filter-toggle-pill${pendingVotesOnly ? " active" : ""}`}
       title="Only show media where someone who watched hasn't voted yet"
-      onClick={() => setPendingVotesOnly((v) => !v)}
+      onClick={() => {
+        setPendingVotesOnly((v) => !v);
+        close?.();
+      }}
     >
       Pending votes
     </button>
@@ -1165,7 +1189,7 @@ export function GroupPage() {
                     {(close) => (
                       <div className="media-filters-mobile-panel">
                         <span className="filter-popover-section-label">Voting status</span>
-                        {renderVotingStatusToggle()}
+                        {renderVotingStatusToggle(close)}
                         {availableGenres.length > 0 && (
                           <>
                             <span className="filter-popover-section-label">Genre</span>
@@ -1174,7 +1198,7 @@ export function GroupPage() {
                         )}
                         <span className="filter-popover-section-label">Rating</span>
                         {renderRatingList(close)}
-                        {renderPendingVotesToggle()}
+                        {renderPendingVotesToggle(close)}
                       </div>
                     )}
                   </FilterPopover>

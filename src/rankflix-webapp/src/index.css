@@ -3793,6 +3793,16 @@ button.secondary:hover {
     flex-shrink: 0;
   }
 
+  /* Give the mobile "Filters" popover's inner content some breathing room from the
+     panel's own border - it previously sat flush against the edges. */
+  .filter-popover-panel {
+    padding: 12px;
+  }
+
+  .media-filters-mobile-panel {
+    gap: 14px;
+  }
+
   /* The member sidebar (and its own header/toggle) is fully hidden by default - the
      toolbar's 👥 icon is now the only way to reveal it, instead of always showing a
      "Members" header/add-member row above the toolbar and media list. */
