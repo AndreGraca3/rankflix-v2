@@ -4105,6 +4105,12 @@ button.secondary:hover {
     padding: 8px;
   }
 
+  /* The admin "Edit user" modal (Users page) sat almost flush against the screen edges on
+     mobile with the base 8px overlay padding - give it a bit more breathing room. */
+  .user-edit-overlay {
+    padding: 20px 16px;
+  }
+
   .media-modal-body {
     flex-direction: column;
     gap: 14px;
