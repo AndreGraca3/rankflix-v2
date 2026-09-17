@@ -3582,6 +3582,8 @@ button.secondary:hover {
 }
 
 .member-modal-stat-value {
+  display: block;
+  width: 100%;
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
@@ -3589,6 +3591,8 @@ button.secondary:hover {
 }
 
 .member-modal-stat-label {
+  display: block;
+  width: 100%;
   font-size: 14px;
   color: var(--text-dim);
   text-align: center;
