@@ -3585,6 +3585,7 @@ button.secondary:hover {
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
+  text-align: center;
 }
 
 .member-modal-stat-label {
@@ -3592,6 +3593,7 @@ button.secondary:hover {
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  text-align: center;
 }
 
 .member-sidebar-add {
@@ -4102,7 +4104,7 @@ button.secondary:hover {
   }
 
   .media-modal-overlay {
-    padding: 24px 22px;
+    padding: 32px 22px;
   }
 
   .media-modal-body {
