@@ -1207,17 +1207,23 @@ export function GroupPage() {
                   <FilterPopover label="⚙" active={anyMediaFilterActive} title="Filters">
                     {(close) => (
                       <div className="media-filters-mobile-panel">
-                        <span className="filter-popover-section-label">Voting status</span>
-                        {renderVotingStatusToggle(close)}
+                        <div className="filter-popover-mobile-section">
+                          <span className="filter-popover-section-label">Voting status</span>
+                          {renderVotingStatusToggle(close)}
+                        </div>
                         {availableGenres.length > 0 && (
-                          <>
+                          <div className="filter-popover-mobile-section">
                             <span className="filter-popover-section-label">Genre</span>
                             {renderGenreChecklist()}
-                          </>
+                          </div>
                         )}
-                        <span className="filter-popover-section-label">Rating</span>
-                        {renderRatingList(close)}
-                        {renderPendingVotesToggle(close)}
+                        <div className="filter-popover-mobile-section">
+                          <span className="filter-popover-section-label">Rating</span>
+                          {renderRatingList(close)}
+                        </div>
+                        <div className="filter-popover-mobile-section">
+                          {renderPendingVotesToggle(close)}
+                        </div>
                       </div>
                     )}
                   </FilterPopover>
