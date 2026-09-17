@@ -112,10 +112,7 @@ export function MemberDetailModal({
         </div>
 
         {kind === "pending" && (
-          <p className="muted">
-            No account has claimed this Discord ID yet. Create their account and set this Discord ID to attach
-            this history.
-          </p>
+          <p className="muted">No account has claimed this Discord ID yet.</p>
         )}
 
         {kind === "real" && canManage && !isSelf && userId != null && onToggleOwnership && (
