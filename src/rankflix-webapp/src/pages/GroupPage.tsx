@@ -1441,9 +1441,16 @@ export function GroupPage() {
                           <span className="media-ranking-score">
                             {displayRating !== null ? `★ ${displayRating.toFixed(1)}` : "—"}
                           </span>
-                          <span className="media-ranking-rated-count muted">
-                            {ratedCount}/{watchedList.length} rated
-                          </span>
+                          {rankingMemberId === "average" ? (
+                            <span className="media-ranking-rated-count muted">
+                              {ratedCount}/{watchedList.length} rated
+                            </span>
+                          ) : (
+                            <span className="media-ranking-original-rank" title="Group average rating">
+                              <span aria-hidden="true">🌐</span>
+                              {m.averageRating !== null ? m.averageRating.toFixed(1) : "—"}
+                            </span>
+                          )}
                         </div>
                       </button>
                     </li>
