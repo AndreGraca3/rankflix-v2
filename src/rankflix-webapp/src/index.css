@@ -3277,14 +3277,14 @@ button.secondary:hover {
 .media-ranking-original-rank {
   display: flex;
   align-items: center;
-  gap: 2px;
-  font-size: 10px;
+  gap: 3px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent);
   background: var(--bg-elevated);
   border: 1px solid var(--border-soft);
   border-radius: 999px;
-  padding: 1px 6px;
+  padding: 2px 8px;
   white-space: nowrap;
 }
 
@@ -4144,7 +4144,7 @@ button.secondary:hover {
   }
 
   .media-ranking-original-rank {
-    font-size: 8px;
+    font-size: 10px;
   }
 
   .media-ranking-poster-wrap {
