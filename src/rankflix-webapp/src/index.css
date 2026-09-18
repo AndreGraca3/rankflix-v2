@@ -4142,11 +4142,13 @@ button.secondary:hover {
   }
 
   .media-ranking-number-wrap {
-    width: 20px;
+    width: 28px;
   }
 
   .media-ranking-original-rank {
-    font-size: 10px;
+    font-size: 9px;
+    padding: 1px 5px;
+    gap: 2px;
   }
 
   .media-ranking-poster-wrap {
