@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface FilterPopoverProps {
   label: string;
@@ -17,19 +18,8 @@ export function FilterPopover({ label, active, title, children }: FilterPopoverP
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (
-        ref.current &&
-        !ref.current.contains(e.target as Node) &&
-        !(e.target as HTMLElement).closest(".filter-popover-portal")
-      )
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDropdownOutsideClick(open, close, [ref, panelRef]);
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;

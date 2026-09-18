@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { GroupMedia } from "../api/types";
 import { VotingProgress } from "./VotingProgress";
@@ -8,6 +8,7 @@ import { Avatar } from "./Avatar";
 import { Modal } from "./Modal";
 import { useScrollLock } from "../hooks/useScrollLock";
 import { formatWatchTime } from "../utils/time";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface MediaDetailModalProps {
   media: GroupMedia;
@@ -62,19 +63,8 @@ export function MediaDetailModal({
 
   useScrollLock();
 
-  useEffect(() => {
-    if (!addWatcherOpen) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (
-        addWatcherRef.current &&
-        !addWatcherRef.current.contains(e.target as Node) &&
-        !(e.target as HTMLElement).closest(".watcher-add-list")
-      )
-        setAddWatcherOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [addWatcherOpen]);
+  const closeAddWatcher = useCallback(() => setAddWatcherOpen(false), []);
+  useDropdownOutsideClick(addWatcherOpen, closeAddWatcher, [addWatcherRef], ".watcher-add-list");
 
   useLayoutEffect(() => {
     if (!addWatcherOpen || !addWatcherTriggerRef.current) return;

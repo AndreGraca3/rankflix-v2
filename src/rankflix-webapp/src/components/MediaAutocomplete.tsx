@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "../api/client";
 import type { MediaSearchResult } from "../api/types";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface MediaAutocompleteProps {
   onSelect: (result: MediaSearchResult) => void;
@@ -33,19 +34,8 @@ export function MediaAutocomplete({ onSelect }: MediaAutocompleteProps) {
     return () => clearTimeout(handle);
   }, [query]);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target) &&
-        !dropdownRef.current?.contains(target)
-      )
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const close = useCallback(() => setOpen(false), []);
+  useDropdownOutsideClick(open, close, [containerRef, dropdownRef]);
 
   // Render the dropdown in a portal so it renders on a layer above the modal instead of
   // being clipped by the modal's overflow: auto/hidden.

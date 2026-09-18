@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { GroupMember, PendingGroupMember } from "../api/types";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface RankingMemberSelectProps {
   members: GroupMember[];
@@ -15,19 +16,8 @@ export function RankingMemberSelect({ members, pendingMembers, value, onChange }
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (
-        ref.current &&
-        !ref.current.contains(e.target as Node) &&
-        !(e.target as HTMLElement).closest(".ranking-member-list")
-      )
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDropdownOutsideClick(open, close, [ref], ".ranking-member-list");
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) return;

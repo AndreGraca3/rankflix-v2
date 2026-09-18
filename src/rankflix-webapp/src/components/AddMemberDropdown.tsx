@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { UserDirectoryItem } from "../api/types";
 import { Avatar } from "./Avatar";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface AddMemberDropdownProps {
   users: UserDirectoryItem[];
@@ -11,14 +12,8 @@ export function AddMemberDropdown({ users, onAdd }: AddMemberDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDropdownOutsideClick(open, close, [ref]);
 
   return (
     <div className="add-member-dropdown" ref={ref}>

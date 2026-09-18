@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./Avatar";
+import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 export function UserMenu() {
   const { user, logout, setStatus, adminViewEnabled, setAdminViewEnabled } = useAuth();
@@ -11,17 +12,11 @@ export function UserMenu() {
   const [savingStatus, setSavingStatus] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-        setStatusMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
+  const close = useCallback(() => {
+    setOpen(false);
+    setStatusMenuOpen(false);
+  }, []);
+  useDropdownOutsideClick(open, close, [ref]);
 
   if (!user) return null;
 
