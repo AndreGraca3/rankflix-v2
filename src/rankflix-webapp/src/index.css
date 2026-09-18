@@ -2447,11 +2447,6 @@ section {
 }
 
 .autocomplete-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 20;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2461,6 +2456,13 @@ section {
   list-style: none;
   margin: 0;
   padding: 4px;
+}
+
+/* Portal-rendered dropdown: positioned via JS (fixed, matched to the input's rect) so it
+   renders above the modal instead of being clipped by the modal's overflow. */
+.autocomplete-dropdown-portal {
+  position: fixed;
+  z-index: 2000;
 }
 
 .autocomplete-dropdown li {
