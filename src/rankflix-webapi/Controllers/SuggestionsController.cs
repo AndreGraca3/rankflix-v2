@@ -74,6 +74,22 @@ public class SuggestionsController(ISuggestionService suggestionService, IGroupS
         }
     }
 
+    // Any group member can trigger a pick - it's a shared, broadcast animation (see
+    // suggestion-spin SSE event) rather than a personal action, so no owner/admin gating here.
+    [HttpPost("spin")]
+    public async Task<ActionResult<SpinSuggestionsResponse>> SpinSuggestions(int groupId)
+    {
+        try
+        {
+            await EnsureAccessAsync(groupId);
+            return await suggestionService.SpinSuggestionsAsync(groupId, GetUserId());
+        }
+        catch (AppException ex)
+        {
+            return Problem(ex.Message, statusCode: ex.StatusCode);
+        }
+    }
+
     private async Task EnsureAccessAsync(int groupId)
     {
         if (User.IsInRole("admin")) return;

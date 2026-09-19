@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Rankflix.Data;
@@ -14,6 +15,7 @@ public interface ISuggestionService
     Task RemoveSuggestionAsync(int groupId, Guid suggestionId, int requestingUserId, bool isSiteAdmin);
     Task<GroupMediaResponse> PromoteSuggestionAsync(int groupId, Guid suggestionId, int requestingUserId,
         PromoteSuggestionRequest request);
+    Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId);
 }
 
 public class SuggestionService(
@@ -22,6 +24,13 @@ public class SuggestionService(
     IMediaMetadataService mediaMetadataService,
     IMediaService mediaService) : ISuggestionService
 {
+    // The spin animation on the client takes this long to land on the winner - matched here so
+    // a second spin can't be started (by anyone in the group) while one is still playing out for
+    // everyone else. Kept as process-wide state (not per-request) since it guards a shared,
+    // group-visible animation rather than anything request-scoped.
+    private const int SpinDurationMs = 4200;
+    private static readonly ConcurrentDictionary<int, DateTime> ActiveSpinsByGroup = new();
+
     public async Task<List<SuggestionResponse>> GetSuggestionsAsync(int groupId, int requestingUserId, bool isSiteAdmin)
     {
         var isOwner = await db.RankGroupMembers
@@ -173,5 +182,31 @@ public class SuggestionService(
             .ToListAsync();
 
         sse.PublishToUsers(memberIds, "suggestions-changed", new { groupId });
+    }
+
+    public async Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId)
+    {
+        var suggestionIds = await db.RankGroupSuggestions
+            .Where(s => s.GroupId == groupId)
+            .Select(s => s.Id)
+            .ToListAsync();
+        if (suggestionIds.Count == 0)
+            throw new AppException("There are no suggestions to pick from", StatusCodes.Status400BadRequest);
+
+        var now = DateTime.UtcNow;
+        var spinStartedAt = ActiveSpinsByGroup.AddOrUpdate(groupId, now, (_, existing) =>
+            (now - existing).TotalMilliseconds < SpinDurationMs ? existing : now);
+        if (spinStartedAt != now)
+            throw new AppException("A pick is already spinning for this group", StatusCodes.Status409Conflict);
+
+        var winnerId = suggestionIds[Random.Shared.Next(suggestionIds.Count)];
+
+        var memberIds = await db.RankGroupMembers
+            .Where(m => m.GroupId == groupId)
+            .Select(m => m.UserId)
+            .ToListAsync();
+        sse.PublishToUsers(memberIds, "suggestion-spin", new { groupId, winnerSuggestionId = winnerId });
+
+        return new SpinSuggestionsResponse { WinnerSuggestionId = winnerId };
     }
 }

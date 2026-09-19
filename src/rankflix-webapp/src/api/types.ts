@@ -99,6 +99,7 @@ export interface MediaSearchResult {
   type: string;
   year: string | null;
   posterUrl: string | null;
+  genre: string | null;
 }
 
 export interface Suggestion {

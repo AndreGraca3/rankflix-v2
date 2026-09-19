@@ -13,6 +13,11 @@ public class PromoteSuggestionRequest
     public int? VotingDurationHours { get; set; }
 }
 
+public class SpinSuggestionsResponse
+{
+    public required Guid WinnerSuggestionId { get; init; }
+}
+
 public class SuggestionResponse
 {
     public required Guid Id { get; init; }

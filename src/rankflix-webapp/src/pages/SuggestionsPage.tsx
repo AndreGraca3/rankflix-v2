@@ -30,6 +30,30 @@ function shuffled<T>(items: T[]): T[] {
   return arr;
 }
 
+// Builds the long scrolling strip: a shuffled copy of every suggestion, repeated
+// REEL_REPEATS times, with the winner appended once at the very end. Each repeat is a full
+// shuffle (every suggestion appears exactly once per repeat) so the only place the same title
+// could ever land right next to itself is at the seam between two repeats (or between the
+// last repeat and the appended winner) - swap it out in those two spots so a title never
+// visibly repeats "twice in a row" and instead only reappears further along the strip.
+function buildReel<T extends { id: string }>(items: T[], winner: T): T[] {
+  const reel: T[] = [];
+  for (let i = 0; i < REEL_REPEATS; i++) {
+    const chunk = shuffled(items);
+    if (reel.length > 0 && chunk.length > 1 && chunk[0].id === reel[reel.length - 1].id) {
+      [chunk[0], chunk[1]] = [chunk[1], chunk[0]];
+    }
+    reel.push(...chunk);
+  }
+  if (reel.length > 0 && reel[reel.length - 1].id === winner.id) {
+    const swapWith = reel.findIndex((s) => s.id !== winner.id);
+    if (swapWith !== -1) [reel[reel.length - 1], reel[swapWith]] = [reel[swapWith], reel[reel.length - 1]];
+  }
+  reel.push(winner);
+  return reel;
+}
+
+
 export function SuggestionsPage() {
   const { groupId } = useParams();
   const { user, adminViewEnabled } = useAuth();
@@ -120,7 +144,12 @@ export function SuggestionsPage() {
   };
 
   // --- Random pick (reel) ---
+  // The spin itself is a shared, broadcast animation: clicking "Spin" just asks the server to
+  // pick a winner and tell every group member (via the "suggestion-spin" SSE event, below) -
+  // the actual reel/animation only starts once that event arrives, so everyone in the group
+  // (including whoever clicked) sees the exact same spin play out at the same time.
   const [spinning, setSpinning] = useState(false);
+  const [spinRequested, setSpinRequested] = useState(false);
   const [winner, setWinner] = useState<Suggestion | null>(null);
   const [reel, setReel] = useState<Suggestion[]>([]);
   const [offset, setOffset] = useState(0);
@@ -139,15 +168,13 @@ export function SuggestionsPage() {
     setAnimate(false);
   };
 
-  const spin = () => {
-    if (suggestions.length === 0 || spinning) return;
+  const playSpin = useCallback((winnerPick: Suggestion, poolAtSpinTime: Suggestion[]) => {
+    setSpinRequested(false);
     setWinner(null);
     setSpinning(true);
 
-    const winnerPick = suggestions[Math.floor(Math.random() * suggestions.length)];
-    const builtReel: Suggestion[] = [];
-    for (let i = 0; i < REEL_REPEATS; i++) builtReel.push(...shuffled(suggestions));
-    builtReel.push(winnerPick);
+    const pool = poolAtSpinTime.length > 0 ? poolAtSpinTime : [winnerPick];
+    const builtReel = buildReel(pool, winnerPick);
 
     // Measured live (rather than a fixed constant) so this still centers correctly on any
     // screen width - the viewport shrinks to fit narrow mobile screens via CSS.
@@ -172,6 +199,25 @@ export function SuggestionsPage() {
       setSpinning(false);
       setWinner(winnerPick);
     }, 4200);
+  }, []);
+
+  useServerEvent<{ groupId?: number; winnerSuggestionId?: string }>("suggestion-spin", (payload) => {
+    if (String(payload.groupId) !== groupId) return;
+    const winnerPick = suggestions.find((s) => s.id === payload.winnerSuggestionId);
+    if (winnerPick) playSpin(winnerPick, suggestions);
+  });
+
+  const requestSpin = async () => {
+    if (!canSpin || spinning || spinRequested) return;
+    setSpinRequested(true);
+    try {
+      await api.post(`/api/groups/${groupId}/suggestions/spin`, {});
+      // The animation itself starts from the "suggestion-spin" broadcast above, not here -
+      // spinRequested just keeps the button disabled for the short round-trip until it arrives.
+    } catch (e) {
+      setSpinRequested(false);
+      setError(e instanceof Error ? e.message : "Failed to start the pick");
+    }
   };
 
   const canSpin = suggestions.length > 0;
@@ -191,6 +237,7 @@ export function SuggestionsPage() {
             {newPick.type === "tv" ? "TV Series" : "Movie"}
             {newPick.year ? ` · ${newPick.year}` : ""}
           </span>
+          {newPick.genre && <span className="muted">{newPick.genre}</span>}
         </div>
       </div>
     );
@@ -227,8 +274,8 @@ export function SuggestionsPage() {
         <section className="random-pick-section">
           <div className="random-pick-header">
             <h2>🎲 Random Pick</h2>
-            <button type="button" className="spin-btn" onClick={spin} disabled={!canSpin || spinning}>
-              {spinning ? "Spinning…" : "Spin"}
+            <button type="button" className="spin-btn" onClick={requestSpin} disabled={!canSpin || spinning || spinRequested}>
+              {spinning ? "Spinning…" : spinRequested ? "Starting…" : "Spin"}
             </button>
           </div>
 
@@ -270,7 +317,7 @@ export function SuggestionsPage() {
                     Add to group
                   </button>
                 )}
-                <button type="button" className="secondary" onClick={spin}>
+                <button type="button" className="secondary" onClick={requestSpin} disabled={spinRequested}>
                   Spin again
                 </button>
                 <button
