@@ -30,28 +30,57 @@ function shuffled<T>(items: T[]): T[] {
   return arr;
 }
 
-// Builds the long scrolling strip: a shuffled copy of every suggestion, repeated
-// REEL_REPEATS times, with the winner appended once at the very end. Each repeat is a full
-// shuffle (every suggestion appears exactly once per repeat) so the only place the same title
-// could ever land right next to itself is at the seam between two repeats (or between the
-// last repeat and the appended winner) - swap it out in those two spots so a title never
-// visibly repeats "twice in a row" and instead only reappears further along the strip.
+// Builds the long scrolling strip: a shuffled copy of every suggestion, repeated REEL_REPEATS
+// times, with the winner appended once at the very end. No two adjacent cards are ever the
+// same title:
+// - Each repeat is a full shuffle (every suggestion appears exactly once per repeat), so
+//   duplicates can only happen at the *seam* between two repeats, or between the last repeat
+//   and the appended winner - both are checked/retried for below.
+// - With exactly 2 suggestions, avoiding adjacent repeats mathematically forces strict
+//   alternation (there's no other valid arrangement), so that case is built directly rather
+//   than shuffled-and-patched.
 function buildReel<T extends { id: string }>(items: T[], winner: T): T[] {
+  if (items.length <= 1) {
+    const reel = Array.from({ length: REEL_REPEATS }, () => items[0] ?? winner);
+    reel.push(winner);
+    return reel;
+  }
+
+  if (items.length === 2) {
+    const other = items[0].id === winner.id ? items[1] : items[0];
+    const totalBeforeWinner = REEL_REPEATS * items.length;
+    const reel: T[] = [];
+    // Starting on the winner and strictly alternating, an even-length run always ends on
+    // `other` - so the winner card appended right after it is guaranteed safe too.
+    for (let i = 0; i < totalBeforeWinner; i++) reel.push(i % 2 === 0 ? winner : other);
+    reel.push(winner);
+    return reel;
+  }
+
   const reel: T[] = [];
   for (let i = 0; i < REEL_REPEATS; i++) {
-    const chunk = shuffled(items);
-    if (reel.length > 0 && chunk.length > 1 && chunk[0].id === reel[reel.length - 1].id) {
+    const isLastChunk = i === REEL_REPEATS - 1;
+    let chunk = shuffled(items);
+    // Reshuffle (rather than patch) up to a few times so the chunk satisfies both constraints
+    // - front-seam and (for the last chunk) not ending on the winner - without disturbing
+    // anything already placed in the reel.
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const frontOk = reel.length === 0 || chunk[0].id !== reel[reel.length - 1].id;
+      const tailOk = !isLastChunk || chunk[chunk.length - 1].id !== winner.id;
+      if (frontOk && tailOk) break;
+      chunk = shuffled(items);
+    }
+    // Deterministic fallback for the front-seam (guaranteed to work: chunk[0] and chunk[1] are
+    // always different titles, so if chunk[0] matches the reel's last title, chunk[1] can't).
+    if (reel.length > 0 && chunk[0].id === reel[reel.length - 1].id) {
       [chunk[0], chunk[1]] = [chunk[1], chunk[0]];
     }
     reel.push(...chunk);
   }
-  if (reel.length > 0 && reel[reel.length - 1].id === winner.id) {
-    const swapWith = reel.findIndex((s) => s.id !== winner.id);
-    if (swapWith !== -1) [reel[reel.length - 1], reel[swapWith]] = [reel[swapWith], reel[reel.length - 1]];
-  }
   reel.push(winner);
   return reel;
 }
+
 
 
 export function SuggestionsPage() {
