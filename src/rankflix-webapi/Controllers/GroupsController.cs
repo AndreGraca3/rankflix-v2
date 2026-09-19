@@ -53,7 +53,7 @@ public class GroupsController(IGroupService groupService) : ControllerBase
         try
         {
             await groupService.EnsureManagerAsync(groupId, userId, isAdmin);
-            return await groupService.UpdateGroupAsync(groupId, request.Name, request.ImageUrl);
+            return await groupService.UpdateGroupAsync(groupId, request.Name, request.ImageUrl, request.SpinsDisabledForMembers);
         }
         catch (AppException ex)
         {

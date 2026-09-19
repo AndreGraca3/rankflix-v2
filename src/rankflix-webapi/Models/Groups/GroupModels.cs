@@ -10,6 +10,7 @@ public class UpdateGroupRequest
 {
     public string? Name { get; set; }
     public string? ImageUrl { get; set; }
+    public bool? SpinsDisabledForMembers { get; set; }
 }
 
 public class AddMemberRequest
@@ -45,6 +46,7 @@ public class GroupResponse
     // permissions are governed by each member's IsOwner flag (a group can have several owners).
     public required int OwnerId { get; init; }
     public string? ImageUrl { get; init; }
+    public required bool SpinsDisabledForMembers { get; init; }
     public required List<MemberResponse> Members { get; init; }
     public required List<PendingMemberResponse> PendingMembers { get; init; }
 }

@@ -45,6 +45,7 @@ export interface Group {
   name: string;
   ownerId: number;
   imageUrl: string | null;
+  spinsDisabledForMembers: boolean;
   members: GroupMember[];
   pendingMembers: PendingGroupMember[];
 }

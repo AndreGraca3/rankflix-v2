@@ -12,7 +12,7 @@ public interface IGroupService
     Task<List<GroupResponse>> GetAllGroupsAsync();
     Task<GroupResponse> GetGroupAsync(int groupId, int requestingUserId, bool isAdmin);
     Task<GroupResponse> CreateGroupAsync(string name, int ownerId, string? imageUrl);
-    Task<GroupResponse> UpdateGroupAsync(int groupId, string? name, string? imageUrl);
+    Task<GroupResponse> UpdateGroupAsync(int groupId, string? name, string? imageUrl, bool? spinsDisabledForMembers);
     Task DeleteGroupAsync(int groupId);
     Task<GroupResponse> AddMemberAsync(int groupId, int userId);
     Task RemoveMemberAsync(int groupId, int userId);
@@ -62,13 +62,14 @@ public class GroupService(RankflixDbContext db, ISseService sse) : IGroupService
         return await BuildGroupResponseAsync(group.Id);
     }
 
-    public async Task<GroupResponse> UpdateGroupAsync(int groupId, string? name, string? imageUrl)
+    public async Task<GroupResponse> UpdateGroupAsync(int groupId, string? name, string? imageUrl, bool? spinsDisabledForMembers)
     {
         var group = await db.RankGroups.FirstOrDefaultAsync(g => g.Id == groupId)
                     ?? throw new AppException("Group not found", StatusCodes.Status404NotFound);
 
         if (!string.IsNullOrWhiteSpace(name)) group.Name = name;
         if (imageUrl is not null) group.ImageUrl = string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl;
+        if (spinsDisabledForMembers is not null) group.SpinsDisabledForMembers = spinsDisabledForMembers.Value;
 
         await db.SaveChangesAsync();
         await PublishGroupUpdatedToMembersAsync(groupId);
@@ -280,6 +281,7 @@ public class GroupService(RankflixDbContext db, ISseService sse) : IGroupService
             Name = group.Name,
             OwnerId = group.OwnerId,
             ImageUrl = group.ImageUrl,
+            SpinsDisabledForMembers = group.SpinsDisabledForMembers,
             Members = members,
             PendingMembers = pendingMemberResponses
         };

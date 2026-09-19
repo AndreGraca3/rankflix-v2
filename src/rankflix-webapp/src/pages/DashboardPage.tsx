@@ -78,6 +78,7 @@ export function DashboardPage() {
       name: trimmedName,
       ownerId: user.id,
       imageUrl: trimmedImageUrl,
+      spinsDisabledForMembers: false,
       members: [{ userId: user.id, displayName: user.displayName, avatarUrl: user.avatarUrl, discordId: user.discordId, isOwner: true }],
       pendingMembers: [],
     };

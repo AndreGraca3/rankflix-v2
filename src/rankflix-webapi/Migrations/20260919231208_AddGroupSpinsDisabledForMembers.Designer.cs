@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Rankflix.Data;
@@ -11,9 +12,11 @@ using Rankflix.Data;
 namespace Rankflix.Migrations
 {
     [DbContext(typeof(RankflixDbContext))]
-    partial class RankflixDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919231208_AddGroupSpinsDisabledForMembers")]
+    partial class AddGroupSpinsDisabledForMembers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

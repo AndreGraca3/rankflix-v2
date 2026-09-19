@@ -15,7 +15,7 @@ public interface ISuggestionService
     Task RemoveSuggestionAsync(int groupId, Guid suggestionId, int requestingUserId, bool isSiteAdmin);
     Task<GroupMediaResponse> PromoteSuggestionAsync(int groupId, Guid suggestionId, int requestingUserId,
         PromoteSuggestionRequest request);
-    Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId);
+    Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId, bool isSiteAdmin);
 }
 
 public class SuggestionService(
@@ -184,8 +184,20 @@ public class SuggestionService(
         sse.PublishToUsers(memberIds, "suggestions-changed", new { groupId });
     }
 
-    public async Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId)
+    public async Task<SpinSuggestionsResponse> SpinSuggestionsAsync(int groupId, int requestingUserId, bool isSiteAdmin)
     {
+        var group = await db.RankGroups.FirstOrDefaultAsync(g => g.Id == groupId)
+            ?? throw new AppException("Group not found", StatusCodes.Status404NotFound);
+
+        if (group.SpinsDisabledForMembers && !isSiteAdmin)
+        {
+            var isOwner = await db.RankGroupMembers
+                .AnyAsync(m => m.GroupId == groupId && m.UserId == requestingUserId && m.IsOwner);
+            if (!isOwner)
+                throw new AppException("The group owner has turned off random picks for members",
+                    StatusCodes.Status403Forbidden);
+        }
+
         var suggestionIds = await db.RankGroupSuggestions
             .Where(s => s.GroupId == groupId)
             .Select(s => s.Id)

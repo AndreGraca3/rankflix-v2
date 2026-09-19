@@ -82,7 +82,7 @@ public class SuggestionsController(ISuggestionService suggestionService, IGroupS
         try
         {
             await EnsureAccessAsync(groupId);
-            return await suggestionService.SpinSuggestionsAsync(groupId, GetUserId());
+            return await suggestionService.SpinSuggestionsAsync(groupId, GetUserId(), User.IsInRole("admin"));
         }
         catch (AppException ex)
         {

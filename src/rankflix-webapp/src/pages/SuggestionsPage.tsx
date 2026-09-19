@@ -237,7 +237,7 @@ export function SuggestionsPage() {
   });
 
   const requestSpin = async () => {
-    if (!canSpin || spinning || spinRequested) return;
+    if (!canSpin || !spinsAllowedForMe || spinning || spinRequested) return;
     setSpinRequested(true);
     try {
       await api.post(`/api/groups/${groupId}/suggestions/spin`, {});
@@ -249,7 +249,20 @@ export function SuggestionsPage() {
     }
   };
 
+  const toggleSpinsDisabled = async () => {
+    if (!group) return;
+    const next = !group.spinsDisabledForMembers;
+    setGroup({ ...group, spinsDisabledForMembers: next });
+    try {
+      await api.patch(`/api/groups/${groupId}`, { spinsDisabledForMembers: next });
+    } catch (e) {
+      setGroup((prev) => (prev ? { ...prev, spinsDisabledForMembers: !next } : prev));
+      setError(e instanceof Error ? e.message : "Failed to update spin setting");
+    }
+  };
+
   const canSpin = suggestions.length > 0;
+  const spinsAllowedForMe = isGroupOwner || !group?.spinsDisabledForMembers;
 
   const modalPreview = useMemo(() => {
     if (!newPick) return null;
@@ -303,15 +316,29 @@ export function SuggestionsPage() {
         <section className="random-pick-section">
           <div className="random-pick-header">
             <h2>🎲 Random Pick</h2>
-            <button type="button" className="spin-btn" onClick={requestSpin} disabled={!canSpin || spinning || spinRequested}>
-              {spinning ? "Spinning…" : spinRequested ? "Starting…" : "Spin"}
-            </button>
+            <div className="row">
+              {isGroupOwner && (
+                <button type="button" className="secondary spin-toggle-btn" onClick={toggleSpinsDisabled}>
+                  {group?.spinsDisabledForMembers ? "🔒 Spins disabled for members" : "🔓 Spins allowed for members"}
+                </button>
+              )}
+              <button
+                type="button"
+                className="spin-btn"
+                onClick={requestSpin}
+                disabled={!canSpin || !spinsAllowedForMe || spinning || spinRequested}
+              >
+                {spinning ? "Spinning…" : spinRequested ? "Starting…" : "Spin"}
+              </button>
+            </div>
           </div>
 
           {!canSpin ? (
             <p className="muted">Add a few suggestions first, then spin to let fate decide.</p>
           ) : (
-            <div className="reel-viewport" ref={reelViewportRef}>
+            <>
+              {!spinsAllowedForMe && <p className="muted">Only the group owner can trigger a spin right now.</p>}
+              <div className="reel-viewport" ref={reelViewportRef}>
               <div className="reel-pointer" aria-hidden="true" />
               <div
                 className="reel-track"
@@ -332,7 +359,8 @@ export function SuggestionsPage() {
                       </div>
                     ))}
               </div>
-            </div>
+              </div>
+            </>
           )}
 
           {winner && !spinning && (
@@ -346,7 +374,7 @@ export function SuggestionsPage() {
                     Add to group
                   </button>
                 )}
-                <button type="button" className="secondary" onClick={requestSpin} disabled={spinRequested}>
+                <button type="button" className="secondary" onClick={requestSpin} disabled={!spinsAllowedForMe || spinRequested}>
                   Spin again
                 </button>
                 <button
