@@ -6,7 +6,7 @@ namespace Rankflix.Controllers;
 
 [ApiController]
 [Route("api/media/search")]
-[Authorize(Roles = "admin")]
+[Authorize]
 public class MediaSearchController(IMediaSearchService searchService) : ControllerBase
 {
     [HttpGet]

@@ -14,6 +14,7 @@ public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : Db
     public DbSet<RankGroupWatchStatusEntity> RankGroupWatchStatuses => Set<RankGroupWatchStatusEntity>();
     public DbSet<ReviewEntity> Reviews => Set<ReviewEntity>();
     public DbSet<PendingGroupMemberEntity> PendingGroupMembers => Set<PendingGroupMemberEntity>();
+    public DbSet<RankGroupSuggestionEntity> RankGroupSuggestions => Set<RankGroupSuggestionEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -125,6 +126,17 @@ public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : Db
             e.Property(p => p.DiscordId).HasMaxLength(32);
             e.Property(p => p.DisplayName).HasMaxLength(100);
             e.HasOne<RankGroupEntity>().WithMany().HasForeignKey(p => p.GroupId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RankGroupSuggestionEntity>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(s => s.AddedAt).HasDefaultValueSql("now()");
+            e.HasIndex(s => new { s.GroupId, s.TmdbId }).IsUnique();
+            e.HasOne<RankGroupEntity>().WithMany().HasForeignKey(s => s.GroupId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<MediaEntity>().WithMany().HasForeignKey(s => s.TmdbId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<UserEntity>().WithMany().HasForeignKey(s => s.AddedBy).OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

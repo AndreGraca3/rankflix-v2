@@ -7,6 +7,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { GroupPage } from "./pages/GroupPage";
+import { SuggestionsPage } from "./pages/SuggestionsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { ProfilePage } from "./pages/ProfilePage";
 
@@ -32,6 +33,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <GroupPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:groupId/suggestions"
+              element={
+                <ProtectedRoute>
+                  <SuggestionsPage />
                 </ProtectedRoute>
               }
             />

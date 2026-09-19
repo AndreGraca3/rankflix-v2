@@ -101,6 +101,22 @@ export interface MediaSearchResult {
   posterUrl: string | null;
 }
 
+export interface Suggestion {
+  id: string;
+  tmdbId: number;
+  title: string;
+  type: string;
+  posterUrl: string | null;
+  year: number | null;
+  runtimeMinutes: number | null;
+  genre: string | null;
+  addedByUserId: number;
+  addedByDisplayName: string;
+  addedByAvatarUrl: string | null;
+  addedAt: string;
+  canRemove: boolean;
+}
+
 export interface TopMedia {
   tmdbId: number;
   title: string;

@@ -1045,6 +1045,9 @@ export function GroupPage() {
           </div>
           {statsSummary && <div className="group-stats-summary group-stats-summary-mobile">{statsSummary}</div>}
           <div className="row">
+            <button className="excel-btn" onClick={() => navigate(`/groups/${groupId}/suggestions`)}>
+              🎲 Suggestions
+            </button>
             <button className="excel-btn" onClick={exportExcel}>Export .xlsx</button>
             {isGroupOwner && (
               <label className="file-input-label excel-btn">

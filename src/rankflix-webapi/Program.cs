@@ -31,6 +31,7 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IUserStatsService, UserStatsService>();
 builder.Services.AddScoped<IGroupStatsService, GroupStatsService>();
+builder.Services.AddScoped<ISuggestionService, SuggestionService>();
 builder.Services.AddSingleton<ISseService, SseService>();
 
 var tmdbApiKey = builder.Configuration["Tmdb:ApiKey"];
