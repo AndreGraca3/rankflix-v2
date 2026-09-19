@@ -16,8 +16,17 @@ export function MediaAutocomplete({ onSelect }: MediaAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLUListElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  // Set right before setQuery(...) in handleSelect so the search effect below (which also
+  // fires on that same query change) knows to skip re-searching/reopening the dropdown for
+  // the title the user just picked - otherwise it silently reopens ~300ms later, and the
+  // *next* click elsewhere (e.g. an "Add" button) gets absorbed just to close it again.
+  const skipNextSearchRef = useRef(false);
 
   useEffect(() => {
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return;
+    }
     if (query.trim().length < 2) {
       setResults([]);
       return;
@@ -56,6 +65,7 @@ export function MediaAutocomplete({ onSelect }: MediaAutocompleteProps) {
 
   const handleSelect = (result: MediaSearchResult) => {
     onSelect(result);
+    skipNextSearchRef.current = true;
     setQuery(`${result.title}${result.year ? ` (${result.year})` : ""}`);
     setOpen(false);
   };

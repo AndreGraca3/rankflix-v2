@@ -11,7 +11,7 @@ const SIBLING_TRIGGER_SELECTOR =
  * Closes an open dropdown/popover on outside click, and swallows that click (prevents it
  * from also activating whatever button/link is underneath) - unless the click landed on
  * another dropdown's own trigger, which is allowed through so switching between triggers
- * still works in a single click.
+ * still works in a single click. Also closes on Escape.
  *
  * @param open whether the dropdown/popover is currently open
  * @param onClose callback to close it
@@ -45,6 +45,15 @@ export function useDropdownOutsideClick(
     // Capture phase so we intercept before the click reaches (and activates) whatever
     // element is underneath.
     document.addEventListener("click", onDocClick, true);
-    return () => document.removeEventListener("click", onDocClick, true);
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("click", onDocClick, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [open, onClose, containerRefs, extraOpenSelector]);
 }

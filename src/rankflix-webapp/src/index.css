@@ -4645,6 +4645,32 @@ button.secondary:hover {
   margin: 4px 0;
 }
 
+.suggestion-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.suggestion-preview-poster-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  font-size: 28px;
+  margin: 0;
+}
+
+.suggestion-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
 @media (max-width: 680px) {
   .reel-viewport {
     height: 110px;

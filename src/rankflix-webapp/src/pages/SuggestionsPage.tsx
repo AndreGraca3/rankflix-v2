@@ -91,6 +91,10 @@ export function SuggestionsPage() {
   const removeSuggestion = async (s: Suggestion) => {
     setPendingRemove(null);
     setSuggestions((prev) => prev.filter((x) => x.id !== s.id));
+    // The reel is a static snapshot built at spin time, so it doesn't know a suggestion was
+    // just removed - if the removed title is showing in the wheel (as the winner or otherwise),
+    // reset the reel so a stale/no-longer-available title isn't left displayed as the result.
+    if (winner?.id === s.id) resetReel();
     try {
       await api.delete(`/api/groups/${groupId}/suggestions/${s.id}`);
     } catch (e) {
@@ -104,9 +108,11 @@ export function SuggestionsPage() {
     try {
       await api.post(`/api/groups/${groupId}/suggestions/${s.id}/promote`, {});
       setPendingPromote(null);
-      setWinner(null);
       setSuggestions((prev) => prev.filter((x) => x.id !== s.id));
       setSuccessToast(`"${s.title}" added to the group's media list`);
+      // Same reasoning as removeSuggestion: the promoted title is no longer a valid pick, so
+      // clear the reel/winner display rather than leaving it shown as still "won".
+      resetReel();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to add to media list");
     } finally {
@@ -126,6 +132,13 @@ export function SuggestionsPage() {
   useEffect(() => () => {
     if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
   }, []);
+
+  const resetReel = () => {
+    setWinner(null);
+    setReel([]);
+    setOffset(0);
+    setAnimate(false);
+  };
 
   const spin = () => {
     if (suggestions.length === 0 || spinning) return;
@@ -164,10 +177,25 @@ export function SuggestionsPage() {
 
   const canSpin = suggestions.length > 0;
 
-  const modalPosterOrPlaceholder = useMemo(
-    () => (newPick?.posterUrl ? <img src={newPick.posterUrl} alt="" className="suggestion-preview-poster" /> : null),
-    [newPick]
-  );
+  const modalPreview = useMemo(() => {
+    if (!newPick) return null;
+    return (
+      <div className="suggestion-preview">
+        {newPick.posterUrl ? (
+          <img src={newPick.posterUrl} alt="" className="suggestion-preview-poster" />
+        ) : (
+          <div className="suggestion-preview-poster suggestion-preview-poster-fallback">🎬</div>
+        )}
+        <div className="suggestion-preview-info">
+          <strong>{newPick.title}</strong>
+          <span className="muted">
+            {newPick.type === "tv" ? "TV Series" : "Movie"}
+            {newPick.year ? ` · ${newPick.year}` : ""}
+          </span>
+        </div>
+      </div>
+    );
+  }, [newPick]);
 
   if (loading) return <Spinner full />;
 
@@ -243,7 +271,7 @@ export function SuggestionsPage() {
               <div className="row">
                 {isGroupOwner && (
                   <button type="button" onClick={() => setPendingPromote(winner)}>
-                    Add to watch list
+                    Add to group
                   </button>
                 )}
                 <button type="button" className="secondary" onClick={spin}>
@@ -294,7 +322,7 @@ export function SuggestionsPage() {
                   </div>
                   <div className="suggestion-card-actions">
                     {isGroupOwner && (
-                      <button type="button" className="suggestion-promote-btn" title="Add to media list" onClick={() => setPendingPromote(s)}>
+                      <button type="button" className="suggestion-promote-btn" title="Add to group" onClick={() => setPendingPromote(s)}>
                         ➕
                       </button>
                     )}
@@ -329,7 +357,7 @@ export function SuggestionsPage() {
                 <div className="add-media-search-row">
                   <MediaAutocomplete onSelect={setNewPick} />
                 </div>
-                {modalPosterOrPlaceholder}
+                {modalPreview}
                 <div className="row">
                   <button onClick={addSuggestion} disabled={!newPick || adding}>
                     {adding ? "Adding…" : "Add suggestion"}
@@ -372,7 +400,7 @@ export function SuggestionsPage() {
         <Modal modalClassName="media-modal confirm-modal" onClose={() => setPendingPromote(null)}>
           {(requestClose) => (
             <>
-              <h2>Add "{pendingPromote.title}" to the media list?</h2>
+              <h2>Add "{pendingPromote.title}" to the group?</h2>
               <p className="muted">This moves it out of suggestions and into the group's votable media list.</p>
               <div className="row">
                 <button
@@ -382,7 +410,7 @@ export function SuggestionsPage() {
                     requestClose();
                   }}
                 >
-                  {promoting ? "Adding…" : "Yes, add it"}
+                  {promoting ? "Adding…" : "Add to group"}
                 </button>
                 <button className="secondary" onClick={requestClose}>
                   Cancel

@@ -1,4 +1,4 @@
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { useScrollLock } from "../hooks/useScrollLock";
 
 interface ModalProps {
@@ -36,6 +36,19 @@ export function Modal({
     if (!disableBackdropClose) requestClose();
   };
 
+  // Same rule as backdrop click: Escape closes the modal unless a blocking action is in
+  // progress. Listens in the capture phase so the topmost mounted modal (the last one, since
+  // modals stack in DOM order) gets first refusal when several are open at once.
+  useEffect(() => {
+    if (disableBackdropClose) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") requestClose();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disableBackdropClose, closing]);
+
   return (
     <div className={`${overlayClassName}${closing ? " closing" : ""}`} onClick={handleBackdropClick}>
       <div
@@ -50,3 +63,4 @@ export function Modal({
     </div>
   );
 }
+
