@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Group, MediaSearchResult, Suggestion } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -32,7 +32,6 @@ function shuffled<T>(items: T[]): T[] {
 
 export function SuggestionsPage() {
   const { groupId } = useParams();
-  const navigate = useNavigate();
   const { user, adminViewEnabled } = useAuth();
   const isAdmin = user?.role === "admin" && adminViewEnabled;
 
@@ -205,9 +204,6 @@ export function SuggestionsPage() {
       <main className="page page-wide">
         <div className="page-header-row">
           <div className="group-header-title">
-            <button type="button" className="suggestions-back-btn" title="Back to group" onClick={() => navigate(`/groups/${groupId}`)}>
-              ←
-            </button>
             {group?.imageUrl ? (
               <img className="group-header-poster" src={group.imageUrl} alt={group.name} />
             ) : (
