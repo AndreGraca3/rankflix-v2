@@ -1,3 +1,9 @@
+/* Wrapped in the "base" cascade layer so Tailwind utility classes (layer "utilities", always
+   declared after "base") can override these legacy rules regardless of selector specificity.
+   Unlayered CSS otherwise always beats layered CSS, no matter how specific - see main.tsx for
+   why tailwind.css must be imported before this file. */
+@layer base {
+
 :root {
   --bg: #0b0b0d;
   --bg-elevated: #131316;
@@ -2772,3 +2778,5 @@ button.secondary:hover {
   }
 
 /* Suggestions page: "what to watch next" queue + random-pick reel */
+
+}
