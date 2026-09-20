@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import type { Group } from "../api/types";
 import { ImageUploadButton } from "./ImageUploadButton";
@@ -31,7 +32,7 @@ export function GroupPosterEditor({
         onImage={onChange}
         renderTrigger={(open, loading) => (
           <button type="button" className="group-poster-edit-overlay" onClick={open} disabled={loading} title="Change poster">
-            {loading ? "…" : "✎"}
+            {loading ? "…" : <Pencil size={14} />}
           </button>
         )}
       />
@@ -42,7 +43,7 @@ export function GroupPosterEditor({
           onClick={() => onChange("")}
           title="Remove poster"
         >
-          🗑
+          <Trash2 size={14} />
         </button>
       )}
     </div>

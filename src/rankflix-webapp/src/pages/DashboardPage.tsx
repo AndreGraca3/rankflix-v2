@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Crown, Globe, Clapperboard, Pencil, Trash2, FileText, X } from "lucide-react";
 import { api } from "../api/client";
 import type { Group } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -157,11 +158,11 @@ export function DashboardPage() {
             All
           </button>
           <button type="button" className={viewFilter === "owner" ? "active" : ""} onClick={() => setViewFilter("owner")} title="Groups you own">
-            👑 Owner
+            <Crown size={14} className="inline-block align-[-2px] mr-1" /> Owner
           </button>
           {isAdmin && (
             <button type="button" className={viewFilter === "system" ? "active" : ""} onClick={() => setViewFilter("system")} title="Every group in the system, including ones you don't belong to">
-              🌐 All groups (system)
+              <Globe size={14} className="inline-block align-[-2px] mr-1" /> All groups (system)
             </button>
           )}
         </div>
@@ -178,7 +179,7 @@ export function DashboardPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
-                  ×
+                  <X size={18} />
                 </button>
                 <form className="new-group-card" onSubmit={createGroup}>
                   <h2>New group</h2>
@@ -195,7 +196,14 @@ export function DashboardPage() {
                     <button type="submit">Create group</button>
                   </div>
                   <label className="file-input-label excel-btn new-group-import-label">
-                    {newGroupImportFile ? `📄 ${newGroupImportFile.name} (import on create)` : "Or import from legacy .xlsx"}
+                    {newGroupImportFile ? (
+                      <>
+                        <FileText size={14} className="inline-block align-[-2px] mr-1" />
+                        {newGroupImportFile.name} (import on create)
+                      </>
+                    ) : (
+                      "Or import from legacy .xlsx"
+                    )}
                     <input
                       type="file"
                       accept=".xlsx"
@@ -221,7 +229,7 @@ export function DashboardPage() {
         )}
         {!loading && displayedGroups.length === 0 && (
           <EmptyState
-            icon="🎬"
+            icon={<Clapperboard size={40} />}
             title={viewFilter === "owner" ? "No groups owned" : "No groups yet"}
             subtitle={
               viewFilter === "owner"
@@ -248,7 +256,7 @@ export function DashboardPage() {
                           setEditingId(g.id);
                         }}
                       >
-                        ✎
+                        <Pencil size={14} />
                       </button>
                       <button
                         type="button"
@@ -260,7 +268,7 @@ export function DashboardPage() {
                           setDeletingId(g.id);
                         }}
                       >
-                        🗑
+                        <Trash2 size={14} />
                       </button>
                     </>
                   )}
@@ -279,7 +287,7 @@ export function DashboardPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
-                  ×
+                  <X size={18} />
                 </button>
                 <GroupEditForm
                   group={editingGroup}
@@ -307,7 +315,7 @@ export function DashboardPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
-                  ×
+                  <X size={18} />
                 </button>
                 <p className="confirm-modal-message">
                   Delete <strong>{deletingGroup.name}</strong>? This can't be undone.
