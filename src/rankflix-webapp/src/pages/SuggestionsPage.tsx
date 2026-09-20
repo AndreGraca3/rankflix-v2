@@ -318,8 +318,17 @@ export function SuggestionsPage() {
             <h2>🎲 Random Pick</h2>
             <div className="row">
               {isGroupOwner && (
-                <button type="button" className="secondary spin-toggle-btn" onClick={toggleSpinsDisabled}>
-                  {group?.spinsDisabledForMembers ? "🔒 Spins disabled for members" : "🔓 Spins allowed for members"}
+                <button
+                  type="button"
+                  className={`spin-toggle-btn${group?.spinsDisabledForMembers ? " active" : ""}`}
+                  onClick={toggleSpinsDisabled}
+                  title={
+                    group?.spinsDisabledForMembers
+                      ? "Spins are disabled for members - click to allow"
+                      : "Spins are allowed for members - click to disable"
+                  }
+                >
+                  {group?.spinsDisabledForMembers ? "🔒" : "🔓"}
                 </button>
               )}
               <button
