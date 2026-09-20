@@ -25,6 +25,14 @@ public class AuthService(
 {
     private readonly RefreshTokenOptions _refreshTokenOptions = refreshTokenOptions.Value;
 
+    // How long a just-rotated (single-use) refresh token is still tolerated. Needed because
+    // several tabs on the same device/browser share one cookie: if two of them silently
+    // refresh around the same moment (e.g. laptop waking from sleep, both SSE connections
+    // reconnecting at once), only the first request actually rotates the token - without this
+    // grace window, the second, near-simultaneous request would be wrongly rejected as an
+    // invalid/reused token and that tab would get logged out.
+    private static readonly TimeSpan ReuseGracePeriod = TimeSpan.FromSeconds(30);
+
     public async Task<LoginResult> RegisterAsync(string username, string password, string displayName)
     {
         username = UsernameValidator.ValidateAndTrim(username);
@@ -62,7 +70,33 @@ public class AuthService(
     public async Task<LoginResult> RefreshTokensAsync(Guid refreshToken)
     {
         var token = await tokenRepository.GetByValueAsync(refreshToken);
-        if (token is null || tokenRepository.IsExpired(token))
+        if (token is null)
+            throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
+
+        if (token.UsedAt is not null)
+        {
+            if (DateTime.UtcNow - token.UsedAt.Value <= ReuseGracePeriod)
+            {
+                // Within the grace window: treat this as a benign race from another tab on the
+                // same device rather than an error - follow the rotation chain to the still-valid
+                // current token and hand that back (without rotating again) so both tabs converge
+                // on the same session.
+                var current = await tokenRepository.GetLatestInChainAsync(token);
+                if (current is null || tokenRepository.IsExpired(current))
+                    throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
+
+                var currentUser = await userRepository.GetByIdAsync(current.UserId)
+                                   ?? throw new AppException("User not found", StatusCodes.Status401Unauthorized);
+                return BuildLoginResult(currentUser, current);
+            }
+
+            // Reuse outside the grace window is a strong signal of a stolen/replayed token -
+            // revoke every session for this user as a precaution.
+            await tokenRepository.RemoveByUserIdAsync(token.UserId);
+            throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
+        }
+
+        if (tokenRepository.IsExpired(token))
             throw new AppException("Invalid refresh token", StatusCodes.Status401Unauthorized);
 
         var user = await userRepository.GetByIdAsync(token.UserId)
@@ -70,8 +104,9 @@ public class AuthService(
 
         // Rotate only the token being used (single-use, replay-proof) - other devices/tabs keep
         // their own refresh tokens and stay logged in.
-        await tokenRepository.RemoveByValueAsync(refreshToken);
-        return await GenerateLoginResultAsync(user);
+        var newToken = await tokenRepository.AddAsync(user.Id);
+        await tokenRepository.MarkUsedAsync(token.Value, newToken.Value);
+        return BuildLoginResult(user, newToken);
     }
 
     public async Task RevokeRefreshTokenAsync(int userId)
@@ -86,9 +121,13 @@ public class AuthService(
 
     private async Task<LoginResult> GenerateLoginResultAsync(UserEntity user)
     {
-        var (accessToken, accessTokenExpiresAt) = jwtProvider.Generate(user);
-
         var refreshToken = await tokenRepository.AddAsync(user.Id);
+        return BuildLoginResult(user, refreshToken);
+    }
+
+    private LoginResult BuildLoginResult(UserEntity user, RefreshTokenEntity refreshToken)
+    {
+        var (accessToken, accessTokenExpiresAt) = jwtProvider.Generate(user);
         var refreshTokenExpiresAt = refreshToken.CreatedAt.AddMinutes(_refreshTokenOptions.ExpireMinutes);
 
         return new LoginResult(

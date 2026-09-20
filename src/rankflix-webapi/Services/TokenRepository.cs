@@ -12,6 +12,8 @@ public interface ITokenRepository
     Task<RefreshTokenEntity> AddAsync(int userId);
     Task RemoveByUserIdAsync(int userId);
     Task RemoveByValueAsync(Guid value);
+    Task MarkUsedAsync(Guid value, Guid replacedByValue);
+    Task<RefreshTokenEntity?> GetLatestInChainAsync(RefreshTokenEntity token);
     bool IsExpired(RefreshTokenEntity token);
 }
 
@@ -20,11 +22,20 @@ public class TokenRepository(RankflixDbContext db, IOptions<RefreshTokenOptions>
 {
     private readonly RefreshTokenOptions _options = refreshTokenOptions.Value;
 
+    // Used tokens are kept (not deleted) so the rotation chain can be followed within the
+    // reuse grace window (see AuthService) - but old ones no longer serve any purpose once
+    // that window has long passed, so prune them opportunistically to keep the table bounded.
+    private static readonly TimeSpan UsedTokenRetention = TimeSpan.FromHours(1);
+
     public Task<RefreshTokenEntity?> GetByValueAsync(Guid value) =>
         db.RefreshTokens.FirstOrDefaultAsync(t => t.Value == value);
 
     public async Task<RefreshTokenEntity> AddAsync(int userId)
     {
+        var staleUsedTokens = db.RefreshTokens.Where(t =>
+            t.UserId == userId && t.UsedAt != null && t.UsedAt < DateTime.UtcNow - UsedTokenRetention);
+        db.RefreshTokens.RemoveRange(staleUsedTokens);
+
         var token = new RefreshTokenEntity
         {
             Value = Guid.NewGuid(),
@@ -50,6 +61,28 @@ public class TokenRepository(RankflixDbContext db, IOptions<RefreshTokenOptions>
         if (token is null) return;
         db.RefreshTokens.Remove(token);
         await db.SaveChangesAsync();
+    }
+
+    public async Task MarkUsedAsync(Guid value, Guid replacedByValue)
+    {
+        var token = await db.RefreshTokens.FirstOrDefaultAsync(t => t.Value == value);
+        if (token is null) return;
+        token.UsedAt = DateTime.UtcNow;
+        token.ReplacedByValue = replacedByValue;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<RefreshTokenEntity?> GetLatestInChainAsync(RefreshTokenEntity token)
+    {
+        var current = token;
+        // Hard cap guards against an unbounded loop if the chain data were ever corrupted.
+        for (var i = 0; i < 10 && current.ReplacedByValue is not null; i++)
+        {
+            var next = await db.RefreshTokens.FirstOrDefaultAsync(t => t.Value == current.ReplacedByValue);
+            if (next is null) return null;
+            current = next;
+        }
+        return current;
     }
 
     public bool IsExpired(RefreshTokenEntity token) =>
