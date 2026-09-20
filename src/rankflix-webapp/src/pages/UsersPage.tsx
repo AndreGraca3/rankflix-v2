@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "../api/client";
 import type { UserListItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -146,7 +148,7 @@ export function UsersPage() {
           {(requestClose) => (
             <>
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
-                ×
+                <X size={18} />
               </button>
               <div className="user-edit-modal-header">
                 <Avatar name={editingUser.displayName} avatarUrl={editingUser.avatarUrl} size={40} />
@@ -177,10 +179,15 @@ export function UsersPage() {
 
               <label className="user-edit-field">
                 <span className="muted">Role</span>
-                <select value={editRole} onChange={(e) => setEditRole(e.target.value)}>
-                  <option value="member">member</option>
-                  <option value="admin">admin</option>
-                </select>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">member</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                  </SelectContent>
+                </Select>
               </label>
 
               <div className="user-edit-field">
