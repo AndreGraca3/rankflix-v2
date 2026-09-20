@@ -18,7 +18,7 @@ import { formatWatchTime } from "../utils/time";
 // pitch (width + gap) is fixed in CSS so the JS translateX math matches the rendered DOM;
 // the viewport's own width is measured at spin time so it still works at any screen size.
 const CARD_WIDTH = 104;
-const CARD_GAP = 12;
+const CARD_GAP = 14;
 const REEL_REPEATS = 6;
 
 function shuffled<T>(items: T[]): T[] {
