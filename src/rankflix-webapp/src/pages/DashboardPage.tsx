@@ -13,6 +13,8 @@ import { Modal } from "../components/Modal";
 import { useAuth } from "../auth/AuthContext";
 import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 export function DashboardPage() {
   const { user, adminViewEnabled } = useAuth();
@@ -144,26 +146,47 @@ export function DashboardPage() {
   return (
     <div>
       <NavBar />
-      <main className="page groups-page">
-        <div className="page-header-row">
+      <main className="mx-auto max-w-[960px] px-6 py-8 pb-16">
+        <div className="mb-7 flex items-center justify-between gap-3">
           <h1>Groups</h1>
-          {!showCreateForm && (
-            <button type="button" onClick={() => setShowCreateForm(true)}>
-              + New group
-            </button>
-          )}
+          {!showCreateForm && <Button onClick={() => setShowCreateForm(true)}>+ New group</Button>}
         </div>
-        <div className="voting-filter-toggle" role="tablist" aria-label="Filter groups">
-          <button type="button" className={viewFilter === "all" ? "active" : ""} onClick={() => setViewFilter("all")} title="All groups you belong to">
+        <div
+          className="flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-border bg-card p-1"
+          role="tablist"
+          aria-label="Filter groups"
+        >
+          <Button
+            type="button"
+            variant={viewFilter === "all" ? "default" : "ghost"}
+            size="sm"
+            className="rounded-full font-semibold"
+            onClick={() => setViewFilter("all")}
+            title="All groups you belong to"
+          >
             All
-          </button>
-          <button type="button" className={viewFilter === "owner" ? "active" : ""} onClick={() => setViewFilter("owner")} title="Groups you own">
-            <Crown size={14} className="inline-block align-[-2px] mr-1" /> Owner
-          </button>
+          </Button>
+          <Button
+            type="button"
+            variant={viewFilter === "owner" ? "default" : "ghost"}
+            size="sm"
+            className="rounded-full font-semibold"
+            onClick={() => setViewFilter("owner")}
+            title="Groups you own"
+          >
+            <Crown size={14} /> Owner
+          </Button>
           {isAdmin && (
-            <button type="button" className={viewFilter === "system" ? "active" : ""} onClick={() => setViewFilter("system")} title="Every group in the system, including ones you don't belong to">
-              <Globe size={14} className="inline-block align-[-2px] mr-1" /> All groups (system)
-            </button>
+            <Button
+              type="button"
+              variant={viewFilter === "system" ? "default" : "ghost"}
+              size="sm"
+              className="rounded-full font-semibold"
+              onClick={() => setViewFilter("system")}
+              title="Every group in the system, including ones you don't belong to"
+            >
+              <Globe size={14} /> All groups (system)
+            </Button>
           )}
         </div>
         {showCreateForm && (
@@ -181,24 +204,24 @@ export function DashboardPage() {
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
                   <X size={18} />
                 </button>
-                <form className="new-group-card" onSubmit={createGroup}>
+                <form className="mx-auto max-w-[420px]" onSubmit={createGroup}>
                   <h2>New group</h2>
-                  <div className="group-edit-poster-row">
+                  <div className="mb-3.5 flex justify-center">
                     <GroupPosterEditor imageUrl={newGroupImageUrl} name={newGroupName || "New group"} onChange={setNewGroupImageUrl} />
                   </div>
-                  <div className="row">
-                    <input
+                  <div className="my-3 flex flex-wrap items-center gap-2">
+                    <Input
                       placeholder="New group name"
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
                       autoFocus
                     />
-                    <button type="submit">Create group</button>
+                    <Button type="submit">Create group</Button>
                   </div>
-                  <label className="file-input-label excel-btn new-group-import-label">
+                  <label className="relative mt-2.5 inline-flex cursor-pointer items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
                     {newGroupImportFile ? (
                       <>
-                        <FileText size={14} className="inline-block align-[-2px] mr-1" />
+                        <FileText size={14} className="mr-1 inline-block align-[-2px]" />
                         {newGroupImportFile.name} (import on create)
                       </>
                     ) : (
@@ -207,6 +230,7 @@ export function DashboardPage() {
                     <input
                       type="file"
                       accept=".xlsx"
+                      className="absolute inset-0 w-full cursor-pointer opacity-0"
                       onChange={(e) => setNewGroupImportFile(e.target.files?.[0] ?? null)}
                     />
                   </label>
@@ -216,12 +240,12 @@ export function DashboardPage() {
           </Modal>
         )}
         {!loading && (
-          <p className="muted list-count-text">
+          <p className="my-2 mb-4 text-[13px] text-muted-foreground">
             {displayedGroups.length} group{displayedGroups.length === 1 ? "" : "s"}
           </p>
         )}
         {loading && (
-          <div className="group-grid">
+          <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <GroupCardSkeleton key={i} />
             ))}
@@ -238,48 +262,52 @@ export function DashboardPage() {
             }
           />
         )}
-        <div className="group-grid">
-          {!loading && visibleGroups.map((g) => (
-            <div className="group-card" key={g.id}>
-              <Link to={`/groups/${g.id}`} className="group-card-link">
-                <div className="group-poster-wrap">
-                  <GroupPoster imageUrl={g.imageUrl} name={g.name} />
-                  {isGroupOwner(g) && (
-                    <>
-                      <button
-                        type="button"
-                        className="group-edit-btn"
-                        title="Edit group"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setEditingId(g.id);
-                        }}
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        className="group-delete-overlay-btn"
-                        title="Delete group"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setDeletingId(g.id);
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="group-card-info">
-                  <span className="group-card-name">{g.name}</span>
-                  <span className="muted">{g.members.length + g.pendingMembers.length} members</span>
-                </div>
-              </Link>
-            </div>
-          ))}
+        <div className="mt-5 grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5">
+          {!loading &&
+            visibleGroups.map((g) => (
+              <div className="group flex flex-col gap-2.5" key={g.id}>
+                <Link
+                  to={`/groups/${g.id}`}
+                  className="flex flex-col gap-2.5 rounded-lg transition-transform [@media(hover:hover)]:hover:scale-[1.03]"
+                >
+                  <div className="relative aspect-[2/3] overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                    <GroupPoster imageUrl={g.imageUrl} name={g.name} />
+                    {isGroupOwner(g) && (
+                      <>
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full border border-border bg-black/70 text-foreground opacity-100 transition-colors [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:hover:bg-primary [@media(hover:hover)]:hover:text-primary-foreground"
+                          title="Edit group"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setEditingId(g.id);
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="absolute top-2 left-2 flex size-7 items-center justify-center rounded-full border border-border bg-black/70 text-foreground opacity-100 transition-colors [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:hover:bg-destructive [@media(hover:hover)]:hover:text-white"
+                          title="Delete group"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDeletingId(g.id);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-semibold text-foreground">{g.name}</span>
+                    <span className="text-muted-foreground">{g.members.length + g.pendingMembers.length} members</span>
+                  </div>
+                </Link>
+              </div>
+            ))}
         </div>
         {hasMoreGroups && <InfiniteScrollLoader sentinelRef={groupsSentinelRef} />}
         {editingGroup && (
@@ -300,33 +328,32 @@ export function DashboardPage() {
                     load(viewFilter);
                   }}
                   onCancel={requestClose}
-                  onDeleteRequested={() => { setEditingId(null); setDeletingId(editingGroup.id); }}
+                  onDeleteRequested={() => {
+                    setEditingId(null);
+                    setDeletingId(editingGroup.id);
+                  }}
                 />
               </>
             )}
           </Modal>
         )}
         {deletingGroup && (
-          <Modal
-            overlayClassName="comment-modal-overlay"
-            modalClassName="comment-modal confirm-modal"
-            onClose={() => setDeletingId(null)}
-          >
+          <Modal overlayClassName="comment-modal-overlay" modalClassName="comment-modal confirm-modal" onClose={() => setDeletingId(null)}>
             {(requestClose) => (
               <>
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   <X size={18} />
                 </button>
-                <p className="confirm-modal-message">
+                <p className="mt-7 text-[15px] leading-normal">
                   Delete <strong>{deletingGroup.name}</strong>? This can't be undone.
                 </p>
-                <div className="media-modal-confirm-delete confirm-modal-actions">
-                  <button className="danger" onClick={deleteGroup}>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button variant="destructive" onClick={deleteGroup}>
                     Yes, delete
-                  </button>
-                  <button className="secondary" onClick={requestClose}>
+                  </Button>
+                  <Button variant="outline" onClick={requestClose}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
