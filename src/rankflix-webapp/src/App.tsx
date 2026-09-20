@@ -3,6 +3,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import { PresenceProvider } from "./presence/PresenceContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { TopProgressBar } from "./components/TopProgressBar";
+import { Toaster } from "./components/ui/sonner";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -17,6 +18,9 @@ function App() {
       <AuthProvider>
         <PresenceProvider>
           <TopProgressBar />
+          {/* Sonner's toast host - mounted once here so any page can call toast() directly
+              once it's migrated off the old manual setXToast()-state pattern. */}
+          <Toaster position="top-right" />
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
