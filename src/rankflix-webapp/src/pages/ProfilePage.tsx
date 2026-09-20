@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Pencil } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { NavBar } from "../components/NavBar";
 import { Avatar } from "../components/Avatar";
@@ -91,7 +92,9 @@ export function ProfilePage() {
                 renderTrigger={(open) => (
                   <button type="button" className="avatar-edit-trigger" onClick={open} title="Change avatar">
                     <Avatar name={displayName || user.displayName} avatarUrl={avatarUrl} size={112} />
-                    <span className="avatar-edit-overlay">✎</span>
+                    <span className="avatar-edit-overlay">
+                      <Pencil size={16} />
+                    </span>
                   </button>
                 )}
               />
