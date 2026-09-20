@@ -1,3 +1,5 @@
+import { Avatar as AvatarPrimitive } from "radix-ui";
+
 interface AvatarProps {
   name: string;
   avatarUrl?: string | null;
@@ -9,6 +11,9 @@ function initialsFor(name: string) {
   return name.trim().slice(0, 2).toUpperCase();
 }
 
+// Built on Radix's Avatar primitive so a broken/expired image URL automatically falls back to
+// the initials badge (Radix detects the image load error) instead of showing a broken-image icon,
+// which the old plain <img> version didn't handle.
 export function Avatar({ name, avatarUrl, size = 32, online }: AvatarProps) {
   const style = { width: size, height: size, fontSize: Math.max(11, size * 0.4) };
   const statusDot =
@@ -19,20 +24,14 @@ export function Avatar({ name, avatarUrl, size = 32, online }: AvatarProps) {
       />
     ) : null;
 
-  if (avatarUrl) {
-    return (
-      <span className="avatar-wrap">
-        <img className="avatar" src={avatarUrl} alt={name} style={style} />
-        {statusDot}
-      </span>
-    );
-  }
-
   return (
     <span className="avatar-wrap">
-      <div className="avatar avatar-fallback" style={style}>
-        {initialsFor(name)}
-      </div>
+      <AvatarPrimitive.Root className="avatar" style={style}>
+        {avatarUrl && <AvatarPrimitive.Image className="size-full object-cover" src={avatarUrl} alt={name} />}
+        <AvatarPrimitive.Fallback className="avatar-fallback flex size-full items-center justify-center" delayMs={avatarUrl ? 400 : 0}>
+          {initialsFor(name)}
+        </AvatarPrimitive.Fallback>
+      </AvatarPrimitive.Root>
       {statusDot}
     </span>
   );

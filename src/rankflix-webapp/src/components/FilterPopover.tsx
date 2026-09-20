@@ -1,6 +1,5 @@
-import { useCallback, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
-import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
+import { useState, type ReactNode } from "react";
+import { Popover as PopoverPrimitive } from "radix-ui";
 
 interface FilterPopoverProps {
   label: string;
@@ -9,63 +8,30 @@ interface FilterPopoverProps {
   children: (close: () => void) => ReactNode;
 }
 
-// Generic trigger-button + portal-rendered panel, used for the media list's genre/rating
-// filter dropdowns (mirrors RankingMemberSelect's popover mechanics).
+// Generic trigger-button + panel, used for the media list's genre/rating filter dropdowns
+// (mirrors RankingMemberSelect's popover mechanics). Positioning/outside-click/escape are all
+// handled by Radix's Popover primitive now instead of a hand-rolled portal + getBoundingClientRect
+// + scroll/resize-listener dance.
 export function FilterPopover({ label, active, title, children }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  const close = useCallback(() => setOpen(false), []);
-  useDropdownOutsideClick(open, close, [ref, panelRef]);
-
-  useLayoutEffect(() => {
-    if (!open || !triggerRef.current) return;
-    const margin = 8;
-    const updatePos = () => {
-      const rect = triggerRef.current!.getBoundingClientRect();
-      // Clamp the panel's left edge so it can't spill past the right (or left) edge
-      // of the viewport - important on mobile where the trigger can sit close to the
-      // screen edge (e.g. the Filters icon in the consolidated toolbar).
-      const panelWidth = panelRef.current?.offsetWidth ?? 220;
-      const maxLeft = window.innerWidth - panelWidth - margin;
-      const left = Math.max(margin, Math.min(rect.left, maxLeft));
-      setPos({ top: rect.bottom + 6, left });
-    };
-    updatePos();
-    window.addEventListener("resize", updatePos);
-    window.addEventListener("scroll", updatePos, true);
-    return () => {
-      window.removeEventListener("resize", updatePos);
-      window.removeEventListener("scroll", updatePos, true);
-    };
-  }, [open]);
 
   return (
-    <div className="filter-popover" ref={ref}>
-      <button
-        type="button"
-        ref={triggerRef}
-        className={`filter-popover-trigger${active ? " active" : ""}${open ? " open" : ""}`}
-        onClick={() => setOpen((o) => !o)}
-        title={title}
-      >
-        <span className="filter-popover-trigger-label">{label}</span>
-        <span className="filter-popover-chevron">▾</span>
-      </button>
-      {open &&
-        createPortal(
-          <div
-            className="filter-popover-panel filter-popover-portal"
-            ref={panelRef}
-            style={{ top: pos.top, left: pos.left }}
-          >
-            {children(() => setOpen(false))}
-          </div>,
-          document.body
-        )}
-    </div>
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      <PopoverPrimitive.Trigger asChild>
+        <button
+          type="button"
+          className={`filter-popover-trigger${active ? " active" : ""}${open ? " open" : ""}`}
+          title={title}
+        >
+          <span className="filter-popover-trigger-label">{label}</span>
+          <span className="filter-popover-chevron">▾</span>
+        </button>
+      </PopoverPrimitive.Trigger>
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content className="filter-popover-panel" side="bottom" align="start" sideOffset={6}>
+          {children(() => setOpen(false))}
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
   );
 }

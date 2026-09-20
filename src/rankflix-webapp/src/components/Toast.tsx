@@ -1,4 +1,11 @@
 import { useEffect, useRef } from "react";
+import { CheckCircle2, Info, AlertTriangle, X } from "lucide-react";
+
+const VARIANT_ICONS = {
+  success: CheckCircle2,
+  warning: Info,
+  error: AlertTriangle,
+} as const;
 
 export function Toast({
   variant = "success",
@@ -34,9 +41,13 @@ export function Toast({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duration, title]);
 
+  const Icon = VARIANT_ICONS[variant];
+
   return (
     <div className={`toast toast-${variant}`} role="status" style={style}>
-      <div className="toast-icon">{variant === "success" ? "✓" : variant === "warning" ? "i" : "!"}</div>
+      <div className="toast-icon">
+        <Icon size={16} strokeWidth={2.5} />
+      </div>
       <div className="toast-body">
         <p className="toast-title">{title}</p>
         {details && details.length > 0 && (
@@ -50,7 +61,7 @@ export function Toast({
         )}
       </div>
       <button type="button" className="toast-close" onClick={onClose} aria-label="Dismiss">
-        ×
+        <X size={16} />
       </button>
     </div>
   );

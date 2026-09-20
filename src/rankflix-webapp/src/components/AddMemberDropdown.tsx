@@ -1,7 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import type { UserDirectoryItem } from "../api/types";
 import { Avatar } from "./Avatar";
-import { useDropdownOutsideClick } from "./useDropdownOutsideClick";
 
 interface AddMemberDropdownProps {
   users: UserDirectoryItem[];
@@ -9,34 +8,28 @@ interface AddMemberDropdownProps {
 }
 
 export function AddMemberDropdown({ users, onAdd }: AddMemberDropdownProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  const close = useCallback(() => setOpen(false), []);
-  useDropdownOutsideClick(open, close, [ref]);
-
   return (
-    <div className="add-member-dropdown" ref={ref}>
-      <button type="button" className="add-member-trigger" onClick={() => setOpen((o) => !o)}>
-        + Add member
-      </button>
-      {open && (
-        <ul className="add-member-list">
-          {users.length === 0 && <li className="add-member-empty muted">No users to add</li>}
-          {users.map((u) => (
-            <li
-              key={u.id}
-              onClick={() => {
-                onAdd(u.id);
-                setOpen(false);
-              }}
-            >
-              <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={26} />
-              <span>{u.displayName}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <DropdownMenuPrimitive.Root>
+      <div className="add-member-dropdown">
+        <DropdownMenuPrimitive.Trigger asChild>
+          <button type="button" className="add-member-trigger">
+            + Add member
+          </button>
+        </DropdownMenuPrimitive.Trigger>
+        <DropdownMenuPrimitive.Portal>
+          <DropdownMenuPrimitive.Content className="add-member-list" side="top" align="start" sideOffset={6}>
+            {users.length === 0 && <div className="add-member-empty muted">No users to add</div>}
+            {users.map((u) => (
+              <DropdownMenuPrimitive.Item key={u.id} className="outline-none" onSelect={() => onAdd(u.id)} asChild>
+                <li>
+                  <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={26} />
+                  <span>{u.displayName}</span>
+                </li>
+              </DropdownMenuPrimitive.Item>
+            ))}
+          </DropdownMenuPrimitive.Content>
+        </DropdownMenuPrimitive.Portal>
+      </div>
+    </DropdownMenuPrimitive.Root>
   );
 }
