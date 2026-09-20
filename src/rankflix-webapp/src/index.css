@@ -3360,6 +3360,7 @@ button.secondary:hover {
 .media-ranking-rated-count {
   font-size: 13px;
   white-space: nowrap;
+  color: var(--text);
 }
 
 .member-sidebar {
