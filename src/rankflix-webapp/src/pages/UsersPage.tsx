@@ -25,6 +25,7 @@ export function UsersPage() {
   const [editDiscordId, setEditDiscordId] = useState("");
   const [editRole, setEditRole] = useState("member");
   const [newPassword, setNewPassword] = useState<string | null>(null);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const loadUsers = () =>
@@ -86,11 +87,14 @@ export function UsersPage() {
 
   const resetPassword = async () => {
     if (!editingUser) return;
+    setResettingPassword(true);
     try {
       const result = await api.post<{ newPassword: string }>(`/api/users/${editingUser.id}/reset-password`, {});
       setNewPassword(result.newPassword);
     } catch (e) {
       setToast({ variant: "error", title: e instanceof Error ? e.message : "Failed to reset password" });
+    } finally {
+      setResettingPassword(false);
     }
   };
 
@@ -118,7 +122,7 @@ export function UsersPage() {
           Manage user accounts: reassign Discord IDs (e.g. when a friend switches accounts) and grant/revoke admin.
         </p>
 
-        <section>
+        <section className="mb-8">
           <div className="overflow-x-auto">
             <table className="mb-4 w-full overflow-hidden rounded-lg border border-border bg-muted [border-collapse:collapse]">
               <thead>
@@ -215,8 +219,14 @@ export function UsersPage() {
                     </Button>
                   </div>
                 ) : (
-                  <Button type="button" variant="outline" className="self-start" onClick={resetPassword}>
-                    Reset password
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="self-start"
+                    disabled={resettingPassword}
+                    onClick={resetPassword}
+                  >
+                    {resettingPassword ? "Resetting..." : "Reset password"}
                   </Button>
                 )}
               </div>

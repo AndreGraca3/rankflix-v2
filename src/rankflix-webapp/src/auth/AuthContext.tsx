@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, setAccessToken, setUnauthorizedHandler, tryRefresh } from "../api/client";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { api, setAccessToken, setUnauthorizedHandler } from "../api/client";
 import { eventStream } from "../api/eventStream";
-import type { LoginResponse, UserProfile } from "../api/types";
+import { supabase } from "../lib/supabaseClient";
+import { toSyntheticEmail } from "../lib/syntheticEmail";
+import type { UserProfile } from "../api/types";
 
 interface AuthContextValue {
   user: UserProfile | null;
@@ -24,6 +26,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Needed to re-authenticate (verify the "current password") before Supabase's
+  // updateUser({ password }) call, since that API trusts the already-signed-in session and
+  // doesn't itself check the old password.
+  const syntheticEmailRef = useRef<string | null>(null);
   // Admins-only "Admin view" / "User view" switch: lets an admin temporarily hide all
   // admin-only affordances (Users nav link, group owner-level controls on groups they don't
   // own, "All groups (system)" filter, etc.) to see the app as a regular member would.
@@ -46,19 +52,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(() => setUser(null));
 
-    // Attempt silent session restore via the refresh-token cookie on first load.
-    (async () => {
-      try {
-        const token = await tryRefresh();
-        if (token) {
-          await refreshProfile();
-        }
-      } catch {
-        /* no valid session */
-      } finally {
+    // Supabase persists the session in localStorage and this fires immediately on mount with
+    // whatever it finds there (INITIAL_SESSION), then again on every sign-in/out/token-refresh
+    // from here on - so this one listener handles both the initial-load session restore and
+    // keeping the access token in sync for the lifetime of the app, including refresh in other
+    // tabs (supabase-js broadcasts token refreshes across tabs via the storage event).
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      syntheticEmailRef.current = session?.user.email ?? null;
+      setAccessToken(session?.access_token ?? null);
+
+      if (session) {
+        refreshProfile()
+          .catch(() => setUser(null))
+          .finally(() => setLoading(false));
+      } else {
+        setUser(null);
         setLoading(false);
       }
-    })();
+    });
+
+    return () => subscription.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -69,22 +82,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const login = async (username: string, password: string) => {
-    const data = await api.post<LoginResponse>("/api/auth/login", { username, password });
-    setAccessToken(data.accessToken);
-    await refreshProfile();
+    const { error } = await supabase.auth.signInWithPassword({ email: toSyntheticEmail(username), password });
+    if (error) throw new Error("Incorrect username or password");
+    // onAuthStateChange (above) picks up the new session, sets the access token, and loads
+    // the profile - no need to duplicate that here.
   };
 
   const register = async (username: string, password: string, displayName: string) => {
-    const data = await api.post<LoginResponse>("/api/auth/register", { username, password, displayName });
-    setAccessToken(data.accessToken);
-    await refreshProfile();
+    const { error } = await supabase.auth.signUp({
+      email: toSyntheticEmail(username),
+      password,
+      options: { data: { display_name: displayName } },
+    });
+    if (error) {
+      if (error.message.includes("already registered")) throw new Error("Username already in use");
+      throw new Error(error.message);
+    }
+    // "Confirm email" is disabled on this project (there's nowhere for a synthetic address to
+    // receive a confirmation link anyway), so signUp returns an active session immediately.
   };
 
   const logout = async () => {
-    await api.post("/api/auth/sign-out");
+    await supabase.auth.signOut();
     eventStream.stop();
-    setAccessToken(null);
-    setUser(null);
   };
 
   const updateProfile = async (fields: { username?: string; displayName?: string; avatarUrl?: string }) => {
@@ -93,7 +113,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
-    await api.post("/api/users/me/change-password", { currentPassword, newPassword });
+    if (!syntheticEmailRef.current) throw new Error("Not signed in");
+
+    // Re-verify the current password (Supabase's updateUser trusts the existing session and
+    // won't itself check it) before applying the change.
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: syntheticEmailRef.current,
+      password: currentPassword,
+    });
+    if (reauthError) throw new Error("Current password is incorrect");
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
   };
 
   const setStatus = async (status: "online" | "invisible") => {
@@ -103,7 +134,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refreshProfile, updateProfile, changePassword, setStatus, adminViewEnabled, setAdminViewEnabled }}
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        refreshProfile,
+        updateProfile,
+        changePassword,
+        setStatus,
+        adminViewEnabled,
+        setAdminViewEnabled,
+      }}
     >
       {children}
     </AuthContext.Provider>

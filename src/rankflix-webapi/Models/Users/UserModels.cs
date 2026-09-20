@@ -16,7 +16,6 @@ public class AdminUpdateUserRequest
 
 public class UpdateOwnProfileRequest
 {
-    public string? Username { get; set; }
     public string? DisplayName { get; set; }
     public string? AvatarUrl { get; set; }
 }
@@ -24,12 +23,6 @@ public class UpdateOwnProfileRequest
 public class UpdateStatusRequest
 {
     public required string Status { get; set; } // "online" | "invisible"
-}
-
-public class ChangePasswordRequest
-{
-    public required string CurrentPassword { get; set; }
-    public required string NewPassword { get; set; }
 }
 
 public class ResetPasswordResponse

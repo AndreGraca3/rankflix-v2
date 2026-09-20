@@ -155,6 +155,7 @@ a:hover {
 
 .avatar {
   border-radius: 50%;
+  overflow: hidden;
   object-fit: cover;
   display: flex;
   align-items: center;
@@ -555,8 +556,13 @@ input::placeholder {
 /* :not([data-slot="button"]) excludes shadcn's <Button> component, which fully controls its
    own look via Tailwind classes. Without this, these unlayered rules (which always beat
    Tailwind's @layer utilities regardless of specificity) would clobber every shadcn Button's
-   background/padding/etc. This only needs to matter for plain, not-yet-migrated <button>s. */
-button:not([data-slot="button"]) {
+   background/padding/etc. This only needs to matter for plain, not-yet-migrated <button>s.
+   :not(...) is wrapped in :where(...) so this selector contributes zero specificity of its
+   own (beyond the bare `button` type selector) — otherwise it out-specifies legacy
+   component classes like .avatar-btn/.filter-popover-trigger and silently clobbers their
+   padding/border-radius/background, which is exactly what caused the squared-avatar and
+   oversized-filter-button bugs. */
+button:where(:not([data-slot="button"])) {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
@@ -570,21 +576,21 @@ button:not([data-slot="button"]) {
 }
 
 @media (hover: hover) {
-button:not([data-slot="button"]):hover {
+button:where(:not([data-slot="button"])):hover {
   background: var(--accent-hover);
 }
 }
 
-button:not([data-slot="button"]):active {
+button:where(:not([data-slot="button"])):active {
   transform: scale(0.98);
 }
 
-button:not([data-slot="button"]):disabled {
+button:where(:not([data-slot="button"])):disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-button.link:not([data-slot="button"]) {
+button.link:where(:not([data-slot="button"])) {
   background: none;
   color: var(--accent);
   padding: 0;
@@ -593,7 +599,7 @@ button.link:not([data-slot="button"]) {
 }
 
 @media (hover: hover) {
-button.link:not([data-slot="button"]):hover {
+button.link:where(:not([data-slot="button"])):hover {
   background: none;
   color: var(--accent-hover);
 }
@@ -2145,10 +2151,6 @@ td input, td select {
 
 .group-stats-summary-mobile {
   display: none;
-}
-
-section {
-  margin-bottom: 32px;
 }
 
 /* Top progress bar (global loading indicator) */

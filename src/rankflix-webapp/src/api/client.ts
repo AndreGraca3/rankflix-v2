@@ -1,3 +1,5 @@
+import { supabase } from "../lib/supabaseClient";
+
 const API_URL = import.meta.env.VITE_API_URL as string;
 
 let accessToken: string | null = null;
@@ -32,22 +34,18 @@ function setPending(count: number) {
 
 let inFlightRefresh: Promise<string | null> | null = null;
 
-// De-duplicate concurrent refresh calls (e.g. React StrictMode double-invoking the
-// mount effect, or several 401s firing at once): the refresh token is single-use and
-// rotates on every call, so two simultaneous requests would race and the loser gets
-// a stale/already-consumed token, incorrectly logging the user out.
+// Supabase's client already auto-refreshes the access token in the background before it
+// expires, so this is mostly a safety net for the rare case a request races an
+// about-to-expire token: ask supabase-js for the current (possibly just-refreshed) session
+// instead of the old cookie-based /api/auth/refresh call. De-duplicated the same way the old
+// implementation was, since a stampede of concurrent 401s would otherwise all hit Supabase at once.
 async function tryRefresh(): Promise<string | null> {
   if (inFlightRefresh) return inFlightRefresh;
 
   inFlightRefresh = (async () => {
     try {
-      const res = await fetch(`${API_URL}/api/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) return null;
-      const data = await res.json();
-      accessToken = data.accessToken;
+      const { data } = await supabase.auth.getSession();
+      accessToken = data.session?.access_token ?? null;
       return accessToken;
     } finally {
       inFlightRefresh = null;

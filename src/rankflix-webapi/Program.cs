@@ -1,4 +1,4 @@
-using System.Text;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -18,13 +18,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<RankflixDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("RankflixDatabase")));
 
-builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
-builder.Services.Configure<RefreshTokenOptions>(builder.Configuration.GetSection("RefreshToken"));
+builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
-builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IClaimsTransformation, SupabaseClaimsTransformation>();
+builder.Services.AddHttpClient<ISupabaseAdminService, SupabaseAdminService>();
 builder.Services.AddScoped<IGroupService, GroupService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
@@ -39,19 +37,10 @@ builder.Services.AddSingleton(new TMDbClient(string.IsNullOrWhiteSpace(tmdbApiKe
 builder.Services.AddScoped<IMediaSearchService, MediaSearchService>();
 builder.Services.AddScoped<IMediaMetadataService, MediaMetadataService>();
 
-var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
-                  ?? throw new InvalidOperationException("Missing Jwt configuration section");
-
-// Refuse to start with the checked-in placeholder secret or anything too short to be a real
-// signing key - running with it would let anyone forge valid access tokens for any user.
-if (string.IsNullOrWhiteSpace(jwtOptions.SecretKey) ||
-    jwtOptions.SecretKey == "CHANGE_ME_TO_A_LONG_RANDOM_SECRET" ||
-    jwtOptions.SecretKey.Length < 32)
-{
-    throw new InvalidOperationException(
-        "Jwt:SecretKey must be set to a real, random secret (at least 32 characters) via configuration " +
-        "or the Jwt__SecretKey environment variable - refusing to start with the placeholder/default value.");
-}
+var supabaseUrl = builder.Configuration["Supabase:Url"]
+                  ?? throw new InvalidOperationException(
+                      "Missing Supabase:Url configuration (or the Supabase__Url environment variable).");
+var supabaseIssuer = $"{supabaseUrl.TrimEnd('/')}/auth/v1";
 
 builder.Services.AddAuthentication(options =>
     {
@@ -60,15 +49,18 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
+        // Authority + MetadataAddress let the handler fetch Supabase's JWKS
+        // (asymmetric ES256 signing keys) automatically and refresh them on rotation -
+        // no shared secret is ever stored on this API.
+        options.Authority = supabaseIssuer;
+        options.MetadataAddress = $"{supabaseIssuer}/.well-known/openid-configuration";
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
+            ValidIssuer = supabaseIssuer,
             ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtOptions.Issuer,
-            ValidAudience = jwtOptions.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
+            ValidAudience = "authenticated",
+            ValidateLifetime = true
         };
     });
 

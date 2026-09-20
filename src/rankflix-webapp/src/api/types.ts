@@ -1,8 +1,3 @@
-export interface LoginResponse {
-  accessToken: string;
-  expireMinutes: number;
-}
-
 export interface UserProfile {
   id: number;
   username: string;

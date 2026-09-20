@@ -14,7 +14,6 @@ import { Label } from "../components/ui/label";
 
 export function ProfilePage() {
   const { user, updateProfile, changePassword } = useAuth();
-  const [username, setUsername] = useState(user?.username ?? "");
   const [displayName, setDisplayName] = useState(user?.displayName ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? null);
   const [accountSubmitting, setAccountSubmitting] = useState(false);
@@ -35,8 +34,7 @@ export function ProfilePage() {
 
   if (!user) return null;
 
-  const accountDirty =
-    username !== user.username || displayName !== user.displayName || avatarUrl !== user.avatarUrl;
+  const accountDirty = displayName !== user.displayName || avatarUrl !== user.avatarUrl;
 
   const handleAccountSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +42,7 @@ export function ProfilePage() {
     setSuccess(null);
     setAccountSubmitting(true);
     try {
-      const patch: { username?: string; displayName?: string; avatarUrl?: string } = {};
-      if (username !== user.username) patch.username = username;
+      const patch: { displayName?: string; avatarUrl?: string } = {};
       if (displayName !== user.displayName) patch.displayName = displayName;
       if (avatarUrl !== user.avatarUrl) patch.avatarUrl = avatarUrl ?? "";
       await updateProfile(patch);
@@ -132,17 +129,11 @@ export function ProfilePage() {
 
               <Label className="-mt-1.5 flex-col items-start gap-1.5 text-sm text-muted-foreground">
                 Username
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  minLength={3}
-                  maxLength={32}
-                  autoComplete="username"
-                />
+                <Input value={user.username} disabled autoComplete="username" />
               </Label>
               <p className="-mt-1.5 text-xs text-muted-foreground">
-                Private — used only to sign in, never shown to other users.
+                Private — used only to sign in, never shown to other users. Can't be changed
+                self-service; ask an admin if you need it updated.
               </p>
 
               <Button type="submit" disabled={accountSubmitting || !accountDirty} className="self-start">

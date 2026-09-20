@@ -1,0 +1,18 @@
+name: Keep-alive ping
+
+# Render's free web services spin down after 15 minutes of inactivity, and Supabase pauses
+# free Postgres projects after 7 days with no database activity. This workflow pings the
+# API's /health endpoint (which itself runs a real query, not just returning 200) often
+# enough to prevent both, for $0/month.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API health endpoint
+        run: |
+          curl -fsS --max-time 30 "${{ secrets.RANKFLIX_API_URL }}/health"

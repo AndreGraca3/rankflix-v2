@@ -47,6 +47,8 @@ export function RegisterPage() {
               required
               minLength={3}
               maxLength={32}
+              pattern="[A-Za-z0-9._-]+"
+              title="Letters, numbers, dots, underscores and hyphens only"
             />
           </Label>
           <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">

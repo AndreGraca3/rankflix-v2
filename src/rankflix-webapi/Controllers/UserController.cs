@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Rankflix.Auth;
 using Rankflix.Data;
 using Rankflix.Models.Auth;
 using Rankflix.Models.Users;
@@ -12,7 +14,7 @@ namespace Rankflix.Controllers;
 [ApiController]
 [Route("api/users")]
 [Authorize]
-public class UserController(IUserRepository userRepository, RankflixDbContext db, ISseService sse) : ControllerBase
+public class UserController(IUserRepository userRepository, RankflixDbContext db, ISseService sse, ISupabaseAdminService supabaseAdmin) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<ActionResult<UserProfileResponse>> GetMe()
@@ -37,26 +39,6 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
     {
         var user = await userRepository.GetByIdAsync(GetUserId());
         if (user is null) return NotFound();
-
-        if (request.Username is not null)
-        {
-            try
-            {
-                var newUsername = UsernameValidator.ValidateAndTrim(request.Username);
-                if (newUsername != user.Username)
-                {
-                    var existing = await userRepository.GetByUsernameAsync(newUsername);
-                    if (existing is not null && existing.Id != user.Id)
-                        return Problem("Username already in use", statusCode: StatusCodes.Status409Conflict);
-
-                    user.Username = newUsername;
-                }
-            }
-            catch (AppException ex)
-            {
-                return Problem(ex.Message, statusCode: ex.StatusCode);
-            }
-        }
 
         if (request.DisplayName is not null)
         {
@@ -111,24 +93,6 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
             Role = user.Role,
             Status = user.Status
         };
-    }
-
-    [HttpPost("me/change-password")]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
-    {
-        var user = await userRepository.GetByIdAsync(GetUserId());
-        if (user is null) return NotFound();
-
-        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
-            return Problem("Current password is incorrect", statusCode: StatusCodes.Status400BadRequest);
-
-        if (request.NewPassword.Length < 8)
-            return Problem("New password must be at least 8 characters", statusCode: StatusCodes.Status400BadRequest);
-
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        await userRepository.SaveChangesAsync();
-
-        return NoContent();
     }
 
     [HttpGet]
@@ -213,6 +177,39 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
             DiscordId = user.DiscordId,
             Role = user.Role
         };
+    }
+
+    [HttpPost("{userId:int}/reset-password")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword(int userId)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user is null) return NotFound();
+
+        if (user.SupabaseUserId is null)
+            return Problem("This user hasn't signed in yet, so there's no account to reset", statusCode: StatusCodes.Status400BadRequest);
+
+        // Random 16-char password made of an unambiguous charset - shown to the admin once so
+        // they can hand it to the user out-of-band, who should then change it via their own
+        // Profile page.
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        var newPassword = string.Create(16, chars, (span, alphabet) =>
+        {
+            var bytes = RandomNumberGenerator.GetBytes(span.Length);
+            for (var i = 0; i < span.Length; i++)
+                span[i] = alphabet[bytes[i] % alphabet.Length];
+        });
+
+        try
+        {
+            await supabaseAdmin.SetUserPasswordAsync(user.SupabaseUserId.Value, newPassword);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Problem(ex.Message, statusCode: StatusCodes.Status502BadGateway);
+        }
+
+        return new ResetPasswordResponse { NewPassword = newPassword };
     }
 
     // Attaches any Excel-imported reviews/watch statuses that were stored against a not-yet-registered
@@ -340,29 +337,6 @@ public class UserController(IUserRepository userRepository, RankflixDbContext db
         await db.SaveChangesAsync();
 
         return NoContent();
-    }
-
-    [HttpPost("{userId:int}/reset-password")]
-    [Authorize(Roles = "admin")]
-    public async Task<ActionResult<ResetPasswordResponse>> ResetPassword(int userId)
-    {
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user is null) return NotFound();
-
-        var newPassword = GenerateRandomPassword();
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
-        await userRepository.SaveChangesAsync();
-
-        return new ResetPasswordResponse { NewPassword = newPassword };
-    }
-
-    // Not cryptographically excessive, just needs to be unguessable enough for a one-time
-    // admin-communicated temporary password the user should change after logging in.
-    private static string GenerateRandomPassword()
-    {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-        var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(12);
-        return new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
     }
 
     [HttpGet("me/stats")]

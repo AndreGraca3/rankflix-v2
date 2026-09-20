@@ -6,7 +6,6 @@ namespace Rankflix.Data;
 public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : DbContext(options)
 {
     public DbSet<UserEntity> Users => Set<UserEntity>();
-    public DbSet<RefreshTokenEntity> RefreshTokens => Set<RefreshTokenEntity>();
     public DbSet<MediaEntity> Media => Set<MediaEntity>();
     public DbSet<RankGroupEntity> RankGroups => Set<RankGroupEntity>();
     public DbSet<RankGroupMemberEntity> RankGroupMembers => Set<RankGroupMemberEntity>();
@@ -27,23 +26,14 @@ public class RankflixDbContext(DbContextOptions<RankflixDbContext> options) : Db
             e.HasKey(u => u.Id);
             e.Property(u => u.Username).HasMaxLength(100);
             e.HasIndex(u => u.Username).IsUnique();
+            e.HasIndex(u => u.SupabaseUserId).IsUnique();
             e.Property(u => u.DisplayName).HasMaxLength(60);
-            e.Property(u => u.PasswordHash).HasMaxLength(255);
             e.Property(u => u.DiscordId).HasMaxLength(32);
             e.Property(u => u.Role).HasMaxLength(20).HasDefaultValue("member");
             e.Property(u => u.Status).HasMaxLength(20).HasDefaultValue("online");
             e.Property(u => u.CreatedAt).HasDefaultValueSql("now()");
             e.ToTable(t => t.HasCheckConstraint("ck_user_role", "role in ('admin', 'member')"));
             e.ToTable(t => t.HasCheckConstraint("ck_user_status", "status in ('online', 'invisible')"));
-        });
-
-        modelBuilder.Entity<RefreshTokenEntity>(e =>
-        {
-            e.HasKey(t => t.Value);
-            e.Property(t => t.Value).HasDefaultValueSql("gen_random_uuid()");
-            e.Property(t => t.CreatedAt).HasDefaultValueSql("now()");
-            e.HasIndex(t => t.UserId);
-            e.HasOne<UserEntity>().WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<MediaEntity>(e =>

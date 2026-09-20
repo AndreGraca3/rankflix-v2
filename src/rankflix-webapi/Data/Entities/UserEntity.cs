@@ -9,14 +9,17 @@ public class UserEntity
 
     [Column("username")] public required string Username { get; set; }
 
+    // Links this row to the Supabase Auth user that owns it (Supabase issues JWTs with this
+    // value as the `sub` claim). Passwords/sessions are fully managed by Supabase now - this
+    // app's database only stores the profile/permissions data layered on top.
+    [Column("supabase_user_id")] public Guid? SupabaseUserId { get; set; }
+
     // Friendly name shown everywhere in the UI (leaderboards, watcher lists, reviews, admin
     // panels). Kept separate from Username so friends can rename themselves freely without
     // touching their private login credential.
     [Column("display_name")] public required string DisplayName { get; set; }
 
     [Column("avatar_url")] public string? AvatarUrl { get; set; }
-
-    [Column("password_hash")] public required string PasswordHash { get; set; }
 
     // Editable by admin independently of login identity, since friends occasionally switch Discord accounts.
     [Column("discord_id")] public string? DiscordId { get; set; }
@@ -29,3 +32,4 @@ public class UserEntity
 
     [Column("created_at")] public DateTime CreatedAt { get; set; }
 }
+

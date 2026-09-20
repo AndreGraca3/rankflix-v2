@@ -8,6 +8,7 @@ public interface IUserRepository
 {
     Task<UserEntity?> GetByIdAsync(int id);
     Task<UserEntity?> GetByUsernameAsync(string username);
+    Task<UserEntity?> GetBySupabaseUserIdAsync(Guid supabaseUserId);
     Task<List<UserEntity>> GetAllAsync();
     Task<bool> AnyAsync();
     Task<UserEntity> AddAsync(UserEntity user);
@@ -21,6 +22,9 @@ public class UserRepository(RankflixDbContext db) : IUserRepository
 
     public Task<UserEntity?> GetByUsernameAsync(string username) =>
         db.Users.FirstOrDefaultAsync(u => u.Username == username);
+
+    public Task<UserEntity?> GetBySupabaseUserIdAsync(Guid supabaseUserId) =>
+        db.Users.FirstOrDefaultAsync(u => u.SupabaseUserId == supabaseUserId);
 
     public Task<List<UserEntity>> GetAllAsync() =>
         db.Users.OrderBy(u => u.Id).ToListAsync();

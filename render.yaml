@@ -1,0 +1,58 @@
+########################################################################
+# Render Blueprint - deploys the whole app (API + frontend) for free.
+#
+# Usage: in the Render dashboard, "New +" -> "Blueprint", point it at
+# this repo. Render will create the two services below and prompt for
+# the `sync: false` env vars (see DEPLOY.md for where to get each value).
+########################################################################
+
+services:
+  # .NET API - validates Supabase-issued JWTs, owns the Postgres data, and
+  # proxies TMDb search/media metadata.
+  - type: web
+    name: rankflix-webapi
+    runtime: docker
+    plan: free
+    rootDir: src/rankflix-webapi
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # Render's free web services spin down after 15 minutes of no traffic and take ~30-60s
+      # to cold-start again - the keep-alive workflow in .github/workflows/keep-alive.yml pings
+      # /health on a schedule to prevent that (and to keep Supabase's free Postgres from
+      # auto-pausing after 7 days of no activity - /health runs a real query, not just a 200).
+      - key: ConnectionStrings__RankflixDatabase
+        sync: false # Supabase Postgres connection string - see DEPLOY.md
+      - key: Supabase__Url
+        sync: false # e.g. https://xxxxx.supabase.co
+      - key: Supabase__SecretKey
+        sync: false # sb_secret_... - Project Settings > API Keys. Server-side only, never expose to the frontend.
+      - key: Tmdb__ApiKey
+        sync: false
+      - key: Cors__AllowedOrigins__0
+        sync: false # the frontend's Render URL, e.g. https://rankflix-webapp.onrender.com
+
+  # Static frontend (Vite build output). Vite bakes VITE_* vars into the build at build time, so
+  # these must be set on this service (not just the API) even though only the API talks to
+  # Postgres/Tmdb.
+  - type: web
+    name: rankflix-webapp
+    runtime: static
+    rootDir: src/rankflix-webapp
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # the API service's Render URL, e.g. https://rankflix-webapi.onrender.com
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false # sb_publishable_... (safe to expose to the browser)
+    routes:
+      # Client-side routing (react-router) - unknown paths must still serve index.html.
+      - type: rewrite
+        source: /*
+        destination: /index.html
