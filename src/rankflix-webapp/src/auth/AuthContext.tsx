@@ -89,17 +89,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, password: string, displayName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email: toSyntheticEmail(username),
-      password,
-      options: { data: { display_name: displayName } },
-    });
-    if (error) {
-      if (error.message.includes("already registered")) throw new Error("Username already in use");
-      throw new Error(error.message);
-    }
-    // "Confirm email" is disabled on this project (there's nowhere for a synthetic address to
-    // receive a confirmation link anyway), so signUp returns an active session immediately.
+    // Done server-side via the Admin API (see AuthController.Register) instead of
+    // supabase.auth.signUp() directly, because Supabase's public signup validates the email
+    // address has a resolvable domain/MX record - which the synthetic "@rankflix.local"
+    // address never will. The Admin API has no such restriction.
+    await api.post("/api/auth/register", { username, password, displayName });
+
+    const { error } = await supabase.auth.signInWithPassword({ email: toSyntheticEmail(username), password });
+    if (error) throw new Error(error.message);
+    // onAuthStateChange (above) picks up the new session, sets the access token, and loads
+    // the profile - no need to duplicate that here.
   };
 
   const logout = async () => {
