@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Crown, Check, Popcorn, Clapperboard, Tv, CheckCircle2 } from "lucide-react";
 import { Avatar } from "./Avatar";
 import { useScrollLock } from "../hooks/useScrollLock";
 import { formatWatchTime } from "../utils/time";
@@ -85,7 +86,7 @@ export function MemberDetailModal({
           <div>
             <h2>
               {name}
-              {isOwner && <span className="member-owner-badge" title="Owner">👑</span>}
+              {isOwner && <span className="member-owner-badge" title="Owner"><Crown size={13} /></span>}
               {kind === "pending" && <span className="member-pending-badge">Pending</span>}
             </h2>
             {kind === "real" && (
@@ -103,7 +104,13 @@ export function MemberDetailModal({
                     title="Copy Discord ID"
                     onClick={copyDiscordId}
                   >
-                    {copied ? "✓ Copied" : "Copy"}
+                    {copied ? (
+                      <>
+                        <Check size={12} className="inline-block align-[-2px] mr-0.5" /> Copied
+                      </>
+                    ) : (
+                      "Copy"
+                    )}
                   </button>
                 )}
               </p>
@@ -128,19 +135,19 @@ export function MemberDetailModal({
         <div className="member-modal-stats">
           <div className="member-modal-stat" aria-label={`Watched: ${stats ? stats.moviesWatched + stats.tvWatched : 0}`}>
             <span className="member-modal-stat-value">{stats ? stats.moviesWatched + stats.tvWatched : 0}</span>
-            <span className="member-modal-stat-label" title="Watched" aria-hidden="true">🍿</span>
+            <span className="member-modal-stat-label" title="Watched" aria-hidden="true"><Popcorn size={14} /></span>
           </div>
           <div className="member-modal-stat" aria-label={`Movies: ${stats?.moviesWatched ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.moviesWatched ?? 0}</span>
-            <span className="member-modal-stat-label" title="Movies" aria-hidden="true">🎬</span>
+            <span className="member-modal-stat-label" title="Movies" aria-hidden="true"><Clapperboard size={14} /></span>
           </div>
           <div className="member-modal-stat" aria-label={`TV shows: ${stats?.tvWatched ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.tvWatched ?? 0}</span>
-            <span className="member-modal-stat-label" title="TV shows" aria-hidden="true">📺</span>
+            <span className="member-modal-stat-label" title="TV shows" aria-hidden="true"><Tv size={14} /></span>
           </div>
           <div className="member-modal-stat" aria-label={`Ratings given: ${stats?.totalRatingsGiven ?? 0}`}>
             <span className="member-modal-stat-value">{stats?.totalRatingsGiven ?? 0}</span>
-            <span className="member-modal-stat-label" title="Ratings given" aria-hidden="true">✅</span>
+            <span className="member-modal-stat-label" title="Ratings given" aria-hidden="true"><CheckCircle2 size={14} /></span>
           </div>
           <div
             className="member-modal-stat"

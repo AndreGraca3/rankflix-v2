@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { StarRating } from "./StarRating";
 
 interface RatingModalProps {
@@ -66,7 +67,7 @@ export function RatingModal({ title, posterUrl, initialRating, initialComment, o
               title="Clear comment"
               onClick={() => setComment("")}
             >
-              🗑 Clear
+              <Trash2 size={13} className="inline-block align-[-2px] mr-1" /> Clear
             </button>
           )}
         </div>

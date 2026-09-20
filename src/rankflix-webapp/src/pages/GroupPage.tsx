@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import confetti from "canvas-confetti";
+import { Pencil, Dices, Check, Users, X, Popcorn, Globe, Eye, Crown, Settings, ArrowUp } from "lucide-react";
 import { api } from "../api/client";
 import type { ExcelImportResult, Group, GroupMedia, GroupStats, MediaSearchResult, PagedGroupMedia, UserDirectoryItem } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -1039,14 +1040,14 @@ export function GroupPage() {
             <h1>{group.name}</h1>
             {isGroupOwner && (
               <button type="button" className="group-edit-btn group-header-edit-btn" title="Edit group" onClick={() => setShowEditGroup(true)}>
-                ✎
+                <Pencil size={14} />
               </button>
             )}
           </div>
           {statsSummary && <div className="group-stats-summary group-stats-summary-mobile">{statsSummary}</div>}
           <div className="row">
             <button className="excel-btn" onClick={() => navigate(`/groups/${groupId}/suggestions`)}>
-              🎲 Suggestions
+              <Dices size={14} className="inline-block align-[-2px] mr-1" /> Suggestions
             </button>
             <button className="excel-btn" onClick={exportExcel}>Export .xlsx</button>
             {isGroupOwner && (
@@ -1070,7 +1071,7 @@ export function GroupPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
-                  ×
+                  <X size={18} />
                 </button>
                 <GroupEditForm
                   group={group}
@@ -1099,7 +1100,7 @@ export function GroupPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
-                  ×
+                  <X size={18} />
                 </button>
                 <p className="confirm-modal-message">
                   Delete <strong>{group.name}</strong>? This can't be undone.
@@ -1128,7 +1129,7 @@ export function GroupPage() {
             {(requestClose) => (
               <>
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
-                  ×
+                  <X size={18} />
                 </button>
                 <h2>Add media</h2>
                 <div className="add-media-form">
@@ -1155,7 +1156,7 @@ export function GroupPage() {
                                 }))
                               }
                             >
-                              {checked && "✓ "}
+                              {checked && <Check size={12} className="inline-block align-[-2px] mr-0.5" />}
                               {m.displayName}
                             </button>
                           );
@@ -1176,7 +1177,7 @@ export function GroupPage() {
                                 }))
                               }
                             >
-                              {checked && "✓ "}
+                              {checked && <Check size={12} className="inline-block align-[-2px] mr-0.5" />}
                               {p.displayName || p.discordId}
                             </button>
                           );
@@ -1274,7 +1275,7 @@ export function GroupPage() {
                       onClick={() => setMediaSearchInput("")}
                       title="Clear search"
                     >
-                      ×
+                      <X size={13} />
                     </button>
                   )}
                 </div>
@@ -1305,7 +1306,7 @@ export function GroupPage() {
                     plus a members-sidebar shortcut - hidden on desktop (see .media-filters-mobile
                     / .media-toolbar-members-btn CSS). */}
                 <div className="media-filters-mobile">
-                  <FilterPopover label="⚙" active={anyMediaFilterActive} title="Filters">
+                  <FilterPopover label={<Settings size={16} />} active={anyMediaFilterActive} title="Filters">
                     {(close) => (
                       <div className="media-filters-mobile-panel">
                         <div className="filter-popover-mobile-section">
@@ -1338,7 +1339,7 @@ export function GroupPage() {
                     title={membersExpanded ? "Hide members" : "Show members"}
                     onClick={() => setMembersExpanded((v) => !v)}
                   >
-                    👥
+                    <Users size={16} />
                   </button>
                 </div>
               </div>
@@ -1356,7 +1357,7 @@ export function GroupPage() {
                 {activeFilterChips.map((chip) => (
                   <button type="button" key={chip.key} className="active-filter-chip" onClick={chip.onClear} title="Remove this filter">
                     {chip.label}
-                    <span className="active-filter-chip-x" aria-hidden="true">×</span>
+                    <span className="active-filter-chip-x" aria-hidden="true"><X size={11} /></span>
                   </button>
                 ))}
                 <button type="button" className="active-filters-clear-all" onClick={clearAllFilters}>
@@ -1372,7 +1373,7 @@ export function GroupPage() {
             )}
             {!mediaLoading && totalMediaInGroup === 0 && (
               <EmptyState
-                icon="🍿"
+                icon={<Popcorn size={40} />}
                 title="No media in this group"
                 subtitle="Add a movie or show above to start ranking and voting."
               />
@@ -1413,7 +1414,7 @@ export function GroupPage() {
                           <span className="media-ranking-number">#{i + 1}</span>
                           {mediaFiltersActive && originalRanks[m.tmdbId] !== undefined && originalRanks[m.tmdbId] !== i + 1 && (
                             <span className="media-ranking-original-rank" title="Overall rank (group average, unfiltered)">
-                              <span aria-hidden="true">🌐</span>
+                              <span aria-hidden="true"><Globe size={11} /></span>
                               {originalRanks[m.tmdbId]}
                             </span>
                           )}
@@ -1450,7 +1451,7 @@ export function GroupPage() {
                             </span>
                           ) : (
                             <span className="media-ranking-original-rank" title="Group average rating">
-                              <span aria-hidden="true">🌐</span>
+                              <span aria-hidden="true"><Globe size={11} /></span>
                               {m.averageRating !== null ? m.averageRating.toFixed(1) : "—"}
                             </span>
                           )}
@@ -1476,7 +1477,15 @@ export function GroupPage() {
                   }
                   title="Cycle member sort: A-Z, average rating given, most watched"
                 >
-                  {memberSortMode === "rating" ? "★ By rating" : memberSortMode === "watched" ? "👁 Most watched" : "A-Z"}
+                  {memberSortMode === "rating" ? (
+                    <>★ By rating</>
+                  ) : memberSortMode === "watched" ? (
+                    <>
+                      <Eye size={13} className="inline-block align-[-2px] mr-1" /> Most watched
+                    </>
+                  ) : (
+                    "A-Z"
+                  )}
                 </button>
                 <button
                   type="button"
@@ -1532,7 +1541,7 @@ export function GroupPage() {
                               setPendingRemove({ kind: "pending", discordId: m.discordId, label });
                             }}
                           >
-                            ×
+                            <X size={14} />
                           </button>
                         )}
                       </li>
@@ -1551,7 +1560,7 @@ export function GroupPage() {
                       <div className="member-sidebar-info">
                         <span className="member-sidebar-name">
                           {m.displayName}
-                          {m.isOwner && <span className="member-owner-badge" title="Owner">👑</span>}
+                          {m.isOwner && <span className="member-owner-badge" title="Owner"><Crown size={12} /></span>}
                         </span>
                         {stats && (
                           <span className="member-sidebar-stats muted">
@@ -1569,7 +1578,7 @@ export function GroupPage() {
                             setPendingRemove({ kind: "member", userId: m.userId, label: m.displayName });
                           }}
                         >
-                          ×
+                          <X size={14} />
                         </button>
                       )}
                     </li>
@@ -1628,7 +1637,7 @@ export function GroupPage() {
           {(requestClose) => (
             <>
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
-                ×
+                <X size={18} />
               </button>
               <p className="confirm-modal-message">
                 Remove <strong>{pendingRemove.label}</strong> from this group?
@@ -1660,7 +1669,7 @@ export function GroupPage() {
         aria-hidden={!showScrollTop}
         tabIndex={showScrollTop ? 0 : -1}
       >
-        ↑
+        <ArrowUp size={18} />
       </button>
 
       {pendingImportFile && (

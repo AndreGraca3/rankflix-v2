@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Popover as PopoverPrimitive } from "radix-ui";
 
 interface FilterPopoverProps {
-  label: string;
+  label: ReactNode;
   active: boolean;
   title?: string;
   children: (close: () => void) => ReactNode;

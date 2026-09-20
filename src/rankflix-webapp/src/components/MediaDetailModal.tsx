@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { MessageSquare } from "lucide-react";
 import type { GroupMedia } from "../api/types";
 import { VotingProgress } from "./VotingProgress";
 import { RatingModal } from "./RatingModal";
@@ -238,7 +239,7 @@ export function MediaDetailModal({
                         ) : null}
                         {w.comment && (
                           <span className="watcher-chip-comment" title="Has a comment">
-                            💬
+                            <MessageSquare size={12} />
                           </span>
                         )}
                         {canRemove && (

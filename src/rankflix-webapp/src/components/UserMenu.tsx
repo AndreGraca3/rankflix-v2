@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
+import { Check } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { Avatar } from "./Avatar";
 
@@ -82,7 +83,7 @@ export function UserMenu() {
                           <button type="button" disabled={savingStatus}>
                             <span className="user-menu-status-dot online" />
                             Online
-                            {user.status === "online" && <span className="user-menu-status-check">✓</span>}
+                            {user.status === "online" && <span className="user-menu-status-check"><Check size={13} /></span>}
                           </button>
                         </li>
                       </DropdownMenuPrimitive.Item>
@@ -91,7 +92,7 @@ export function UserMenu() {
                           <button type="button" disabled={savingStatus}>
                             <span className="user-menu-status-dot offline" />
                             Invisible
-                            {user.status === "invisible" && <span className="user-menu-status-check">✓</span>}
+                            {user.status === "invisible" && <span className="user-menu-status-check"><Check size={13} /></span>}
                           </button>
                         </li>
                       </DropdownMenuPrimitive.Item>
