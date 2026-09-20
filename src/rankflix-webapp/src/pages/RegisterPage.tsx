@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -26,16 +29,16 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="auth-page-viewport">
-      <div className="auth-page">
-        <div className="brand-mark">
-          <img src="/favicon.svg" alt="" />
-          <h1>Create account</h1>
+    <div className="flex min-h-screen items-center justify-center px-4 py-6">
+      <div className="w-full max-w-[360px] rounded-lg border border-border bg-card p-8 shadow-lg">
+        <div className="mb-6 flex items-center gap-2.5">
+          <img src="/favicon.svg" alt="" className="h-9 w-9" />
+          <h1 className="m-0 text-[22px]">Create account</h1>
         </div>
-        <form onSubmit={handleSubmit}>
-          <label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">
             Username
-            <input
+            <Input
               type="text"
               name="username"
               autoComplete="username"
@@ -45,10 +48,10 @@ export function RegisterPage() {
               minLength={3}
               maxLength={32}
             />
-          </label>
-          <label>
+          </Label>
+          <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">
             Display name
-            <input
+            <Input
               type="text"
               name="display-name"
               autoComplete="nickname"
@@ -58,10 +61,10 @@ export function RegisterPage() {
               minLength={1}
               maxLength={60}
             />
-          </label>
-          <label>
+          </Label>
+          <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">
             Password
-            <input
+            <Input
               type="password"
               name="new-password"
               autoComplete="new-password"
@@ -70,13 +73,13 @@ export function RegisterPage() {
               minLength={8}
               required
             />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" disabled={submitting}>
+          </Label>
+          {error && <p className="mt-0 text-sm text-destructive">{error}</p>}
+          <Button type="submit" disabled={submitting}>
             {submitting ? "Creating..." : "Register"}
-          </button>
+          </Button>
         </form>
-        <p>
+        <p className="mt-4 text-sm text-muted-foreground">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </div>

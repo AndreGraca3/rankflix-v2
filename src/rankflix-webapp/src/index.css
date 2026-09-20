@@ -552,7 +552,11 @@ input::placeholder {
   color: var(--text-dim);
 }
 
-button {
+/* :not([data-slot="button"]) excludes shadcn's <Button> component, which fully controls its
+   own look via Tailwind classes. Without this, these unlayered rules (which always beat
+   Tailwind's @layer utilities regardless of specificity) would clobber every shadcn Button's
+   background/padding/etc. This only needs to matter for plain, not-yet-migrated <button>s. */
+button:not([data-slot="button"]) {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
@@ -566,21 +570,21 @@ button {
 }
 
 @media (hover: hover) {
-button:hover {
+button:not([data-slot="button"]):hover {
   background: var(--accent-hover);
 }
 }
 
-button:active {
+button:not([data-slot="button"]):active {
   transform: scale(0.98);
 }
 
-button:disabled {
+button:not([data-slot="button"]):disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-button.link {
+button.link:not([data-slot="button"]) {
   background: none;
   color: var(--accent);
   padding: 0;
@@ -589,7 +593,7 @@ button.link {
 }
 
 @media (hover: hover) {
-button.link:hover {
+button.link:not([data-slot="button"]):hover {
   background: none;
   color: var(--accent-hover);
 }

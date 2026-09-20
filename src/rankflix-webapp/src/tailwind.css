@@ -27,8 +27,12 @@
   --muted: #17171b;
   --muted-foreground: #9a9aa2;
 
-  --accent: #1d1d22;
-  --accent-foreground: #f7f7f8;
+  /* Named --ui-accent (not --accent) to avoid colliding with index.css's legacy --accent
+     (the orange brand color) - both are :root custom properties, so a same-named var here
+     would silently override the legacy one wherever it's still used (e.g. the unlayered
+     `button { background: var(--accent) }` rule), turning brand-orange buttons dark grey. */
+  --ui-accent: #1d1d22;
+  --ui-accent-foreground: #f7f7f8;
 
   --destructive: #ff5d6c;
   --destructive-foreground: #1a1200;
@@ -59,8 +63,8 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--ui-accent);
+  --color-accent-foreground: var(--ui-accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);

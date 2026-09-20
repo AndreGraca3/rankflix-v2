@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { Modal } from "../components/Modal";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -27,16 +30,16 @@ export function LoginPage() {
   };
 
   return (
-    <div className="auth-page-viewport">
-      <div className="auth-page">
-        <div className="brand-mark">
-          <img src="/favicon.svg" alt="" />
-          <h1>Rankflix</h1>
+    <div className="flex min-h-screen items-center justify-center px-4 py-6">
+      <div className="w-full max-w-[360px] rounded-lg border border-border bg-card p-8 shadow-lg">
+        <div className="mb-6 flex items-center gap-2.5">
+          <img src="/favicon.svg" alt="" className="h-9 w-9" />
+          <h1 className="m-0 text-[22px]">Rankflix</h1>
         </div>
-        <form onSubmit={handleSubmit}>
-          <label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">
             Username
-            <input
+            <Input
               type="text"
               name="username"
               autoComplete="username"
@@ -44,10 +47,10 @@ export function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-          </label>
-          <label>
+          </Label>
+          <Label className="flex-col items-start gap-1.5 text-[13px] text-muted-foreground">
             Password
-            <input
+            <Input
               type="password"
               name="password"
               autoComplete="current-password"
@@ -55,15 +58,20 @@ export function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" disabled={submitting}>
+          </Label>
+          {error && <p className="mt-0 text-sm text-destructive">{error}</p>}
+          <Button type="submit" disabled={submitting}>
             {submitting ? "Signing in..." : "Sign in"}
-          </button>
+          </Button>
         </form>
-        <button type="button" className="link-btn" onClick={() => setShowForgot(true)}>
+        <Button
+          type="button"
+          variant="link"
+          className="mt-4 h-auto p-0"
+          onClick={() => setShowForgot(true)}
+        >
           Forgot password?
-        </button>
+        </Button>
         {showForgot && (
           <Modal modalClassName="media-modal forgot-password-modal" onClose={() => setShowForgot(false)}>
             {(requestClose) => (
@@ -72,14 +80,14 @@ export function LoginPage() {
                   ×
                 </button>
                 <h2>Forgot password?</h2>
-                <p className="muted">
+                <p className="text-[13px] text-muted-foreground">
                   Ask a group admin to reset your password for you — self-service reset isn't available yet.
                 </p>
               </>
             )}
           </Modal>
         )}
-        <p>
+        <p className="mt-4 text-sm text-muted-foreground">
           No account? <Link to="/register">Register</Link>
         </p>
       </div>

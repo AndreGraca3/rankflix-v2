@@ -904,7 +904,7 @@ export function GroupPage() {
       role="tablist"
       aria-label="Filter by voting status"
     >
-      <button
+      <button data-slot="button"
         type="button"
         className={
           votingFilter === "all"
@@ -918,7 +918,7 @@ export function GroupPage() {
       >
         All
       </button>
-      <button
+      <button data-slot="button"
         type="button"
         className={
           votingFilter === "open"
@@ -932,7 +932,7 @@ export function GroupPage() {
       >
         Open
       </button>
-      <button
+      <button data-slot="button"
         type="button"
         className={
           votingFilter === "closed"
@@ -966,7 +966,7 @@ export function GroupPage() {
         </Label>
       ))}
       {selectedGenres.length > 0 && (
-        <button
+        <button data-slot="button"
           type="button"
           className="mt-1 border-t border-border px-2.5 pt-2 pb-1 text-left text-[13px] font-semibold text-muted-foreground transition-colors hover:text-primary"
           onClick={() => setSelectedGenres([])}
@@ -990,7 +990,7 @@ export function GroupPage() {
   const renderRatingList = (close: () => void) => (
     <div className="flex flex-col gap-0.5">
       {ratingOptions.map((opt) => (
-        <button
+        <button data-slot="button"
           type="button"
           key={String(opt.value)}
           className={
@@ -1012,7 +1012,7 @@ export function GroupPage() {
   const renderSortByList = (close: () => void) => (
     <div className="flex flex-col gap-0.5">
       {sortByOptions.map((opt) => (
-        <button
+        <button data-slot="button"
           type="button"
           key={opt.value}
           className={
@@ -1046,7 +1046,7 @@ export function GroupPage() {
     ) : null;
 
   const renderPendingVotesToggle = (close?: () => void) => (
-    <button
+    <button data-slot="button"
       type="button"
       className={
         pendingVotesOnly
@@ -1082,7 +1082,7 @@ export function GroupPage() {
             )}
             <h1 className="m-0">{group.name}</h1>
             {isGroupOwner && (
-              <button
+              <button data-slot="button"
                 type="button"
                 className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-border bg-muted p-0 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                 title="Edit group"
@@ -1133,7 +1133,7 @@ export function GroupPage() {
           <Modal modalClassName="media-modal group-edit-modal" onClose={() => setShowEditGroup(false)}>
             {(requestClose) => (
               <>
-                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                <button data-slot="button" className="media-modal-close" title="Close" type="button" onClick={requestClose}>
                   <X size={18} />
                 </button>
                 <GroupEditForm
@@ -1162,7 +1162,7 @@ export function GroupPage() {
           >
             {(requestClose) => (
               <>
-                <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+                <button data-slot="button" className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   <X size={18} />
                 </button>
                 <p className="mt-7 text-[15px] leading-normal">
@@ -1191,7 +1191,7 @@ export function GroupPage() {
           >
             {(requestClose) => (
               <>
-                <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
+                <button data-slot="button" className="media-modal-close" title="Close" type="button" onClick={requestClose}>
                   <X size={18} />
                 </button>
                 <h2 className="mt-0">Add media</h2>
@@ -1206,7 +1206,7 @@ export function GroupPage() {
                         {group.members.map((m) => {
                           const checked = newMedia.watchedByUserIds.includes(m.userId);
                           return (
-                            <button
+                            <button data-slot="button"
                               type="button"
                               key={m.userId}
                               className={
@@ -1231,7 +1231,7 @@ export function GroupPage() {
                         {group.pendingMembers.map((p) => {
                           const checked = newMedia.watchedByUserIds.includes(p.discordId);
                           return (
-                            <button
+                            <button data-slot="button"
                               type="button"
                               key={p.discordId}
                               className={
@@ -1259,7 +1259,7 @@ export function GroupPage() {
                   <div className="my-3 flex flex-wrap items-center gap-[10px]">
                     <span className="text-[13px] text-muted-foreground">Voting hours</span>
                     <div className="inline-flex items-center overflow-hidden rounded-full border border-border">
-                      <button
+                      <button data-slot="button"
                         type="button"
                         className="flex h-7 w-7 items-center justify-center bg-card p-0 text-base font-bold leading-none text-foreground transition-colors hover:bg-secondary"
                         aria-label="Decrease voting hours"
@@ -1275,7 +1275,7 @@ export function GroupPage() {
                       <span className="min-w-[34px] text-center text-[13px] font-bold text-foreground">
                         {newMedia.votingDurationHours || 24}
                       </span>
-                      <button
+                      <button data-slot="button"
                         type="button"
                         className="flex h-7 w-7 items-center justify-center bg-card p-0 text-base font-bold leading-none text-foreground transition-colors hover:bg-secondary"
                         aria-label="Increase voting hours"
@@ -1345,7 +1345,7 @@ export function GroupPage() {
                     onChange={(e) => setMediaSearchInput(e.target.value)}
                   />
                   {mediaSearchInput && (
-                    <button
+                    <button data-slot="button"
                       type="button"
                       className="absolute right-[6px] flex h-[20px] w-[20px] items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                       onClick={() => setMediaSearchInput("")}
@@ -1409,7 +1409,7 @@ export function GroupPage() {
                       </div>
                     )}
                   </FilterPopover>
-                  <button
+                  <button data-slot="button"
                     type="button"
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-secondary transition-colors hover:border-primary"
                     title={membersExpanded ? "Hide members" : "Show members"}
@@ -1440,7 +1440,7 @@ export function GroupPage() {
                   Filtered
                 </span>
                 {activeFilterChips.map((chip) => (
-                  <button
+                  <button data-slot="button"
                     type="button"
                     key={chip.key}
                     className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 pl-3 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -1453,7 +1453,7 @@ export function GroupPage() {
                     </span>
                   </button>
                 ))}
-                <button
+                <button data-slot="button"
                   type="button"
                   className="ml-auto whitespace-nowrap px-1.5 py-1 text-xs font-bold text-muted-foreground transition-colors hover:text-primary hover:underline"
                   onClick={clearAllFilters}
@@ -1506,7 +1506,7 @@ export function GroupPage() {
                       className="animate-[media-row-slide-in_0.35s_ease_both] motion-reduce:animate-none"
                       style={{ animationDelay: `${Math.min(posInPage, 15) * 25}ms` }}
                     >
-                      <button
+                      <button data-slot="button"
                         type="button"
                         className="flex w-full items-center gap-[18px] rounded-lg border border-border bg-muted px-5 py-3.5 text-left transition-transform transition-colors hover:scale-[1.01] hover:border-muted-foreground max-[680px]:gap-2.5 max-[680px]:px-2.5 max-[680px]:py-2"
                         onClick={() => setSelectedTmdbId(m.tmdbId)}
@@ -1588,7 +1588,7 @@ export function GroupPage() {
             <div className="flex items-center justify-between gap-2">
               <h2 className="m-0 text-[15px]">Members — {group.members.length + group.pendingMembers.length}</h2>
               <div className="flex items-center gap-2">
-                <button
+                <button data-slot="button"
                   type="button"
                   className="rounded-full border border-border bg-card px-[10px] py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-muted-foreground hover:bg-secondary hover:text-foreground"
                   onClick={() =>
@@ -1606,7 +1606,7 @@ export function GroupPage() {
                     "A-Z"
                   )}
                 </button>
-                <button
+                <button data-slot="button"
                   type="button"
                   className="hidden rounded-full border border-border bg-card px-[10px] py-1 text-[11px] font-semibold text-muted-foreground max-[860px]:inline-block"
                   onClick={() => setMembersExpanded((v) => !v)}
@@ -1657,7 +1657,7 @@ export function GroupPage() {
                           )}
                         </div>
                         {isGroupOwner && (
-                          <button
+                          <button data-slot="button"
                             type="button"
                             className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-transparent p-0 text-muted-foreground transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-destructive hover:text-white [@media(hover:hover)]:opacity-0 [@media(hover:none),(pointer:coarse)]:h-[26px] [@media(hover:none),(pointer:coarse)]:w-[26px] [@media(hover:none),(pointer:coarse)]:opacity-[0.85]"
                             title="Remove pending member"
@@ -1702,7 +1702,7 @@ export function GroupPage() {
                         )}
                       </div>
                       {isGroupOwner && !m.isOwner && (
-                        <button
+                        <button data-slot="button"
                           type="button"
                           className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-transparent p-0 text-muted-foreground transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-destructive hover:text-white [@media(hover:hover)]:opacity-0 [@media(hover:none),(pointer:coarse)]:h-[26px] [@media(hover:none),(pointer:coarse)]:w-[26px] [@media(hover:none),(pointer:coarse)]:opacity-[0.85]"
                           title="Remove member"
@@ -1769,7 +1769,7 @@ export function GroupPage() {
         >
           {(requestClose) => (
             <>
-              <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
+              <button data-slot="button" className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 <X size={18} />
               </button>
               <p className="mt-7 text-[15px] leading-normal">
@@ -1796,7 +1796,7 @@ export function GroupPage() {
         </Modal>
       )}
 
-      <button
+      <button data-slot="button"
         className={`fixed right-[56px] bottom-[72px] z-50 flex h-[44px] w-[44px] items-center justify-center rounded-full shadow-lg transition-all max-[680px]:right-6 max-[680px]:bottom-[92px] max-[680px]:h-10 max-[680px]:w-10 ${
           showScrollTop
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100 hover:scale-110"
