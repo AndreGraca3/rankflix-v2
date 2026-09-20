@@ -11,6 +11,9 @@ import { UserRowSkeleton } from "../components/UserRowSkeleton";
 import { Modal } from "../components/Modal";
 import { usePresence } from "../presence/PresenceContext";
 import { useInfiniteList } from "../hooks/useInfiniteList";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export function UsersPage() {
   const { isOnline } = usePresence();
@@ -109,33 +112,48 @@ export function UsersPage() {
   return (
     <div>
       <NavBar />
-      <main className="page">
+      <main className="mx-auto max-w-[960px] px-6 py-8 pb-16">
         <h1>Users</h1>
-        <p className="muted">Manage user accounts: reassign Discord IDs (e.g. when a friend switches accounts) and grant/revoke admin.</p>
+        <p className="text-[13px] text-muted-foreground">
+          Manage user accounts: reassign Discord IDs (e.g. when a friend switches accounts) and grant/revoke admin.
+        </p>
 
         <section>
-          <div className="table-scroll">
-            <table>
+          <div className="overflow-x-auto">
+            <table className="mb-4 w-full overflow-hidden rounded-lg border border-border bg-muted [border-collapse:collapse]">
               <thead>
                 <tr>
-                  <th></th>
-                  <th>Display Name</th>
-                  <th>Discord Id</th>
-                  <th>Role</th>
+                  <th className="border-b border-border/70 bg-card px-3.5 py-2.5 text-left text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"></th>
+                  <th className="border-b border-border/70 bg-card px-3.5 py-2.5 text-left text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Display Name
+                  </th>
+                  <th className="border-b border-border/70 bg-card px-3.5 py-2.5 text-left text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Discord Id
+                  </th>
+                  <th className="border-b border-border/70 bg-card px-3.5 py-2.5 text-left text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Role
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {loading && Array.from({ length: 8 }).map((_, i) => <UserRowSkeleton key={i} />)}
-                {!loading && visibleUsers.map((u) => (
-                  <tr key={u.id} className="users-row" onClick={() => openEdit(u)}>
-                    <td>
-                      <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={28} online={isOnline(u.id)} />
-                    </td>
-                    <td>{u.displayName}</td>
-                    <td>{u.discordId || <span className="muted">—</span>}</td>
-                    <td>{u.role}</td>
-                  </tr>
-                ))}
+                {!loading &&
+                  visibleUsers.map((u) => (
+                    <tr
+                      key={u.id}
+                      className="cursor-pointer last:[&>td]:border-b-0 hover:bg-accent"
+                      onClick={() => openEdit(u)}
+                    >
+                      <td className="border-b border-border/70 px-3.5 py-2.5 text-sm">
+                        <Avatar name={u.displayName} avatarUrl={u.avatarUrl} size={28} online={isOnline(u.id)} />
+                      </td>
+                      <td className="border-b border-border/70 px-3.5 py-2.5 text-sm">{u.displayName}</td>
+                      <td className="border-b border-border/70 px-3.5 py-2.5 text-sm">
+                        {u.discordId || <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="border-b border-border/70 px-3.5 py-2.5 text-sm">{u.role}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -150,35 +168,31 @@ export function UsersPage() {
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 <X size={18} />
               </button>
-              <div className="user-edit-modal-header">
+              <div className="mb-4 flex items-center gap-3">
                 <Avatar name={editingUser.displayName} avatarUrl={editingUser.avatarUrl} size={40} />
-                <h2>{editingUser.displayName}</h2>
+                <h2 className="m-0">{editingUser.displayName}</h2>
               </div>
 
-              <label className="user-edit-field">
-                <span className="muted">Display Name</span>
-                <input
+              <Label className="mb-4 flex-col items-start gap-1.5">
+                <span className="text-muted-foreground">Display Name</span>
+                <Input
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
                   placeholder="Display name"
                   maxLength={60}
                 />
-              </label>
+              </Label>
 
-              <label className="user-edit-field">
-                <span className="muted">Discord ID</span>
-                <input
-                  value={editDiscordId}
-                  onChange={(e) => setEditDiscordId(e.target.value)}
-                  placeholder="Discord ID"
-                />
-                <span className="user-edit-hint muted">
+              <Label className="mb-4 flex-col items-start gap-1.5">
+                <span className="text-muted-foreground">Discord ID</span>
+                <Input value={editDiscordId} onChange={(e) => setEditDiscordId(e.target.value)} placeholder="Discord ID" />
+                <span className="text-xs text-muted-foreground">
                   Reassigning this attaches any pending imported ratings/watch history for that Discord ID to this account.
                 </span>
-              </label>
+              </Label>
 
-              <label className="user-edit-field">
-                <span className="muted">Role</span>
+              <Label className="mb-4 flex-col items-start gap-1.5">
+                <span className="text-muted-foreground">Role</span>
                 <Select value={editRole} onValueChange={setEditRole}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -188,47 +202,47 @@ export function UsersPage() {
                     <SelectItem value="admin">admin</SelectItem>
                   </SelectContent>
                 </Select>
-              </label>
+              </Label>
 
-              <div className="user-edit-field">
-                <span className="muted">Password</span>
+              <div className="mb-4 flex flex-col gap-1.5">
+                <span className="text-muted-foreground">Password</span>
                 {newPassword ? (
-                  <div className="reset-password-result">
-                    <span className="muted">New password (copy now):</span>
-                    <code>{newPassword}</code>
-                    <button type="button" className="btn-secondary" onClick={() => setNewPassword(null)}>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px]">
+                    <span className="text-muted-foreground">New password (copy now):</span>
+                    <code className="rounded bg-white/[0.06] px-1.5 py-0.5">{newPassword}</code>
+                    <Button type="button" variant="outline" onClick={() => setNewPassword(null)}>
                       Dismiss
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button type="button" className="btn-secondary" onClick={resetPassword}>
+                  <Button type="button" variant="outline" className="self-start" onClick={resetPassword}>
                     Reset password
-                  </button>
+                  </Button>
                 )}
               </div>
 
-              <div className="row rating-modal-actions user-edit-actions-row">
-                <button type="button" onClick={saveEdit}>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" onClick={saveEdit}>
                   Save changes
-                </button>
-                <button type="button" className="btn-secondary" onClick={requestClose}>
+                </Button>
+                <Button type="button" variant="outline" onClick={requestClose}>
                   Cancel
-                </button>
-                <div className="user-edit-danger-zone">
+                </Button>
+                <div className="ml-auto">
                   {confirmingDelete ? (
-                    <div className="row" style={{ gap: 8 }}>
-                      <span className="muted">Delete this user permanently?</span>
-                      <button type="button" className="danger" onClick={deleteUser}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-muted-foreground">Delete this user permanently?</span>
+                      <Button type="button" variant="destructive" onClick={deleteUser}>
                         Confirm delete
-                      </button>
-                      <button type="button" className="secondary" onClick={() => setConfirmingDelete(false)}>
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => setConfirmingDelete(false)}>
                         Cancel
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button type="button" className="danger" onClick={() => setConfirmingDelete(true)}>
+                    <Button type="button" variant="destructive" onClick={() => setConfirmingDelete(true)}>
                       Delete user
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
