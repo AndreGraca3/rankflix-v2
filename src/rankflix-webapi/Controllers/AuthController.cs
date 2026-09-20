@@ -10,7 +10,7 @@ public record RegisterRequest(string Username, string Password, string DisplayNa
 [ApiController]
 [Route("api/auth")]
 [AllowAnonymous]
-public partial class AuthController(ISupabaseAdminService supabaseAdmin) : ControllerBase
+public partial class AuthController(ISupabaseAdminService supabaseAdmin, ILogger<AuthController> logger) : ControllerBase
 {
     // Same pattern enforced client-side on the Register form's username input.
     [GeneratedRegex("^[A-Za-z0-9._-]{1,60}$")]
@@ -44,6 +44,15 @@ public partial class AuthController(ISupabaseAdminService supabaseAdmin) : Contr
         catch (SupabaseUserAlreadyExistsException)
         {
             return Problem("Username already in use", statusCode: 409);
+        }
+        catch (Exception ex)
+        {
+            // Covers any Supabase Admin API failure we haven't specifically anticipated (rate
+            // limiting, transient outage, unexpected error shape, etc.) - returning a normal
+            // Problem response here (rather than letting it propagate to the global handler)
+            // keeps the message specific to registration.
+            logger.LogError(ex, "Registration failed for username {Username}", username);
+            return Problem("Registration failed. Please try again in a moment.", statusCode: 502);
         }
 
         return NoContent();

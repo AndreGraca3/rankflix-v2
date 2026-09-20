@@ -98,6 +98,41 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Registered before UseCors so that if anything downstream throws unhandled, this catches it
+// and writes a normal JSON response - crucially, ASP.NET Core's CORS middleware only adds
+// Access-Control-Allow-Origin via a response.OnStarting callback, and an unhandled exception
+// that reaches the host without ever going through a "normal" response write means that
+// callback never fires. The browser then reports a generic "blocked by CORS policy" /
+// "Failed to fetch" error that completely hides the real 500 and its cause. Catching here
+// (and logging it) guarantees every response - success or failure - gets proper CORS headers
+// and a real error body to look at.
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("UnhandledException");
+        logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+
+        if (!context.Response.HasStarted)
+        {
+            context.Response.Clear();
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+                title = "An unexpected error occurred.",
+                status = 500,
+                traceId = context.TraceIdentifier
+            });
+        }
+    }
+});
+
 app.UseCors(corsPolicy);
 
 app.UseAuthentication();
