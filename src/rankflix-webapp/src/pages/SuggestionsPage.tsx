@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Clapperboard, Dices, Lock, LockOpen, Plus, X, Popcorn } from "lucide-react";
 import { api } from "../api/client";
 import type { Group, MediaSearchResult, Suggestion } from "../api/types";
 import { NavBar } from "../components/NavBar";
@@ -271,7 +272,9 @@ export function SuggestionsPage() {
         {newPick.posterUrl ? (
           <img src={newPick.posterUrl} alt="" className="suggestion-preview-poster" />
         ) : (
-          <div className="suggestion-preview-poster suggestion-preview-poster-fallback">🎬</div>
+          <div className="suggestion-preview-poster suggestion-preview-poster-fallback">
+            <Clapperboard size={20} />
+          </div>
         )}
         <div className="suggestion-preview-info">
           <strong>{newPick.title}</strong>
@@ -315,7 +318,9 @@ export function SuggestionsPage() {
 
         <section className="random-pick-section">
           <div className="random-pick-header">
-            <h2>🎲 Random Pick</h2>
+            <h2>
+              <Dices size={18} className="inline-block align-[-3px] mr-1" /> Random Pick
+            </h2>
             {isGroupOwner && (
               <button
                 type="button"
@@ -327,7 +332,7 @@ export function SuggestionsPage() {
                     : "Spins are allowed for members - click to disable"
                 }
               >
-                {group?.spinsDisabledForMembers ? "🔒" : "🔓"}
+                {group?.spinsDisabledForMembers ? <Lock size={15} /> : <LockOpen size={15} />}
               </button>
             )}
           </div>
@@ -375,7 +380,8 @@ export function SuggestionsPage() {
           {winner && !spinning && (
             <div className="spin-winner-panel">
               <p>
-                🎬 <strong>{winner.title}</strong> {winner.year ? `(${winner.year})` : ""}
+                <Clapperboard size={16} className="inline-block align-[-3px] mr-1" />
+                <strong>{winner.title}</strong> {winner.year ? `(${winner.year})` : ""}
               </p>
               <div className="row">
                 {isGroupOwner && (
@@ -400,7 +406,7 @@ export function SuggestionsPage() {
         <section className="suggestions-list-section">
           <h2>Suggested titles</h2>
           {suggestions.length === 0 ? (
-            <EmptyState icon="🍿" title="No suggestions yet" subtitle="Add a movie or show you'd like the group to watch next." />
+            <EmptyState icon={<Popcorn size={40} />} title="No suggestions yet" subtitle="Add a movie or show you'd like the group to watch next." />
           ) : (
             <ul className="suggestions-list">
               {suggestions.map((s) => (
@@ -429,12 +435,12 @@ export function SuggestionsPage() {
                   <div className="suggestion-card-actions">
                     {isGroupOwner && (
                       <button type="button" className="suggestion-promote-btn" title="Add to group" onClick={() => setPendingPromote(s)}>
-                        ➕
+                        <Plus size={16} />
                       </button>
                     )}
                     {s.canRemove && (
                       <button type="button" className="suggestion-remove-btn" title="Remove" onClick={() => setPendingRemove(s)}>
-                        ×
+                        <X size={16} />
                       </button>
                     )}
                   </div>
@@ -456,7 +462,7 @@ export function SuggestionsPage() {
           {(requestClose) => (
             <>
               <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
-                ×
+                <X size={18} />
               </button>
               <h2>Suggest a title</h2>
               <div className="add-media-form">
