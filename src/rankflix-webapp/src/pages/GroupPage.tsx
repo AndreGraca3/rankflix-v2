@@ -24,6 +24,9 @@ import { useAuth } from "../auth/AuthContext";
 import { usePresence } from "../presence/PresenceContext";
 import { useServerEvent } from "../hooks/useServerEvent";
 import { useInfiniteList } from "../hooks/useInfiniteList";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import { formatWatchTime } from "../utils/time";
 
 const MEDIA_PAGE_SIZE = 30;
@@ -896,10 +899,18 @@ export function GroupPage() {
   // Shared between the always-visible desktop filter row and the single consolidated
   // "Filters" popover shown on mobile, so the two layouts never drift apart.
   const renderVotingStatusToggle = (close?: () => void) => (
-    <div className="voting-filter-toggle" role="tablist" aria-label="Filter by voting status">
+    <div
+      className="inline-flex w-fit shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-border bg-muted p-1 max-[680px]:w-full max-[680px]:justify-between"
+      role="tablist"
+      aria-label="Filter by voting status"
+    >
       <button
         type="button"
-        className={votingFilter === "all" ? "active" : ""}
+        className={
+          votingFilter === "all"
+            ? "rounded-full bg-primary px-4 py-[7px] text-[13px] font-semibold text-primary-foreground max-[680px]:flex-1 max-[680px]:px-1"
+            : "rounded-full px-4 py-[7px] text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground max-[680px]:flex-1 max-[680px]:px-1"
+        }
         onClick={() => {
           setVotingFilter("all");
           close?.();
@@ -909,7 +920,11 @@ export function GroupPage() {
       </button>
       <button
         type="button"
-        className={votingFilter === "open" ? "active" : ""}
+        className={
+          votingFilter === "open"
+            ? "rounded-full bg-primary px-4 py-[7px] text-[13px] font-semibold text-primary-foreground max-[680px]:flex-1 max-[680px]:px-1"
+            : "rounded-full px-4 py-[7px] text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground max-[680px]:flex-1 max-[680px]:px-1"
+        }
         onClick={() => {
           setVotingFilter("open");
           close?.();
@@ -919,7 +934,11 @@ export function GroupPage() {
       </button>
       <button
         type="button"
-        className={votingFilter === "closed" ? "active" : ""}
+        className={
+          votingFilter === "closed"
+            ? "rounded-full bg-primary px-4 py-[7px] text-[13px] font-semibold text-primary-foreground max-[680px]:flex-1 max-[680px]:px-1"
+            : "rounded-full px-4 py-[7px] text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground max-[680px]:flex-1 max-[680px]:px-1"
+        }
         onClick={() => {
           setVotingFilter("closed");
           close?.();
@@ -931,19 +950,27 @@ export function GroupPage() {
   );
 
   const renderGenreChecklist = () => (
-    <div className="filter-popover-checklist">
+    <div className="flex flex-col gap-0.5">
       {availableGenres.map((g) => (
-        <label key={g} className="filter-popover-checkbox-row">
+        <Label
+          key={g}
+          className="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-normal text-foreground hover:bg-secondary"
+        >
           <input
             type="checkbox"
+            className="h-4 w-4 cursor-pointer accent-primary"
             checked={selectedGenres.includes(g)}
             onChange={() => setSelectedGenres((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]))}
           />
           {g}
-        </label>
+        </Label>
       ))}
       {selectedGenres.length > 0 && (
-        <button type="button" className="filter-popover-clear-btn" onClick={() => setSelectedGenres([])}>
+        <button
+          type="button"
+          className="mt-1 border-t border-border px-2.5 pt-2 pb-1 text-left text-[13px] font-semibold text-muted-foreground transition-colors hover:text-primary"
+          onClick={() => setSelectedGenres([])}
+        >
           Clear
         </button>
       )}
@@ -961,12 +988,16 @@ export function GroupPage() {
   ];
 
   const renderRatingList = (close: () => void) => (
-    <div className="filter-popover-list">
+    <div className="flex flex-col gap-0.5">
       {ratingOptions.map((opt) => (
         <button
           type="button"
           key={String(opt.value)}
-          className={ratingFilter === opt.value ? "active" : ""}
+          className={
+            ratingFilter === opt.value
+              ? "rounded-lg bg-primary px-2.5 py-2 text-left text-sm text-primary-foreground"
+              : "rounded-lg px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+          }
           onClick={() => {
             setRatingFilter(opt.value);
             close();
@@ -979,12 +1010,16 @@ export function GroupPage() {
   );
 
   const renderSortByList = (close: () => void) => (
-    <div className="filter-popover-list">
+    <div className="flex flex-col gap-0.5">
       {sortByOptions.map((opt) => (
         <button
           type="button"
           key={opt.value}
-          className={mediaSortBy === opt.value ? "active" : ""}
+          className={
+            mediaSortBy === opt.value
+              ? "rounded-lg bg-primary px-2.5 py-2 text-left text-sm text-primary-foreground"
+              : "rounded-lg px-2.5 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+          }
           onClick={() => {
             setMediaSortBy(opt.value);
             close();
@@ -1000,10 +1035,10 @@ export function GroupPage() {
     groupStats && (groupStats.totalWatchTimeMinutes > 0 || groupStats.totalRatingsCount > 0) ? (
       <>
         {groupStats.totalWatchTimeMinutes > 0 && (
-          <p className="muted">⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)}</p>
+          <p className="m-0 text-[13px] text-muted-foreground">⏱ {formatWatchTime(groupStats.totalWatchTimeMinutes)}</p>
         )}
         {groupStats.totalRatingsCount > 0 && (
-          <p className="muted">
+          <p className="m-0 text-[13px] text-muted-foreground">
             ★ {groupStats.overallAverageRating?.toFixed(1)} · {groupStats.totalRatingsCount}
           </p>
         )}
@@ -1013,7 +1048,11 @@ export function GroupPage() {
   const renderPendingVotesToggle = (close?: () => void) => (
     <button
       type="button"
-      className={`filter-toggle-pill${pendingVotesOnly ? " active" : ""}`}
+      className={
+        pendingVotesOnly
+          ? "rounded-full border border-primary bg-primary px-[14px] py-[7px] text-[13px] font-semibold whitespace-nowrap text-primary-foreground"
+          : "rounded-full border border-border bg-secondary px-[14px] py-[7px] text-[13px] font-semibold whitespace-nowrap text-foreground transition-colors hover:border-primary"
+      }
       title="Only show media where someone who watched hasn't voted yet"
       onClick={() => {
         setPendingVotesOnly((v) => !v);
@@ -1027,36 +1066,60 @@ export function GroupPage() {
   return (
     <div>
       <NavBar />
-      <main className="page page-wide">
-        <div className="page-header-row">
-          <div className="group-header-title">
+      <main className="mx-auto max-w-[1200px] px-6 py-8 pb-16 max-[680px]:px-[14px] max-[680px]:py-[18px] max-[680px]:pb-12">
+        <div className="mb-7 flex items-center justify-between gap-3 max-[680px]:mb-[18px] max-[680px]:flex-col max-[680px]:items-stretch max-[680px]:gap-3">
+          <div className="flex items-center gap-3.5">
             {group.imageUrl ? (
-              <img className="group-header-poster" src={group.imageUrl} alt={group.name} />
+              <img
+                className="h-[128px] w-[128px] shrink-0 rounded-lg border border-border object-cover shadow-lg max-[680px]:h-[68px] max-[680px]:w-[68px]"
+                src={group.imageUrl}
+                alt={group.name}
+              />
             ) : (
-              <div className="group-header-poster group-poster-fallback">
-                <img src="/favicon.svg" alt="" />
+              <div className="flex h-[128px] w-[128px] shrink-0 items-center justify-center rounded-lg border border-border bg-card shadow-lg max-[680px]:h-[68px] max-[680px]:w-[68px]">
+                <img src="/favicon.svg" alt="" className="h-1/2 w-1/2 opacity-40" />
               </div>
             )}
-            <h1>{group.name}</h1>
+            <h1 className="m-0">{group.name}</h1>
             {isGroupOwner && (
-              <button type="button" className="group-edit-btn group-header-edit-btn" title="Edit group" onClick={() => setShowEditGroup(true)}>
+              <button
+                type="button"
+                className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-border bg-muted p-0 text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                title="Edit group"
+                onClick={() => setShowEditGroup(true)}
+              >
                 <Pencil size={14} />
               </button>
             )}
           </div>
-          {statsSummary && <div className="group-stats-summary group-stats-summary-mobile">{statsSummary}</div>}
-          <div className="row">
-            <button className="excel-btn" onClick={() => navigate(`/groups/${groupId}/suggestions`)}>
+          {statsSummary && (
+            <div className="hidden flex-col gap-0.5 max-[680px]:mt-[-4px] max-[680px]:flex">
+              {statsSummary}
+            </div>
+          )}
+          <div className="my-3 flex flex-wrap items-center gap-2 max-[680px]:m-0">
+            <Button
+              type="button"
+              className="transition-transform hover:scale-105 max-[680px]:flex-1 max-[680px]:justify-center max-[680px]:text-center"
+              onClick={() => navigate(`/groups/${groupId}/suggestions`)}
+            >
               <Dices size={14} className="inline-block align-[-2px] mr-1" /> Suggestions
-            </button>
-            <button className="excel-btn" onClick={exportExcel}>Export .xlsx</button>
+            </Button>
+            <Button
+              type="button"
+              className="transition-transform hover:scale-105 max-[680px]:flex-1 max-[680px]:justify-center max-[680px]:text-center"
+              onClick={exportExcel}
+            >
+              Export .xlsx
+            </Button>
             {isGroupOwner && (
-              <label className="file-input-label excel-btn">
+              <label className="relative inline-flex cursor-pointer items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 max-[680px]:flex-1 max-[680px]:justify-center max-[680px]:text-center">
                 Import .xlsx
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".xlsx"
+                  className="absolute inset-0 w-full cursor-pointer opacity-0"
                   onChange={(e) => e.target.files?.[0] && setPendingImportFile(e.target.files[0])}
                 />
               </label>
@@ -1064,7 +1127,7 @@ export function GroupPage() {
           </div>
         </div>
 
-        {statsSummary && <div className="group-stats-summary group-stats-summary-desktop">{statsSummary}</div>}
+        {statsSummary && <div className="-mt-2 mb-5 flex flex-col gap-0.5 max-[680px]:hidden">{statsSummary}</div>}
 
         {isGroupOwner && showEditGroup && (
           <Modal modalClassName="media-modal group-edit-modal" onClose={() => setShowEditGroup(false)}>
@@ -1102,16 +1165,16 @@ export function GroupPage() {
                 <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                   <X size={18} />
                 </button>
-                <p className="confirm-modal-message">
+                <p className="mt-7 text-[15px] leading-normal">
                   Delete <strong>{group.name}</strong>? This can't be undone.
                 </p>
-                <div className="media-modal-confirm-delete confirm-modal-actions">
-                  <button className="danger" onClick={deleteGroup}>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" variant="destructive" onClick={deleteGroup}>
                     Yes, delete
-                  </button>
-                  <button className="secondary" onClick={requestClose}>
+                  </Button>
+                  <Button type="button" variant="outline" onClick={requestClose}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </>
             )}
@@ -1131,22 +1194,26 @@ export function GroupPage() {
                 <button className="media-modal-close" title="Close" type="button" onClick={requestClose}>
                   <X size={18} />
                 </button>
-                <h2>Add media</h2>
-                <div className="add-media-form">
-                  <div className="add-media-search-row">
+                <h2 className="mt-0">Add media</h2>
+                <div className="flex max-w-[480px] flex-col gap-2.5">
+                  <div className="flex items-start gap-2 max-[680px]:flex-col max-[680px]:items-stretch">
                     <MediaAutocomplete onSelect={handleMediaSelected} />
                   </div>
                   {(group.members.length > 0 || group.pendingMembers.length > 0) && (
-                    <div className="add-media-watched">
-                      <span className="muted add-media-watched-label">Already watched by:</span>
-                      <div className="add-media-watched-chips">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs text-muted-foreground">Already watched by:</span>
+                      <div className="flex flex-wrap gap-1.5">
                         {group.members.map((m) => {
                           const checked = newMedia.watchedByUserIds.includes(m.userId);
                           return (
                             <button
                               type="button"
                               key={m.userId}
-                              className={`add-media-watched-chip${checked ? " active" : ""}`}
+                              className={
+                                checked
+                                  ? "inline-flex items-center rounded-full border border-primary bg-primary px-3 py-[5px] text-[13px] font-medium text-primary-foreground"
+                                  : "inline-flex items-center rounded-full border border-border bg-card px-3 py-[5px] text-[13px] font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                              }
                               onClick={() =>
                                 setNewMedia((prev) => ({
                                   ...prev,
@@ -1167,7 +1234,11 @@ export function GroupPage() {
                             <button
                               type="button"
                               key={p.discordId}
-                              className={`add-media-watched-chip${checked ? " active" : ""}`}
+                              className={
+                                checked
+                                  ? "inline-flex items-center rounded-full border border-primary bg-primary px-3 py-[5px] text-[13px] font-medium text-primary-foreground"
+                                  : "inline-flex items-center rounded-full border border-border bg-card px-3 py-[5px] text-[13px] font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                              }
                               onClick={() =>
                                 setNewMedia((prev) => ({
                                   ...prev,
@@ -1185,11 +1256,12 @@ export function GroupPage() {
                       </div>
                     </div>
                   )}
-                  <div className="row add-media-hours-row">
-                    <span className="muted">Voting hours</span>
-                    <div className="voting-hours-stepper">
+                  <div className="my-3 flex flex-wrap items-center gap-[10px]">
+                    <span className="text-[13px] text-muted-foreground">Voting hours</span>
+                    <div className="inline-flex items-center overflow-hidden rounded-full border border-border">
                       <button
                         type="button"
+                        className="flex h-7 w-7 items-center justify-center bg-card p-0 text-base font-bold leading-none text-foreground transition-colors hover:bg-secondary"
                         aria-label="Decrease voting hours"
                         onClick={() =>
                           setNewMedia((prev) => ({
@@ -1200,9 +1272,12 @@ export function GroupPage() {
                       >
                         −
                       </button>
-                      <span className="voting-hours-value">{newMedia.votingDurationHours || 24}</span>
+                      <span className="min-w-[34px] text-center text-[13px] font-bold text-foreground">
+                        {newMedia.votingDurationHours || 24}
+                      </span>
                       <button
                         type="button"
+                        className="flex h-7 w-7 items-center justify-center bg-card p-0 text-base font-bold leading-none text-foreground transition-colors hover:bg-secondary"
                         aria-label="Increase voting hours"
                         onClick={() =>
                           setNewMedia((prev) => ({
@@ -1215,8 +1290,9 @@ export function GroupPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="row">
-                    <button
+                  <div className="my-3 flex flex-wrap items-center gap-2">
+                    <Button
+                      type="button"
                       onClick={async () => {
                         await addMedia();
                         requestClose();
@@ -1224,10 +1300,10 @@ export function GroupPage() {
                       disabled={!newMedia.tmdbId || !newMedia.title}
                     >
                       Add media
-                    </button>
-                    <button className="secondary" onClick={requestClose}>
+                    </Button>
+                    <Button type="button" variant="outline" onClick={requestClose}>
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </>
@@ -1235,11 +1311,11 @@ export function GroupPage() {
           </Modal>
         )}
 
-        <div className="group-layout">
-          <div className="media-panel">
-            <div className="media-toolbar">
-              <div className="media-toolbar-left">
-                <div className="view-toggle" role="tablist" aria-label="Media view">
+        <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-7 max-[860px]:grid-cols-1">
+          <div className="min-w-0 max-[680px]:px-1">
+            <div className="mb-5 flex items-center justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-3 max-[680px]:flex-nowrap max-[680px]:gap-2">
+                <div className="w-fit shrink-0" role="tablist" aria-label="Media view">
                   <RankingMemberSelect
                     members={group.members}
                     pendingMembers={group.pendingMembers}
@@ -1251,7 +1327,7 @@ export function GroupPage() {
                 {/* Actual sort-order control - distinct from the ranking-perspective (⇅) picker
                     above, which changes *whose* ratings the list is ranked by, not *how* it's
                     ordered. Desktop-only; mirrored inside the mobile Filters popover below. */}
-                <div className="media-sort-desktop">
+                <div className="flex items-center max-[680px]:hidden">
                   <FilterPopover
                     label={`Sort: ${sortByOptions.find((o) => o.value === mediaSortBy)?.label ?? "Highest rated"}`}
                     active={mediaSortBy !== "rating"}
@@ -1260,10 +1336,10 @@ export function GroupPage() {
                   </FilterPopover>
                 </div>
 
-                <div className="media-search-wrap">
-                  <input
+                <div className="relative flex min-w-0 flex-1 items-center max-w-[220px] max-[680px]:max-w-none">
+                  <Input
                     type="text"
-                    className="media-search-input"
+                    className="h-9 w-[220px] rounded-full bg-muted pr-[30px] pl-[14px] text-sm max-[680px]:w-full"
                     placeholder="Search media…"
                     value={mediaSearchInput}
                     onChange={(e) => setMediaSearchInput(e.target.value)}
@@ -1271,7 +1347,7 @@ export function GroupPage() {
                   {mediaSearchInput && (
                     <button
                       type="button"
-                      className="media-search-clear"
+                      className="absolute right-[6px] flex h-[20px] w-[20px] items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                       onClick={() => setMediaSearchInput("")}
                       title="Clear search"
                     >
@@ -1283,7 +1359,7 @@ export function GroupPage() {
                 {/* Desktop: each filter shown inline. Hidden on mobile in favour of the
                     single consolidated "Filters" popover below, so mobile doesn't get a
                     tall stack of wrapped rows before the media list even starts. */}
-                <div className="media-filters-inline">
+                <div className="flex items-center flex-wrap gap-x-4 gap-y-3 max-[680px]:hidden">
                   {renderVotingStatusToggle()}
                   {availableGenres.length > 0 && (
                     <FilterPopover
@@ -1305,29 +1381,29 @@ export function GroupPage() {
                 {/* Mobile: one icon trigger bundling voting status/genre/rating/pending-votes,
                     plus a members-sidebar shortcut - hidden on desktop (see .media-filters-mobile
                     / .media-toolbar-members-btn CSS). */}
-                <div className="media-filters-mobile">
+                <div className="hidden items-center gap-2 max-[680px]:flex max-[680px]:shrink-0">
                   <FilterPopover label={<Settings size={16} />} active={anyMediaFilterActive} title="Filters">
                     {(close) => (
-                      <div className="media-filters-mobile-panel">
-                        <div className="filter-popover-mobile-section">
-                          <span className="filter-popover-section-label">Sort by</span>
+                      <div className="flex min-w-[220px] flex-col gap-3.5">
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Sort by</span>
                           {renderSortByList(close)}
                         </div>
-                        <div className="filter-popover-mobile-section">
-                          <span className="filter-popover-section-label">Voting status</span>
+                        <div className="flex flex-col gap-2 border-t border-border pt-3">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Voting status</span>
                           {renderVotingStatusToggle(close)}
                         </div>
                         {availableGenres.length > 0 && (
-                          <div className="filter-popover-mobile-section">
-                            <span className="filter-popover-section-label">Genre</span>
+                          <div className="flex flex-col gap-2 border-t border-border pt-3">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Genre</span>
                             {renderGenreChecklist()}
                           </div>
                         )}
-                        <div className="filter-popover-mobile-section">
-                          <span className="filter-popover-section-label">Rating</span>
+                        <div className="flex flex-col gap-2 border-t border-border pt-3">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.03em] text-muted-foreground">Rating</span>
                           {renderRatingList(close)}
                         </div>
-                        <div className="filter-popover-mobile-section">
+                        <div className="flex flex-col gap-2 border-t border-border pt-3">
                           {renderPendingVotesToggle(close)}
                         </div>
                       </div>
@@ -1335,7 +1411,7 @@ export function GroupPage() {
                   </FilterPopover>
                   <button
                     type="button"
-                    className="media-toolbar-icon-btn media-toolbar-members-btn"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-secondary transition-colors hover:border-primary"
                     title={membersExpanded ? "Hide members" : "Show members"}
                     onClick={() => setMembersExpanded((v) => !v)}
                   >
@@ -1345,29 +1421,50 @@ export function GroupPage() {
               </div>
 
               {isGroupOwner && !showAddMedia && (
-                <button type="button" className="media-toolbar-add-btn" onClick={() => setShowAddMedia(true)}>
+                <Button
+                  type="button"
+                  className="shrink-0 whitespace-nowrap transition-transform hover:scale-[1.06] max-[680px]:w-full"
+                  onClick={() => setShowAddMedia(true)}
+                >
                   + Add media
-                </button>
+                </Button>
               )}
             </div>
 
             {activeFilterChips.length > 0 && (
-              <div className="active-filters-bar" role="status">
-                <span className="active-filters-label">Filtered</span>
+              <div
+                className="mt-1 mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-primary/35 bg-primary/10 px-2.5 py-2 animate-in fade-in slide-in-from-top-1 duration-200"
+                role="status"
+              >
+                <span className="inline-flex items-center gap-1.5 pr-0.5 text-[12px] font-bold uppercase tracking-[0.02em] text-primary before:h-[7px] before:w-[7px] before:rounded-full before:bg-primary before:shadow-[0_0_0_3px_rgba(255,176,32,0.25)] before:content-['']">
+                  Filtered
+                </span>
                 {activeFilterChips.map((chip) => (
-                  <button type="button" key={chip.key} className="active-filter-chip" onClick={chip.onClear} title="Remove this filter">
+                  <button
+                    type="button"
+                    key={chip.key}
+                    className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full border border-border bg-card px-2 py-1 pl-3 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+                    onClick={chip.onClear}
+                    title="Remove this filter"
+                  >
                     {chip.label}
-                    <span className="active-filter-chip-x" aria-hidden="true"><X size={11} /></span>
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-secondary text-xs leading-none" aria-hidden="true">
+                      <X size={11} />
+                    </span>
                   </button>
                 ))}
-                <button type="button" className="active-filters-clear-all" onClick={clearAllFilters}>
+                <button
+                  type="button"
+                  className="ml-auto whitespace-nowrap px-1.5 py-1 text-xs font-bold text-muted-foreground transition-colors hover:text-primary hover:underline"
+                  onClick={clearAllFilters}
+                >
                   Clear all
                 </button>
               </div>
             )}
 
             {!mediaLoading && totalMediaInGroup > 0 && (
-              <p className="muted list-count-text">
+              <p className="my-2 mb-4 text-[13px] text-muted-foreground">
                 {mediaTotalCount} media {mediaTotalCount === 1 ? "item" : "items"}
               </p>
             )}
@@ -1379,7 +1476,7 @@ export function GroupPage() {
               />
             )}
             {mediaLoading ? (
-              <ol className="media-ranking-list">
+              <ol className="mb-6 flex list-none flex-col gap-2.5 p-0">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <li key={i}>
                     <MediaRowSkeleton />
@@ -1387,9 +1484,9 @@ export function GroupPage() {
                 ))}
               </ol>
             ) : (
-            <ol className="media-ranking-list">
+              <ol className="mb-6 flex list-none flex-col gap-2.5 p-0">
                 {totalMediaInGroup > 0 && media.length === 0 && (
-                  <p className="muted">
+                  <p className="text-[13px] text-muted-foreground">
                     {mediaSearch ? `No media matches "${mediaSearchInput}".` : "No media matches the current filters."}
                   </p>
                 )}
@@ -1406,51 +1503,71 @@ export function GroupPage() {
                   return (
                     <li
                       key={`${m.tmdbId}:${mediaFilterSignature}`}
-                      className="media-row-enter"
+                      className="animate-[media-row-slide-in_0.35s_ease_both] motion-reduce:animate-none"
                       style={{ animationDelay: `${Math.min(posInPage, 15) * 25}ms` }}
                     >
-                      <button type="button" className="media-ranking-row" onClick={() => setSelectedTmdbId(m.tmdbId)}>
-                        <div className="media-ranking-number-wrap">
-                          <span className="media-ranking-number">#{i + 1}</span>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-[18px] rounded-lg border border-border bg-muted px-5 py-3.5 text-left transition-transform transition-colors hover:scale-[1.01] hover:border-muted-foreground max-[680px]:gap-2.5 max-[680px]:px-2.5 max-[680px]:py-2"
+                        onClick={() => setSelectedTmdbId(m.tmdbId)}
+                      >
+                        <div className="flex w-[42px] shrink-0 flex-col items-center gap-0.5 max-[680px]:w-7">
+                          <span
+                            className={`w-[42px] shrink-0 text-center text-[22px] font-bold max-[680px]:w-5 max-[680px]:text-sm ${i === 0 ? "text-primary" : "text-muted-foreground"}`}
+                          >
+                            #{i + 1}
+                          </span>
                           {mediaFiltersActive && originalRanks[m.tmdbId] !== undefined && originalRanks[m.tmdbId] !== i + 1 && (
-                            <span className="media-ranking-original-rank" title="Overall rank (group average, unfiltered)">
+                            <span
+                              className="inline-flex items-center gap-[3px] whitespace-nowrap rounded-full border border-border bg-card px-2 py-[2px] text-[13px] font-bold text-primary max-[680px]:gap-0.5 max-[680px]:px-[5px] max-[680px]:py-px max-[680px]:text-[9px]"
+                              title="Overall rank (group average, unfiltered)"
+                            >
                               <span aria-hidden="true"><Globe size={11} /></span>
                               {originalRanks[m.tmdbId]}
                             </span>
                           )}
                         </div>
-                        <div className="media-ranking-poster-wrap">
+                        <div className="w-[62px] shrink-0 max-[680px]:w-12">
                           {m.posterUrl ? (
-                            <img className="media-ranking-poster" src={m.posterUrl} alt={m.title} />
+                            <img
+                              className="block h-[93px] w-[62px] rounded-[6px] border border-muted-foreground object-cover max-[680px]:h-[72px] max-[680px]:w-12"
+                              src={m.posterUrl}
+                              alt={m.title}
+                            />
                           ) : (
-                            <div className="media-ranking-poster media-poster-fallback">
-                              <img src="/favicon.svg" alt="" />
+                            <div className="flex h-[93px] w-[62px] items-center justify-center rounded-[6px] border border-muted-foreground bg-card max-[680px]:h-[72px] max-[680px]:w-12">
+                              <img src="/favicon.svg" alt="" className="h-2/5 w-2/5 opacity-40" />
                             </div>
                           )}
                         </div>
-                        <div className="media-ranking-info">
-                          <span className="media-card-title">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <span className="truncate text-[17px] font-semibold text-foreground max-[680px]:line-clamp-2 max-[680px]:whitespace-normal max-[680px]:text-sm">
                             {m.title}
-                            {m.year ? <span className="media-modal-year"> ({m.year})</span> : null}
+                            {m.year ? <span className="font-normal text-muted-foreground"> ({m.year})</span> : null}
                           </span>
-                          <span className="media-ranking-meta muted">
-                            <span className="media-modal-type-badge">{m.type}</span>
+                          <span className="flex flex-wrap items-center gap-0 text-[13px] text-muted-foreground [&>*+*]:before:mx-1.5 [&>*+*]:before:inline-block [&>*+*]:before:content-['·'] max-[680px]:flex-col max-[680px]:items-start max-[680px]:gap-1 max-[680px]:[&>*+*]:before:mx-0 max-[680px]:[&>*+*]:before:content-none">
+                            <span className="mr-1.5 rounded-full border border-border bg-card px-2 py-[2px] text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground max-[680px]:mr-0">
+                              {m.type}
+                            </span>
                             {m.runtimeMinutes ? (
-                              <span className="media-ranking-meta-item">{formatWatchTime(m.runtimeMinutes)}</span>
+                              <span className="whitespace-nowrap">{formatWatchTime(m.runtimeMinutes)}</span>
                             ) : null}
                           </span>
                           <VotingStatusBadge media={m} />
                         </div>
-                        <div className="media-ranking-score-wrap">
-                          <span className="media-ranking-score">
+                        <div className="flex shrink-0 flex-col items-end gap-0.5">
+                          <span className="text-[19px] font-bold text-primary max-[680px]:text-[13px]">
                             {displayRating !== null ? `★ ${displayRating.toFixed(1)}` : "—"}
                           </span>
                           {rankingMemberId === "average" ? (
-                            <span className="media-ranking-rated-count muted">
+                            <span className="whitespace-nowrap text-[13px] text-foreground">
                               {ratedCount}/{watchedList.length} rated
                             </span>
                           ) : (
-                            <span className="media-ranking-original-rank" title="Group average rating">
+                            <span
+                              className="inline-flex items-center gap-[3px] whitespace-nowrap rounded-full border border-border bg-card px-2 py-[2px] text-[13px] font-bold text-primary max-[680px]:gap-0.5 max-[680px]:px-[5px] max-[680px]:py-px max-[680px]:text-[9px]"
+                              title="Group average rating"
+                            >
                               <span aria-hidden="true"><Globe size={11} /></span>
                               {m.averageRating !== null ? m.averageRating.toFixed(1) : "—"}
                             </span>
@@ -1465,13 +1582,15 @@ export function GroupPage() {
               {mediaHasMore && <InfiniteScrollLoader sentinelRef={mediaSentinelRef} />}
           </div>
 
-          <aside className={`member-sidebar${membersExpanded ? " expanded" : ""}`}>
-            <div className="member-sidebar-header">
-              <h2>Members — {group.members.length + group.pendingMembers.length}</h2>
-              <div className="member-sidebar-header-actions">
+          <aside
+            className={`sticky top-[78px] rounded-lg border border-border bg-muted p-4 shadow-lg max-[860px]:static max-[860px]:order-[-1] ${membersExpanded ? "max-[680px]:block" : "max-[680px]:hidden"}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="m-0 text-[15px]">Members — {group.members.length + group.pendingMembers.length}</h2>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="member-sort-toggle"
+                  className="rounded-full border border-border bg-card px-[10px] py-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-muted-foreground hover:bg-secondary hover:text-foreground"
                   onClick={() =>
                     setMemberSortMode((v) => (v === "az" ? "rating" : v === "rating" ? "watched" : "az"))
                   }
@@ -1489,7 +1608,7 @@ export function GroupPage() {
                 </button>
                 <button
                   type="button"
-                  className="member-sidebar-mobile-toggle"
+                  className="hidden rounded-full border border-border bg-card px-[10px] py-1 text-[11px] font-semibold text-muted-foreground max-[860px]:inline-block"
                   onClick={() => setMembersExpanded((v) => !v)}
                 >
                   {membersExpanded ? "Hide ▲" : "Show ▼"}
@@ -1497,14 +1616,14 @@ export function GroupPage() {
               </div>
             </div>
 
-            <div className={`member-sidebar-body${membersExpanded ? " expanded" : ""}`}>
+            <div className={membersExpanded ? "max-[860px]:mt-3 max-[860px]:block max-[860px]:animate-[dropdown-pop-in_0.2s_ease_both]" : "max-[860px]:hidden"}>
               {isGroupOwner && (
-                <div className="member-sidebar-add">
+                <div className="mb-[14px] border-b border-border/70 pb-[14px]">
                   <AddMemberDropdown users={nonMemberUsers} onAdd={addMember} />
                 </div>
               )}
 
-              <ul className="member-sidebar-list">
+              <ul className="flex max-h-[65vh] flex-col gap-2 overflow-y-auto">
                 {visibleMembers.map((m, mi) => {
                   const rowStyle = { animationDelay: `${Math.min(mi, 15) * 25}ms` };
                   if (m.kind === "pending") {
@@ -1513,20 +1632,25 @@ export function GroupPage() {
                     return (
                       <li
                         key={m.key}
-                        className="member-sidebar-row member-sidebar-row-pending member-sidebar-row-clickable member-row-enter"
+                        className="group flex cursor-pointer items-center gap-3 rounded-[10px] border border-border/70 border-dashed bg-card px-[13px] py-[11px] opacity-85 transition-colors hover:border-primary hover:bg-secondary animate-[media-row-slide-in_0.3s_ease_both] motion-reduce:animate-none"
                         style={rowStyle}
                         onClick={() => setMemberModal(m)}
                       >
-                        <div className="avatar avatar-pending" style={{ width: 40, height: 40 }} title={`Discord id: ${m.discordId}`}>
+                        <div
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border bg-secondary text-[13px] font-bold text-muted-foreground"
+                          title={`Discord id: ${m.discordId}`}
+                        >
                           {label.charAt(0).toUpperCase()}
                         </div>
-                        <div className="member-sidebar-info">
-                          <span className="member-sidebar-name">
+                        <div className="flex min-w-0 flex-1 flex-col gap-px">
+                          <span className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-base text-foreground">
                             {label}
-                            <span className="member-pending-badge">Pending</span>
+                            <span className="shrink-0 rounded-full border border-border bg-secondary px-1.5 py-[2px] text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground">
+                              Pending
+                            </span>
                           </span>
                           {stats && (
-                            <span className="member-sidebar-stats muted">
+                            <span className="overflow-visible whitespace-nowrap text-xs text-muted-foreground">
                               {stats.moviesWatched + stats.tvWatched} watched
                               {stats.averageRatingGiven !== null && ` · ★ ${stats.averageRatingGiven.toFixed(1)} avg`}
                             </span>
@@ -1534,7 +1658,8 @@ export function GroupPage() {
                         </div>
                         {isGroupOwner && (
                           <button
-                            className="member-remove"
+                            type="button"
+                            className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-transparent p-0 text-muted-foreground transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-destructive hover:text-white [@media(hover:hover)]:opacity-0 [@media(hover:none),(pointer:coarse)]:h-[26px] [@media(hover:none),(pointer:coarse)]:w-[26px] [@media(hover:none),(pointer:coarse)]:opacity-[0.85]"
                             title="Remove pending member"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1552,18 +1677,25 @@ export function GroupPage() {
                   return (
                     <li
                       key={m.key}
-                      className="member-sidebar-row member-sidebar-row-clickable member-row-enter"
+                      className="group flex cursor-pointer items-center gap-3 rounded-[10px] border border-border/70 bg-card px-[13px] py-[11px] transition-colors hover:border-primary hover:bg-secondary animate-[media-row-slide-in_0.3s_ease_both] motion-reduce:animate-none"
                       style={rowStyle}
                       onClick={() => setMemberModal(m)}
                     >
                       <Avatar name={m.displayName} avatarUrl={m.avatarUrl} size={40} online={isOnline(m.userId)} />
-                      <div className="member-sidebar-info">
-                        <span className="member-sidebar-name">
+                      <div className="flex min-w-0 flex-1 flex-col gap-px">
+                        <span className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-base text-foreground">
                           {m.displayName}
-                          {m.isOwner && <span className="member-owner-badge" title="Owner"><Crown size={12} /></span>}
+                          {m.isOwner && (
+                            <span
+                              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-secondary text-[13px] leading-none"
+                              title="Owner"
+                            >
+                              <Crown size={12} />
+                            </span>
+                          )}
                         </span>
                         {stats && (
-                          <span className="member-sidebar-stats muted">
+                          <span className="overflow-visible whitespace-nowrap text-xs text-muted-foreground">
                             {stats.moviesWatched + stats.tvWatched} watched
                             {stats.averageRatingGiven !== null && ` · ★ ${stats.averageRatingGiven.toFixed(1)} avg`}
                           </span>
@@ -1571,7 +1703,8 @@ export function GroupPage() {
                       </div>
                       {isGroupOwner && !m.isOwner && (
                         <button
-                          className="member-remove"
+                          type="button"
+                          className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-transparent p-0 text-muted-foreground transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-destructive hover:text-white [@media(hover:hover)]:opacity-0 [@media(hover:none),(pointer:coarse)]:h-[26px] [@media(hover:none),(pointer:coarse)]:w-[26px] [@media(hover:none),(pointer:coarse)]:opacity-[0.85]"
                           title="Remove member"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1639,12 +1772,13 @@ export function GroupPage() {
               <button className="media-modal-close" onClick={requestClose} title="Close" type="button">
                 <X size={18} />
               </button>
-              <p className="confirm-modal-message">
+              <p className="mt-7 text-[15px] leading-normal">
                 Remove <strong>{pendingRemove.label}</strong> from this group?
               </p>
-              <div className="media-modal-confirm-delete confirm-modal-actions">
-                <button
-                  className="danger"
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
                   onClick={() => {
                     if (pendingRemove.kind === "member") removeMember(pendingRemove.userId);
                     else removePendingMember(pendingRemove.discordId);
@@ -1652,10 +1786,10 @@ export function GroupPage() {
                   }}
                 >
                   Yes, remove
-                </button>
-                <button className="secondary" onClick={requestClose}>
+                </Button>
+                <Button type="button" variant="outline" onClick={requestClose}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -1663,7 +1797,11 @@ export function GroupPage() {
       )}
 
       <button
-        className={`scroll-top-btn${showScrollTop ? " visible" : ""}`}
+        className={`fixed right-[56px] bottom-[72px] z-50 flex h-[44px] w-[44px] items-center justify-center rounded-full shadow-lg transition-all max-[680px]:right-6 max-[680px]:bottom-[92px] max-[680px]:h-10 max-[680px]:w-10 ${
+          showScrollTop
+            ? "pointer-events-auto translate-y-0 scale-100 opacity-100 hover:scale-110"
+            : "pointer-events-none translate-y-[14px] scale-[0.6] opacity-0"
+        }`}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         title="Scroll to top"
         aria-hidden={!showScrollTop}
@@ -1676,13 +1814,15 @@ export function GroupPage() {
         <Modal modalClassName="media-modal confirm-modal" onClose={cancelImport}>
           {(requestClose) => (
             <>
-              <h2>Import "{pendingImportFile.name}"?</h2>
-              <p className="muted">This overwrites the group's media, reviews, and watch statuses. Can't be undone.</p>
-              <div className="row confirm-modal-actions">
-                <button onClick={confirmImport}>Yes, import & overwrite</button>
-                <button className="secondary" onClick={requestClose}>
+              <h2 className="mt-0">Import "{pendingImportFile.name}"?</h2>
+              <p className="text-[13px] text-muted-foreground">
+                This overwrites the group's media, reviews, and watch statuses. Can't be undone.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <Button type="button" onClick={confirmImport}>Yes, import & overwrite</Button>
+                <Button type="button" variant="outline" onClick={requestClose}>
                   Cancel
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -1724,4 +1864,3 @@ export function GroupPage() {
     </div>
   );
 }
-
