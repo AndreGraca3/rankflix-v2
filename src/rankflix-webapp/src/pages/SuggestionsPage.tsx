@@ -316,30 +316,20 @@ export function SuggestionsPage() {
         <section className="random-pick-section">
           <div className="random-pick-header">
             <h2>🎲 Random Pick</h2>
-            <div className="row">
-              {isGroupOwner && (
-                <button
-                  type="button"
-                  className={`spin-toggle-btn${group?.spinsDisabledForMembers ? " active" : ""}`}
-                  onClick={toggleSpinsDisabled}
-                  title={
-                    group?.spinsDisabledForMembers
-                      ? "Spins are disabled for members - click to allow"
-                      : "Spins are allowed for members - click to disable"
-                  }
-                >
-                  {group?.spinsDisabledForMembers ? "🔒" : "🔓"}
-                </button>
-              )}
+            {isGroupOwner && (
               <button
                 type="button"
-                className="spin-btn"
-                onClick={requestSpin}
-                disabled={!canSpin || !spinsAllowedForMe || spinning || spinRequested}
+                className={`spin-toggle-btn${group?.spinsDisabledForMembers ? " active" : ""}`}
+                onClick={toggleSpinsDisabled}
+                title={
+                  group?.spinsDisabledForMembers
+                    ? "Spins are disabled for members - click to allow"
+                    : "Spins are allowed for members - click to disable"
+                }
               >
-                {spinning ? "Spinning…" : spinRequested ? "Starting…" : "Spin"}
+                {group?.spinsDisabledForMembers ? "🔒" : "🔓"}
               </button>
-            </div>
+            )}
           </div>
 
           {!canSpin ? (
@@ -369,6 +359,16 @@ export function SuggestionsPage() {
                     ))}
               </div>
               </div>
+              <div className="spin-btn-row">
+                <button
+                  type="button"
+                  className="spin-btn"
+                  onClick={requestSpin}
+                  disabled={!canSpin || !spinsAllowedForMe || spinning || spinRequested}
+                >
+                  {spinning ? "Spinning…" : spinRequested ? "Starting…" : "Spin"}
+                </button>
+              </div>
             </>
           )}
 
@@ -383,9 +383,6 @@ export function SuggestionsPage() {
                     Add to group
                   </button>
                 )}
-                <button type="button" className="secondary" onClick={requestSpin} disabled={!spinsAllowedForMe || spinRequested}>
-                  Spin again
-                </button>
                 <button
                   type="button"
                   className="secondary"
